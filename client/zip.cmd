@@ -1,0 +1,1 @@
+7z a archive.7z . -xr!node_modules

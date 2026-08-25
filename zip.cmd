@@ -1,0 +1,1 @@
+7z a pega-aftms-project.7z . -xr!node_modules

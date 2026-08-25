@@ -1,0 +1,10 @@
+packages:
+  - "client"
+  - "server"
+allowBuilds:
+  bcrypt: true
+  esbuild: true
+  unrs-resolver: true
+minimumReleaseAgeExclude:
+  - '@tanstack/router-core@1.171.19'
+  - '@tanstack/router-generator@1.167.25'

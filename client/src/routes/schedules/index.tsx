@@ -1,0 +1,279 @@
+import ErrorAlert from '@/components/errors/ErrorAlert'
+import { SearchInput } from '@/components/inputs/searchInput'
+import { ColumnVisibility } from '@/components/table/column-visibility'
+import { TablePagination } from '@/components/table/table-pagination'
+import {
+  AppTable,
+  baseTableOptions,
+  // eslint-disable-next-line import/consistent-type-specifier-style
+  type TTableFeatures,
+} from '@/components/table/table.tsx'
+import LinkButton from '@/components/ui/link-button'
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createColumnHelper, useTable } from '@tanstack/react-table'
+import type { ColumnDef } from '@tanstack/react-table'
+import { PencilIcon, TrashIcon } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { ActionMenu } from '@/components/table/action-menu'
+import trpc, { trpcClient } from '@/trpc'
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from '@tanstack/react-query'
+import type { TrpcRouterOutputs } from 'server/router'
+import { formatDate } from '@/lib/date'
+import FullPageSpinner from '@/components/loaders/page-loader'
+import { toast } from '@/components/ui/toast'
+import { BlockingLoaderOverlay } from '@/components/loaders/BlockingLoader'
+import MissionStatusBadge, {
+  MISSION_STATUS_LABELS,
+} from './-components/mission-stage-bar'
+import PageCard from '@/components/layout/PageCard'
+
+export const Route = createFileRoute('/schedules/')({
+  component: RouteComponent,
+  pendingComponent: FullPageSpinner,
+  errorComponent: ({ error }) => (
+    <ErrorAlert error={error} title="Failed to Load Mission Schedules" />
+  ),
+})
+
+type TScheduleListItem =
+  TrpcRouterOutputs['schedules']['getAll']['items'][number]
+
+const statusFilterOptions = [
+  { label: 'All statuses', value: 'all' },
+  { label: MISSION_STATUS_LABELS.draft, value: 'draft' },
+  { label: MISSION_STATUS_LABELS.published, value: 'published' },
+  { label: MISSION_STATUS_LABELS.in_progress, value: 'in_progress' },
+  { label: MISSION_STATUS_LABELS.completed, value: 'completed' },
+  { label: MISSION_STATUS_LABELS.cancelled, value: 'cancelled' },
+]
+
+const ch = createColumnHelper<TTableFeatures, TScheduleListItem>()
+
+const columns: ColumnDef<TTableFeatures, TScheduleListItem>[] = ch.columns([
+  ch.display({
+    header: '-',
+    cell: (info) => {
+      return (
+        <ActionMenu
+          actions={[
+            {
+              label: 'Edit',
+              icon: <PencilIcon className="h-4 w-4" />,
+              onClick: () => {
+                info.table.options.meta?.onRowAction?.('edit', info.row.id)
+              },
+            },
+            {
+              label: 'Delete',
+              isDestructive: true,
+              icon: <TrashIcon className="h-4 w-4" />,
+              onClick: () => {
+                info.table.options.meta?.onRowAction?.('delete', info.row.id)
+              },
+            },
+          ]}
+        />
+      )
+    },
+    size: 70,
+    id: 'actions',
+    meta: {
+      align: 'center',
+    },
+    minSize: 70,
+  }),
+  ch.accessor('createdAt', {
+    header: 'Created At',
+    size: 130,
+    cell: (info) => {
+      const value = info.getValue()
+      return (
+        <span className="text-sm" title={formatDate(value, true)}>
+          {formatDate(value, false)}
+        </span>
+      )
+    },
+  }),
+  ch.accessor('scheduleNumber', {
+    header: 'No',
+    size: 140,
+    cell: (info) => info.getValue() || '-',
+  }),
+  ch.accessor('name', {
+    header: 'Schedule',
+  }),
+  ch.accessor('missionName', {
+    header: 'Mission',
+    cell: (info) => info.getValue() || '-',
+  }),
+  ch.accessor('status', {
+    header: 'Status',
+    size: 130,
+    cell: (info) => <MissionStatusBadge status={info.getValue()} />,
+  }),
+  ch.accessor('startDateTime', {
+    header: 'Start',
+    cell: (info) => {
+      const value = info.getValue()
+      return value ? formatDate(value, true) : '-'
+    },
+  }),
+  ch.accessor(
+    (row) =>
+      [row.instructorFirstName, row.instructorLastName]
+        .filter(Boolean)
+        .join(' '),
+    {
+      id: 'instructor',
+      header: 'Instructor',
+      cell: (info) => info.getValue() || '-',
+    },
+  ),
+  ch.accessor(
+    (row) => [row.pilotFirstName, row.pilotLastName].filter(Boolean).join(' '),
+    {
+      id: 'pilot',
+      header: 'Pilot',
+      cell: (info) => info.getValue() || '-',
+    },
+  ),
+  ch.accessor('aircraftName', {
+    header: 'Aircraft',
+    cell: (info) => {
+      const row = info.row.original
+      if (!row.aircraftName) return '-'
+      return row.aircraftTailNumber
+        ? `${row.aircraftName} (${row.aircraftTailNumber})`
+        : row.aircraftName
+    },
+  }),
+  ch.accessor('areaName', {
+    header: 'Area',
+    cell: (info) => info.getValue() || '-',
+  }),
+  ch.accessor('traineeCount', {
+    header: 'Trainees',
+    size: 100,
+  }),
+])
+
+function RouteComponent() {
+  const schedulesQ = useSuspenseQuery(trpc.schedules.getAll.queryOptions())
+  const queryClient = useQueryClient()
+  const navigate = useNavigate()
+  const [columnFilters, setColumnFilters] = useState<string>('')
+  const [statusFilter, setStatusFilter] = useState('all')
+
+  const filteredItems = useMemo(() => {
+    if (statusFilter === 'all') return schedulesQ.data.items
+    return schedulesQ.data.items.filter((item) => item.status === statusFilter)
+  }, [schedulesQ.data.items, statusFilter])
+
+  const deleteMutation = useMutation({
+    mutationFn: ({ toDeleteId }: { toDeleteId: number }) => {
+      return trpcClient.schedules.delete.mutate({ toDeleteId })
+    },
+    onSuccess: () => {
+      queryClient.resetQueries(trpc.schedules.pathFilter())
+      toast.add({
+        type: 'success',
+        title: 'Schedule Deleted Successfully',
+      })
+    },
+    onError: (error) => {
+      toast.add({
+        type: 'error',
+        title: 'Failed to Delete Schedule',
+        description: error.message,
+      })
+    },
+  })
+
+  const table = useTable({
+    ...baseTableOptions<TScheduleListItem>(),
+    data: filteredItems,
+    getRowId: (row) => row.id.toString(),
+    columns,
+    initialState: {
+      pagination: {
+        pageIndex: 0,
+        pageSize: 50,
+      },
+    },
+    meta: {
+      onRowAction: (action, rowId) => {
+        if (action === 'edit') {
+          navigate({ to: '/schedules/$id', params: { id: rowId } })
+        } else {
+          const confirm = window.confirm(
+            'Are you sure you want to delete this schedule?',
+          )
+          if (confirm) {
+            deleteMutation.mutate({ toDeleteId: Number(rowId) })
+          }
+        }
+      },
+    },
+    state: {
+      globalFilter: columnFilters,
+    },
+    onGlobalFilterChange: setColumnFilters,
+    globalFilterFn: 'includesString',
+  })
+
+  return (
+    <PageCard className="space-y-4">
+      <div className="items-center gap-1 border-b mb-4 pb-1 flex justify-between">
+        <h1 className="text-xl font-bold">Mission Schedules</h1>
+        <LinkButton to="/schedules/create" newButton />
+      </div>
+      <ErrorAlert error={schedulesQ.error} />
+      <div className=" mb-3 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3 min-w-0">
+          <SearchInput
+            value={table.state.globalFilter ?? ''}
+            onValueChange={(value) => table.setGlobalFilter(value)}
+            placeholder="Search..."
+            className="shadow-none max-w-75"
+          />
+          <Select
+            value={statusFilter}
+            onValueChange={(value) => setStatusFilter(String(value ?? 'all'))}
+            items={statusFilterOptions}
+          >
+            <SelectTrigger className="w-44">
+              <SelectValue placeholder="Filter by status" />
+            </SelectTrigger>
+            <SelectContent alignItemWithTrigger={false}>
+              <SelectGroup>
+                {statusFilterOptions.map((option) => (
+                  <SelectItem key={option.value} value={option.value}>
+                    {option.label}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            </SelectContent>
+          </Select>
+        </div>
+        <div className="flex items-center gap-2">
+          <ColumnVisibility table={table} />
+        </div>
+      </div>
+      <AppTable table={table} />
+      <TablePagination table={table} />
+      <BlockingLoaderOverlay show={deleteMutation.isPending} />
+    </PageCard>
+  )
+}
