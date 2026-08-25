@@ -9,8 +9,11 @@ type AuthUser = {
   name: string | null
   role: 'admin' | 'instructor' | 'trainee' | null
   personnel: {
+    id: number
     imageId: number | null
     code: string | null
+    firstName: string | null
+    lastName: string | null
     personnelType: 'instructor' | 'pilot' | 'trainee'
   }[]
 }

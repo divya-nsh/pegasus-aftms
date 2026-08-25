@@ -13,8 +13,8 @@ export type MissionStatus = (typeof MISSION_STATUSES)[number]
 
 export const MISSION_STATUS_LABELS: Record<MissionStatus, string> = {
   draft: 'Draft',
-  published: 'Scheduled',
-  in_progress: 'In Progress',
+  published: 'Not started',
+  in_progress: 'Started',
   completed: 'Completed',
   cancelled: 'Cancelled',
 }

@@ -14,19 +14,24 @@ import {
   type TTableFeatures,
 } from '@/components/table/table.tsx'
 import { Button } from '@/components/ui/button'
+import { useAuth } from '@/context/auth-context'
 import { formatDate } from '@/lib/date'
 import trpc from '@/trpc'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { createColumnHelper, useTable } from '@tanstack/react-table'
 import type { ColumnDef } from '@tanstack/react-table'
-import { EyeIcon } from 'lucide-react'
+import {
+  CalendarClockIcon,
+  CheckCircle2Icon,
+  EyeIcon,
+  ListTodoIcon,
+} from 'lucide-react'
 import { useMemo, useState } from 'react'
 import type { TrpcRouterOutputs } from 'server/router'
 import MissionStatusBadge, {
   MISSION_STATUS_LABELS,
 } from '@/routes/schedules/-components/mission-stage-bar'
-import { personName } from '@/routes/schedules/-components/trainee-picker'
 
 const ASSIGNED_STATUSES = [
   'published',
@@ -194,38 +199,84 @@ const columns: ColumnDef<TTableFeatures, TAssignedMission>[] = ch.columns([
   }),
 ])
 
+function traineeDisplayName(user: ReturnType<typeof useAuth>['user']) {
+  const person = user?.personnel[0]
+  const personnelName = [person?.firstName, person?.lastName]
+    .filter(Boolean)
+    .join(' ')
+  return user?.name || personnelName || user?.username || 'there'
+}
+
+function StatCard({
+  label,
+  hint,
+  value,
+  icon,
+}: {
+  label: string
+  hint: string
+  value: number
+  icon: React.ReactNode
+}) {
+  return (
+    <div className="flex items-start justify-between rounded-md border bg-background p-4">
+      <div className="space-y-1">
+        <p className="text-sm font-medium text-muted-foreground">{label}</p>
+        <p className="text-3xl font-semibold tracking-tight">{value}</p>
+        <p className="text-xs text-muted-foreground">{hint}</p>
+      </div>
+      <span className="rounded-md bg-muted p-2 text-muted-foreground">
+        {icon}
+      </span>
+    </div>
+  )
+}
+
 function RouteComponent() {
   const navigate = useNavigate()
-  const [personId, setPersonId] = useState('')
+  const { user } = useAuth()
+  const personId = user?.personnel[0]?.id
+  const displayName = traineeDisplayName(user)
+
   const [statusFilter, setStatusFilter] = useState('')
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
   const [columnFilters, setColumnFilters] = useState('')
 
-  const personnelQ = useSuspenseQuery(trpc.personnel.getAll.queryOptions())
   const assignedQ = useSuspenseQuery(
     trpc.schedules.getAssigned.queryOptions({
-      personId: personId ? Number(personId) : undefined,
-      fromDate: fromDate || undefined,
-      toDate: toDate || undefined,
-      status: toAssignedStatus(statusFilter),
+      personId: personId ?? -1,
     }),
   )
 
-  const traineeOptions = useMemo(() => {
-    const trainees = personnelQ.data.items.filter(
-      (person) => person.personnelType === 'trainee',
-    )
-    const list = trainees.length ? trainees : personnelQ.data.items
-    return list.map((person) => ({
-      value: String(person.id),
-      label: `${personName(person)}${person.code ? ` (${person.code})` : ''}`,
-    }))
-  }, [personnelQ.data.items])
+  const stats = useMemo(() => {
+    const items = assignedQ.data.items
+    return {
+      total: items.length,
+      notStarted: items.filter((item) => item.status === 'published').length,
+      completed: items.filter((item) => item.status === 'completed').length,
+    }
+  }, [assignedQ.data.items])
+
+  const tableItems = useMemo(() => {
+    const status = toAssignedStatus(statusFilter)
+    return assignedQ.data.items.filter((item) => {
+      if (status && item.status !== status) return false
+      if (fromDate) {
+        const start = item.startDateTime ? new Date(item.startDateTime) : null
+        if (!start || start < new Date(`${fromDate}T00:00:00`)) return false
+      }
+      if (toDate) {
+        const start = item.startDateTime ? new Date(item.startDateTime) : null
+        if (!start || start > new Date(`${toDate}T23:59:59.999`)) return false
+      }
+      return true
+    })
+  }, [assignedQ.data.items, fromDate, statusFilter, toDate])
 
   const table = useTable({
     ...baseTableOptions<TAssignedMission>(),
-    data: assignedQ.data.items,
+    data: tableItems,
     getRowId: (row) => String(row.assignmentId),
     columns,
     initialState: {
@@ -236,7 +287,7 @@ function RouteComponent() {
     },
     meta: {
       onRowAction: (action, rowId) => {
-        const row = assignedQ.data.items.find(
+        const row = tableItems.find(
           (item) => String(item.assignmentId) === rowId,
         )
         if (action === 'view' && row) {
@@ -255,70 +306,94 @@ function RouteComponent() {
   })
 
   return (
-    <PageCard className="space-y-4">
-      <div className="mb-4 flex items-center justify-between gap-1 border-b pb-1">
-        <h1 className="text-xl font-bold">Trainee Dashboard</h1>
-      </div>
-      <ErrorAlert error={assignedQ.error} />
-      <div className="mb-3 flex flex-wrap items-end justify-between gap-3">
-        <div className="flex min-w-0 flex-wrap items-end gap-3">
-          <SearchInput
-            value={table.state.globalFilter ?? ''}
-            onValueChange={(value) => table.setGlobalFilter(value)}
-            placeholder="Search..."
-            className="max-w-75 shadow-none"
-          />
-          <div className="flex w-56 flex-col gap-2">
-            <span className="text-sm font-medium">Trainee</span>
-            <BasicSelect
-              value={personId}
-              onValueChange={(value) => setPersonId(String(value ?? ''))}
-              placeholder="All"
-              options={traineeOptions}
-            />
-          </div>
-          <div className="flex w-44 flex-col gap-2">
-            <span className="text-sm font-medium">Status</span>
-            <BasicSelect
-              value={statusFilter}
-              onValueChange={(value) => setStatusFilter(String(value ?? ''))}
-              placeholder="All"
-              options={statusFilterOptions}
-            />
-          </div>
-          <TextField
-            className="w-44"
-            label="From date"
-            type="date"
-            value={fromDate}
-            onValueChange={setFromDate}
-          />
-          <TextField
-            className="w-44"
-            label="To date"
-            type="date"
-            value={toDate}
-            onValueChange={setToDate}
-          />
-          {fromDate || toDate || personId || statusFilter ? (
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => {
-                setPersonId('')
-                setStatusFilter('')
-                setFromDate('')
-                setToDate('')
-              }}
-            >
-              Clear filters
-            </Button>
-          ) : null}
+    <PageCard className="space-y-8">
+      <section className="space-y-4">
+        <div className="border-b pb-3">
+          <p className="text-sm text-muted-foreground">Trainee Dashboard</p>
+          <h1 className="text-2xl font-bold tracking-tight">
+            Hey {displayName}
+          </h1>
         </div>
-        <ColumnVisibility table={table} />
-      </div>
-      <AppTable table={table} />
-      <TablePagination table={table} />
+        <div className="grid gap-3 sm:grid-cols-3">
+          <StatCard
+            label="Not started"
+            hint="Assigned, still pending"
+            value={stats.notStarted}
+            icon={<CalendarClockIcon className="size-4" />}
+          />
+          <StatCard
+            label="Completed"
+            hint="Missions you have done"
+            value={stats.completed}
+            icon={<CheckCircle2Icon className="size-4" />}
+          />
+          <StatCard
+            label="Total assigned"
+            hint="All missions assigned to you"
+            value={stats.total}
+            icon={<ListTodoIcon className="size-4" />}
+          />
+        </div>
+      </section>
+
+      <section className="space-y-4">
+        <div className="border-b pb-2">
+          <h2 className="text-lg font-semibold">Missions</h2>
+          <p className="text-sm text-muted-foreground">
+            Filter and review your assigned missions
+          </p>
+        </div>
+        <ErrorAlert error={assignedQ.error} />
+        <div className="flex flex-wrap items-end justify-between gap-3">
+          <div className="flex min-w-0 flex-wrap items-end gap-3">
+            <div className="flex w-44 flex-col gap-2">
+              <span className="text-sm font-medium">Status</span>
+              <BasicSelect
+                value={statusFilter}
+                onValueChange={(value) => setStatusFilter(String(value ?? ''))}
+                placeholder="All"
+                options={statusFilterOptions}
+              />
+            </div>
+            <TextField
+              className="w-44"
+              label="From date"
+              type="date"
+              value={fromDate}
+              onValueChange={setFromDate}
+            />
+            <TextField
+              className="w-44"
+              label="To date"
+              type="date"
+              value={toDate}
+              onValueChange={setToDate}
+            />
+            <SearchInput
+              value={table.state.globalFilter ?? ''}
+              onValueChange={(value) => table.setGlobalFilter(value)}
+              placeholder="Search..."
+              className="max-w-75 shadow-none"
+            />
+            {fromDate || toDate || statusFilter ? (
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => {
+                  setStatusFilter('')
+                  setFromDate('')
+                  setToDate('')
+                }}
+              >
+                Clear filters
+              </Button>
+            ) : null}
+          </div>
+          <ColumnVisibility table={table} />
+        </div>
+        <AppTable table={table} />
+        <TablePagination table={table} />
+      </section>
     </PageCard>
   )
 }
