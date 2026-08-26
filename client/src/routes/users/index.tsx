@@ -26,6 +26,7 @@ import { formatDate } from '@/lib/date'
 import FullPageSpinner from '@/components/loaders/page-loader'
 import { toast } from '@/components/ui/toast'
 import { BlockingLoaderOverlay } from '@/components/loaders/BlockingLoader'
+import RefreshButton from '@/components/table/refresh-button'
 
 export const Route = createFileRoute('/users/')({
   component: RouteComponent,
@@ -165,7 +166,13 @@ function RouteComponent() {
     <div className="px-6 max-w-6xl mx-auto space-y-4">
       <div className="items-center gap-1 border-b mb-4 pb-1 flex justify-between">
         <h1 className="text-xl font-bold">Users</h1>
-        <LinkButton to="/users/create" newButton />
+        <div className="flex items-center gap-2">
+          <LinkButton to="/users/create" newButton />
+          <RefreshButton
+            isPending={usersQ.isRefetching}
+            onClick={() => queryClient.refetchQueries(trpc.users.pathFilter())}
+          />
+        </div>
       </div>
       <ErrorAlert error={usersQ.error} />
       <div className=" mb-3 flex items-center justify-between">

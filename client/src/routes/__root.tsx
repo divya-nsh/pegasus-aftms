@@ -9,9 +9,9 @@ import '../styles.css'
 import Layout from '@/components/layout/RootLayout.tsx'
 import { Toaster } from '@/components/ui/toast'
 import type { QueryClient } from '@tanstack/react-query'
-import { trpc } from '@/trpc'
 import FullPageSpinner from '@/components/loaders/page-loader'
 import type { AuthContextType } from '@/context/auth-context'
+import { Toaster as HotToaster } from 'react-hot-toast'
 
 export type RouterContext = {
   queryClient: QueryClient
@@ -24,7 +24,10 @@ export const Route = createRootRouteWithContext<RouterContext>()({
     const auth = context.auth
 
     if (!auth?.isAuthenticated && !isLoginRoute) {
-      throw redirect({ to: '/login' })
+      throw redirect({
+        to: '/login',
+        search: { redirectTo: location.pathname },
+      })
     }
 
     if (auth?.isAuthenticated && isLoginRoute) {
@@ -53,6 +56,13 @@ function RootComponent() {
         <Outlet />
       </Layout>
       <Toaster />
+      <HotToaster
+        toastOptions={{
+          style: {
+            fontSize: '0.870rem',
+          },
+        }}
+      />
       {/* 
       <TanStackDevtools
         config={{

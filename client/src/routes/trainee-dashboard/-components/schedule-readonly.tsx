@@ -10,6 +10,7 @@ import {
 import { toDateTimeLocal } from '@/lib/date'
 import type { TrpcRouterOutputs } from 'server/router'
 import { personName } from '@/routes/schedules/-components/trainee-picker'
+import { useAuth } from '@/context/auth-context'
 
 type ScheduleDetail = TrpcRouterOutputs['schedules']['getById']
 
@@ -26,10 +27,7 @@ const RESULT_LABELS: Record<string, string> = {
   failed: 'Failed',
 }
 
-function displayName(
-  firstName?: string | null,
-  lastName?: string | null,
-) {
+function displayName(firstName?: string | null, lastName?: string | null) {
   return personName({ firstName, lastName }) || '-'
 }
 
@@ -38,6 +36,7 @@ export default function ScheduleReadonly({
 }: {
   schedule: ScheduleDetail
 }) {
+  const auth = useAuth()
   const aircraftLabel = schedule.aircraftName
     ? schedule.aircraftTailNumber
       ? `${schedule.aircraftName} (${schedule.aircraftTailNumber})`
@@ -141,25 +140,27 @@ export default function ScheduleReadonly({
                   </TableCell>
                 </TableRow>
               ) : (
-                schedule.assignments.map((row, index) => (
-                  <TableRow key={row.id}>
-                    <TableCell>{index + 1}</TableCell>
-                    <TableCell>{row.code || '-'}</TableCell>
-                    <TableCell>
-                      {displayName(row.firstName, row.lastName)}
-                    </TableCell>
-                    <TableCell>{row.rank || '-'}</TableCell>
-                    <TableCell>
-                      {ATTENDANCE_LABELS[row.attendanceStatus] ??
-                        row.attendanceStatus}
-                    </TableCell>
-                    <TableCell>{row.score ?? '-'}</TableCell>
-                    <TableCell>
-                      {RESULT_LABELS[row.result] ?? row.result}
-                    </TableCell>
-                    <TableCell>{row.remarks || '-'}</TableCell>
-                  </TableRow>
-                ))
+                schedule.assignments
+                  .filter((a) => a.personId === auth.profile?.id)
+                  .map((row, index) => (
+                    <TableRow key={row.id}>
+                      <TableCell>{index + 1}</TableCell>
+                      <TableCell>{row.code || '-'}</TableCell>
+                      <TableCell>
+                        {displayName(row.firstName, row.lastName)}
+                      </TableCell>
+                      <TableCell>{row.rank || '-'}</TableCell>
+                      <TableCell>
+                        {ATTENDANCE_LABELS[row.attendanceStatus] ??
+                          row.attendanceStatus}
+                      </TableCell>
+                      <TableCell>{row.score ?? '-'}</TableCell>
+                      <TableCell>
+                        {RESULT_LABELS[row.result] ?? row.result}
+                      </TableCell>
+                      <TableCell>{row.remarks || '-'}</TableCell>
+                    </TableRow>
+                  ))
               )}
             </TableBody>
           </Table>

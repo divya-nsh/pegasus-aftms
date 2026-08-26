@@ -213,6 +213,18 @@ export default function ScheduleForm({
   return (
     <>
       <ErrorAlert error={saveMutation.error} />
+      {schedule ? (
+        <MissionStatusPicker
+          value={schedule.status}
+          disabled={statusMutation.isPending}
+          onChange={(status) => {
+            const confirmed = window.confirm(
+              `Are you sure you want to mark this schedule as ${MISSION_STATUS_LABELS[status]}?\n\nYou cannot go back after the status is changed.`,
+            )
+            if (confirmed) statusMutation.mutate(status)
+          }}
+        />
+      ) : null}
       <form
         className="space-y-8"
         onSubmit={(e) => {
@@ -220,19 +232,6 @@ export default function ScheduleForm({
           saveMutation.mutate()
         }}
       >
-        {schedule ? (
-          <MissionStatusPicker
-            value={schedule.status}
-            disabled={statusMutation.isPending}
-            onChange={(status) => {
-              const confirmed = window.confirm(
-                `Are you sure you want to change this schedule from ${MISSION_STATUS_LABELS[schedule.status]} to ${MISSION_STATUS_LABELS[status]}?`,
-              )
-              if (confirmed) statusMutation.mutate(status)
-            }}
-          />
-        ) : null}
-
         <section className="grid grid-cols-2 gap-6">
           <BasicSelectField
             required
@@ -283,6 +282,7 @@ export default function ScheduleForm({
               <TextField
                 label="Start"
                 type="datetime-local"
+                min={todayStart()}
                 value={formState.startDateTime}
                 onValueChange={(startDateTime) =>
                   applyStartAndDuration(
@@ -293,6 +293,7 @@ export default function ScheduleForm({
               />
               <TextField
                 label="End"
+                min={formState.startDateTime}
                 type="datetime-local"
                 value={formState.endDateTime}
                 onValueChange={(endDateTime) =>
@@ -388,4 +389,10 @@ export default function ScheduleForm({
       />
     </>
   )
+}
+
+function todayStart() {
+  const date = new Date()
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}T00:00`
 }

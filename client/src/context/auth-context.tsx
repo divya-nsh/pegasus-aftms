@@ -20,6 +20,14 @@ type AuthUser = {
 
 export type AuthContextType = {
   user?: AuthUser | null
+  profile?: {
+    id: number
+    imageId: number | null
+    code: string | null
+    firstName: string | null
+    lastName: string | null
+    personnelType: 'instructor' | 'pilot' | 'trainee'
+  }
   isAuthenticated: boolean
   refetch: () => void
 }
@@ -40,8 +48,12 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       </div>
     )
 
+  const profile = user?.personnel[0]
+
   return (
-    <AuthContext.Provider value={{ user, refetch, isAuthenticated: !!user }}>
+    <AuthContext.Provider
+      value={{ user, profile, refetch, isAuthenticated: !!user }}
+    >
       {children}
     </AuthContext.Provider>
   )

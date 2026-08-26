@@ -6,7 +6,6 @@ import TextField, {
 } from '@/components/inputs/TextField'
 import { Button } from '@/components/ui/button'
 import LinkButton from '@/components/ui/link-button'
-import { toast } from '@/components/ui/toast'
 import trpc, { trpcClient } from '@/trpc'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
@@ -15,6 +14,7 @@ import type { ReactNode } from 'react'
 import { cn } from '@/lib/utils'
 import { Checkbox } from '@/components/ui/checkbox'
 import { Label } from '@/components/ui/label'
+import { toast } from 'react-hot-toast'
 
 export type PersonnelType = 'pilot' | 'trainee' | 'instructor'
 export type Gender = 'male' | 'female' | 'other'
@@ -142,9 +142,10 @@ export default function PersonnelForm({
   toEditId,
   initialFormData = defaultPersonnelFormData,
 }: {
-  mode: 'create' | 'edit'
+  mode: 'create' | 'edit' | 'view'
   toEditId?: number
   initialFormData?: PersonnelFormData
+  viewMode?: 'profile'
 }) {
   const [formState, setFormState] = useState(initialFormData)
   const queryClient = useQueryClient()
@@ -169,28 +170,26 @@ export default function PersonnelForm({
     },
     onSuccess: () => {
       queryClient.resetQueries(trpc.personnel.pathFilter())
-      queryClient.resetQueries(trpc.users.pathFilter())
-      toast.add({
-        type: 'success',
-        title:
-          mode === 'create'
-            ? 'Personnel Created Successfully'
-            : 'Personnel Updated Successfully',
-      })
+      queryClient.refetchQueries(trpc.users.pathFilter())
+      toast.success(
+        mode === 'create'
+          ? 'Personnel Created Successfully'
+          : 'Personnel Updated Successfully',
+      )
       navigate({ to: '/personnel' })
     },
     onError: (error) => {
-      toast.add({
-        type: 'error',
-        title: 'Failed to Save Personnel',
-        description: error.message,
-      })
+      toast.error('Failed to Save Personnel')
+      toast.error(error.message)
     },
   })
 
   const updateFormState = (newState: Partial<PersonnelFormData>) => {
+    if (mode === 'view') return
     setFormState((prev) => ({ ...prev, ...newState }))
   }
+
+  const isReadOnly = mode === 'view'
 
   return (
     <>
@@ -210,6 +209,7 @@ export default function PersonnelForm({
             <div className={cn('grid gap-6 flex-1', 'grid-cols-2')}>
               <div className="col-span-2">
                 <BasicSelectField
+                  readOnly={isReadOnly}
                   label="Personnel Type*"
                   className=" max-w-82"
                   placeholder="Select personnel type"
@@ -225,6 +225,7 @@ export default function PersonnelForm({
               </div>
 
               <TextField
+                readOnly={isReadOnly}
                 required
                 label="First Name*"
                 value={formState.firstName}
@@ -232,12 +233,14 @@ export default function PersonnelForm({
               />
 
               <TextField
+                readOnly={isReadOnly}
                 label="Last Name"
                 value={formState.lastName}
                 onValueChange={(lastName) => updateFormState({ lastName })}
               />
 
               <BasicSelectField
+                readOnly={isReadOnly}
                 label="Gender*"
                 placeholder="Select gender"
                 value={formState.gender}
@@ -250,6 +253,7 @@ export default function PersonnelForm({
               />
 
               <TextField
+                readOnly={isReadOnly}
                 label="Date of Birth"
                 type="date"
                 value={formState.dateOfBirth}
@@ -313,6 +317,7 @@ export default function PersonnelForm({
 
         <FormSection title="Medical">
           <BasicSelectField
+            readOnly={isReadOnly}
             label="Medical Status"
             placeholder="Select medical status"
             value={formState.medicalStatus}
@@ -326,6 +331,7 @@ export default function PersonnelForm({
             }
           />
           <TextField
+            readOnly={isReadOnly}
             label="Medical Exam Date"
             type="date"
             value={formState.medicalExamDate}
@@ -334,6 +340,7 @@ export default function PersonnelForm({
             }
           />
           <TextField
+            readOnly={isReadOnly}
             label="Medical Valid Until"
             type="date"
             value={formState.medicalValidUntil}
@@ -358,9 +365,11 @@ export default function PersonnelForm({
               <Label htmlFor="create-user-account">Create User Account</Label>
             </div>
           )}
+
           {!formState.userId && formState.isCreateUser && (
             <>
               <TextField
+                readOnly={isReadOnly}
                 required
                 label="Username*"
                 placeholder="Enter username for user account"
@@ -370,6 +379,7 @@ export default function PersonnelForm({
                 }
               />
               <TextField
+                readOnly={isReadOnly}
                 required
                 label="Password*"
                 type="password"
@@ -392,14 +402,16 @@ export default function PersonnelForm({
           )}
         </FormSection>
 
-        <div className="flex justify-end gap-2 pt-2">
-          <LinkButton to="/personnel" variant="outline">
-            Cancel
-          </LinkButton>
-          <Button type="submit" disabled={mutation.isPending}>
-            {mode === 'create' ? 'Create' : 'Update'}
-          </Button>
-        </div>
+        {mode !== 'view' && (
+          <div className="flex justify-end gap-2 pt-2">
+            <LinkButton to="/personnel" variant="outline">
+              Cancel
+            </LinkButton>
+            <Button type="submit" disabled={mutation.isPending}>
+              {mode === 'create' ? 'Create' : 'Save'}
+            </Button>
+          </div>
+        )}
       </form>
     </>
   )

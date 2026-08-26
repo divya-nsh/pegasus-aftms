@@ -51,6 +51,7 @@ export function BasicSelectField({
   disabled,
   placeholder = 'Select...',
   required = false,
+  readOnly = false,
 }: {
   label: string
   value?: string | undefined | null | number
@@ -61,6 +62,7 @@ export function BasicSelectField({
   disabled?: boolean
   placeholder?: string
   required?: boolean
+  readOnly?: boolean
 }) {
   const id = useId()
 
@@ -74,6 +76,7 @@ export function BasicSelectField({
         placeholder={placeholder}
         required={required}
         disabled={disabled}
+        readOnly={readOnly}
         className={className}
       />
       {error && <FieldError>{error}</FieldError>}

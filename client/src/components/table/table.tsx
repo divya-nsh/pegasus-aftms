@@ -5,7 +5,6 @@ import {
   createPaginatedRowModel,
   createFilteredRowModel,
   createSortedRowModel,
-  cellSelectionFeature,
   rowPaginationFeature,
   rowSelectionFeature,
   rowSortingFeature,

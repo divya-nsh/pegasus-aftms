@@ -25,6 +25,16 @@ const missionStatusSchema = z.enum([
   "cancelled",
 ]);
 
+type MissionStatus = z.infer<typeof missionStatusSchema>;
+
+const ALLOWED_STATUS_TRANSITIONS: Record<MissionStatus, MissionStatus[]> = {
+  draft: ["published", "cancelled"],
+  published: ["in_progress", "cancelled"],
+  in_progress: ["completed", "cancelled"],
+  completed: ["cancelled"],
+  cancelled: [],
+};
+
 const headerSchema = z.object({
   scheduleNumber: optionalText,
   name: z.string().min(1),
@@ -199,9 +209,7 @@ const scheduleRouter = router({
       }),
     )
     .query(async ({ input }) => {
-      const conditions: SQL[] = [
-        ne(missionScheduleTable.status, "draft"),
-      ];
+      const conditions: SQL[] = [ne(missionScheduleTable.status, "draft")];
 
       if (input.personId != null) {
         conditions.push(eq(missionAssignmentTable.personId, input.personId));
@@ -362,64 +370,59 @@ const scheduleRouter = router({
       };
     }),
 
-  create: protectedProcedure
-    .input(createSchema)
-    .mutation(async ({ input }) => {
-      const { traineeIds, missionId, ...data } = input;
-      const mission = await getMissionOrThrow(missionId);
+  create: protectedProcedure.input(createSchema).mutation(async ({ input }) => {
+    const { traineeIds, missionId, ...data } = input;
+    const mission = await getMissionOrThrow(missionId);
 
-      const [created] = await db
-        .insert(missionScheduleTable)
-        .values({
-          missionId,
-          ...toScheduleValues(data),
-          aircraftId: data.aircraftId ?? mission.aircraftId,
-        })
-        .returning({ id: missionScheduleTable.id });
+    const [created] = await db
+      .insert(missionScheduleTable)
+      .values({
+        missionId,
+        ...toScheduleValues(data),
+        aircraftId: data.aircraftId ?? mission.aircraftId,
+      })
+      .returning({ id: missionScheduleTable.id });
 
-      if (!created) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to create mission schedule",
-        });
-      }
+    if (!created) {
+      throw new TRPCError({
+        code: "INTERNAL_SERVER_ERROR",
+        message: "Failed to create mission schedule",
+      });
+    }
 
-      const scheduleNumber =
-        data.scheduleNumber?.trim() ||
-        `${SCHEDULE_NUMBER_PREFIX}${created.id}`;
+    const scheduleNumber =
+      data.scheduleNumber?.trim() || `${SCHEDULE_NUMBER_PREFIX}${created.id}`;
 
-      if (!data.scheduleNumber?.trim()) {
-        await db
-          .update(missionScheduleTable)
-          .set({ scheduleNumber })
-          .where(eq(missionScheduleTable.id, created.id));
-      }
-
-      await replaceTrainees(created.id, traineeIds);
-      return { id: created.id, scheduleNumber };
-    }),
-
-  update: protectedProcedure
-    .input(updateSchema)
-    .mutation(async ({ input }) => {
-      const { toEditId, ...data } = input;
-      await getScheduleOrThrow(toEditId);
-
-      const [updated] = await db
+    if (!data.scheduleNumber?.trim()) {
+      await db
         .update(missionScheduleTable)
-        .set(toScheduleValues(data))
-        .where(eq(missionScheduleTable.id, toEditId))
-        .returning({ id: missionScheduleTable.id });
+        .set({ scheduleNumber })
+        .where(eq(missionScheduleTable.id, created.id));
+    }
 
-      if (!updated) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Mission schedule not found",
-        });
-      }
+    await replaceTrainees(created.id, traineeIds);
+    return { id: created.id, scheduleNumber };
+  }),
 
-      return updated;
-    }),
+  update: protectedProcedure.input(updateSchema).mutation(async ({ input }) => {
+    const { toEditId, ...data } = input;
+    await getScheduleOrThrow(toEditId);
+
+    const [updated] = await db
+      .update(missionScheduleTable)
+      .set(toScheduleValues(data))
+      .where(eq(missionScheduleTable.id, toEditId))
+      .returning({ id: missionScheduleTable.id });
+
+    if (!updated) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Mission schedule not found",
+      });
+    }
+
+    return updated;
+  }),
 
   delete: protectedProcedure
     .input(z.object({ toDeleteId: z.number() }))
@@ -446,7 +449,15 @@ const scheduleRouter = router({
       }),
     )
     .mutation(async ({ input }) => {
-      await getScheduleOrThrow(input.id);
+      const schedule = await getScheduleOrThrow(input.id);
+      const allowed = ALLOWED_STATUS_TRANSITIONS[schedule.status];
+
+      if (!allowed.includes(input.status)) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `Cannot change status from ${schedule.status} to ${input.status}`,
+        });
+      }
 
       const [updated] = await db
         .update(missionScheduleTable)

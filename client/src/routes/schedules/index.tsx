@@ -38,6 +38,7 @@ import MissionStatusBadge, {
   MISSION_STATUS_LABELS,
 } from './-components/mission-stage-bar'
 import PageCard from '@/components/layout/PageCard'
+import RefetchButton from '@/components/table/refresh-button'
 
 export const Route = createFileRoute('/schedules/')({
   component: RouteComponent,
@@ -121,7 +122,7 @@ const columns: ColumnDef<TTableFeatures, TScheduleListItem>[] = ch.columns([
   ch.accessor('status', {
     header: 'Status',
     size: 130,
-    cell: (info) => <MissionStatusBadge status={info.getValue()} />,
+    cell: (info) => <MissionStatusBadge status={info.getValue()} size="sm" />,
   }),
   ch.accessor('startDateTime', {
     header: 'Start',
@@ -237,7 +238,14 @@ function RouteComponent() {
     <PageCard className="space-y-4">
       <div className="items-center gap-1 border-b mb-4 pb-1 flex justify-between">
         <h1 className="text-xl font-bold">Mission Schedules</h1>
-        <LinkButton to="/schedules/create" newButton />
+        <div className="flex items-center gap-2">
+          <RefetchButton
+            onClick={() => schedulesQ.refetch()}
+            isPending={schedulesQ.isFetching}
+            disabled={schedulesQ.isFetching}
+          />
+          <LinkButton to="/schedules/create" newButton />
+        </div>
       </div>
       <ErrorAlert error={schedulesQ.error} />
       <div className=" mb-3 flex items-center justify-between gap-3">

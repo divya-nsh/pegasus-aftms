@@ -18,6 +18,7 @@ export default function BasicSelect({
   disabled,
   className,
   allowClear = true,
+  readOnly = false,
 }: {
   options: { label: string; value: string }[]
   value?: string | undefined | null | number
@@ -27,17 +28,20 @@ export default function BasicSelect({
   disabled?: boolean
   className?: string
   allowClear?: boolean
+  readOnly?: boolean
 }) {
   const [open, setOpen] = useState(false)
 
   return (
     <Select
-      open={open}
+      open={readOnly ? false : open}
       onOpenChange={setOpen}
       required={required}
       disabled={disabled}
+      readOnly={readOnly}
       value={value}
       onValueChange={(nextValue) => {
+        if (readOnly) return
         setOpen(false)
         if (disabled) return
         // Keep parent updates (and any Suspense refetch) off the urgent path

@@ -4,7 +4,6 @@ import TextField from '@/components/inputs/TextField'
 import { SearchInput } from '@/components/inputs/searchInput'
 import PageCard from '@/components/layout/PageCard'
 import FullPageSpinner from '@/components/loaders/page-loader'
-import { ActionMenu } from '@/components/table/action-menu'
 import { ColumnVisibility } from '@/components/table/column-visibility'
 import { TablePagination } from '@/components/table/table-pagination'
 import {
@@ -32,6 +31,7 @@ import type { TrpcRouterOutputs } from 'server/router'
 import MissionStatusBadge, {
   MISSION_STATUS_LABELS,
 } from '@/routes/schedules/-components/mission-stage-bar'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 const ASSIGNED_STATUSES = [
   'published',
@@ -84,17 +84,15 @@ const columns: ColumnDef<TTableFeatures, TAssignedMission>[] = ch.columns([
   ch.display({
     header: '-',
     cell: (info) => (
-      <ActionMenu
-        actions={[
-          {
-            label: 'View',
-            icon: <EyeIcon className="h-4 w-4" />,
-            onClick: () => {
-              info.table.options.meta?.onRowAction?.('view', info.row.id)
-            },
-          },
-        ]}
-      />
+      <Button
+        variant="ghost"
+        size="icon"
+        onClick={() => {
+          info.table.options.meta?.onRowAction?.('view', info.row.id)
+        }}
+      >
+        <EyeIcon />
+      </Button>
     ),
     size: 70,
     id: 'actions',
@@ -182,11 +180,11 @@ const columns: ColumnDef<TTableFeatures, TAssignedMission>[] = ch.columns([
     header: 'Area',
     cell: (info) => info.getValue() || '-',
   }),
-  ch.accessor('attendanceStatus', {
-    header: 'Attendance',
-    size: 120,
-    cell: (info) => ATTENDANCE_LABELS[info.getValue()] ?? info.getValue(),
-  }),
+  // ch.accessor('attendanceStatus', {
+  //   header: 'Attendance',
+  //   size: 120,
+  //   cell: (info) => ATTENDANCE_LABELS[info.getValue()] ?? info.getValue(),
+  // }),
   ch.accessor('result', {
     header: 'Result',
     size: 110,
@@ -195,7 +193,7 @@ const columns: ColumnDef<TTableFeatures, TAssignedMission>[] = ch.columns([
   ch.accessor('score', {
     header: 'Score',
     size: 90,
-    cell: (info) => info.getValue() ?? '-',
+    cell: (info) => info.getValue() ?? '0',
   }),
 ])
 
@@ -238,7 +236,9 @@ function RouteComponent() {
   const personId = user?.personnel[0]?.id
   const displayName = traineeDisplayName(user)
 
-  const [statusFilter, setStatusFilter] = useState('')
+  const [statusFilter, setStatusFilter] = useState<
+    'completed' | 'in_progress' | 'published' | 'all'
+  >('published')
   const [fromDate, setFromDate] = useState('')
   const [toDate, setToDate] = useState('')
   const [columnFilters, setColumnFilters] = useState('')
@@ -259,9 +259,8 @@ function RouteComponent() {
   }, [assignedQ.data.items])
 
   const tableItems = useMemo(() => {
-    const status = toAssignedStatus(statusFilter)
     return assignedQ.data.items.filter((item) => {
-      if (status && item.status !== status) return false
+      if (statusFilter !== 'all' && item.status !== statusFilter) return false
       if (fromDate) {
         const start = item.startDateTime ? new Date(item.startDateTime) : null
         if (!start || start < new Date(`${fromDate}T00:00:00`)) return false
@@ -346,7 +345,7 @@ function RouteComponent() {
         <ErrorAlert error={assignedQ.error} />
         <div className="flex flex-wrap items-end justify-between gap-3">
           <div className="flex min-w-0 flex-wrap items-end gap-3">
-            <div className="flex w-44 flex-col gap-2">
+            {/* <div className="flex w-44 flex-col gap-2">
               <span className="text-sm font-medium">Status</span>
               <BasicSelect
                 value={statusFilter}
@@ -354,7 +353,7 @@ function RouteComponent() {
                 placeholder="All"
                 options={statusFilterOptions}
               />
-            </div>
+            </div> */}
             <TextField
               className="w-44"
               label="From date"
@@ -375,12 +374,12 @@ function RouteComponent() {
               placeholder="Search..."
               className="max-w-75 shadow-none"
             />
-            {fromDate || toDate || statusFilter ? (
+            {fromDate || toDate || statusFilter !== 'all' ? (
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => {
-                  setStatusFilter('')
+                  setStatusFilter('all')
                   setFromDate('')
                   setToDate('')
                 }}
@@ -391,6 +390,19 @@ function RouteComponent() {
           </div>
           <ColumnVisibility table={table} />
         </div>
+        <Tabs
+          value={statusFilter}
+          onValueChange={(value) => {
+            setStatusFilter(value as 'completed' | 'in_progress' | 'published')
+          }}
+        >
+          <TabsList>
+            <TabsTrigger value="all">All</TabsTrigger>
+            <TabsTrigger value="published">Pending</TabsTrigger>
+            <TabsTrigger value="in_progress">Started</TabsTrigger>
+            <TabsTrigger value="completed">Completed</TabsTrigger>
+          </TabsList>
+        </Tabs>
         <AppTable table={table} />
         <TablePagination table={table} />
       </section>

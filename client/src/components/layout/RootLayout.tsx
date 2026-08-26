@@ -1,9 +1,4 @@
-import {
-  Link,
-  useNavigate,
-  useRouter,
-  useRouterState,
-} from '@tanstack/react-router'
+import { Link, useRouterState } from '@tanstack/react-router'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { trpcClient } from '@/trpc'
 import {
@@ -26,12 +21,11 @@ import {
 import {
   CalendarClockIcon,
   GraduationCapIcon,
-  LogOutIcon,
+  ShieldCheckIcon,
   MapPinIcon,
   MapPinnedIcon,
   PlaneIcon,
   TargetIcon,
-  User2Icon,
   UserIcon,
   UsersIcon,
 } from 'lucide-react'
@@ -65,12 +59,17 @@ const navItems: NavGroup[] = [
         url: '/trainee-dashboard',
         icon: GraduationCapIcon,
       },
+      {
+        title: 'Instructor Dashboard',
+        url: '/instructor-dashboard',
+        icon: ShieldCheckIcon,
+      },
     ],
   },
   {
     title: 'Masters',
     items: [
-      { title: 'Training Person', url: '/personnel', icon: UsersIcon },
+      { title: 'Personnel', url: '/personnel', icon: UsersIcon },
       { title: 'Missions', url: '/missions', icon: TargetIcon },
       { title: 'Aircraft', url: '/aircraft', icon: PlaneIcon },
       { title: 'Area', url: '/area', icon: MapPinnedIcon },
@@ -89,6 +88,24 @@ const navItems: NavGroup[] = [
   // }
 ]
 
+const traineeNavItems: NavGroup[] = [
+  {
+    title: 'Training',
+    items: [
+      {
+        title: 'Missions',
+        url: '/trainee-dashboard',
+        icon: TargetIcon,
+      },
+      {
+        title: 'My Profile',
+        url: '/my-personnel',
+        icon: UserIcon,
+      },
+    ],
+  },
+]
+
 function isNavActive(pathname: string, url: string) {
   return pathname === url || pathname.startsWith(`${url}/`)
 }
@@ -102,7 +119,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <SidebarTrigger />
           <span className="text-sm font-semibold md:hidden">Pegasus AFTMS</span>
         </header>
-        <div className="min-w-0 flex-1 overflow-x-hidden p-4">{children}</div>
+        <div className="min-w-0 flex-1 overflow-x-hidden p-4 lg:px-8">
+          {children}
+        </div>
       </SidebarInset>
     </SidebarProvider>
   )
@@ -110,6 +129,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 
 export function AppSidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
+  const { user } = useAuth()
+
+  const isTrainee = user?.role === 'trainee'
 
   return (
     <Sidebar collapsible="icon">
@@ -137,7 +159,7 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        {navItems.map((group) => (
+        {(isTrainee ? traineeNavItems : navItems).map((group) => (
           <SidebarGroup key={group.title}>
             <SidebarGroupLabel>{group.title}</SidebarGroupLabel>
             <SidebarGroupContent>
@@ -168,39 +190,39 @@ export function AppSidebar() {
   )
 }
 
-function SideBarFooterContent() {
-  const { user } = useAuth()
+// function SideBarFooterContent() {
+//   const { user } = useAuth()
 
-  return (
-    <SidebarMenu>
-      <SidebarMenuItem>
-        <SidebarMenuButton>
-          <User2Icon /> {user!.name || user!.username || 'Unknown'}
-        </SidebarMenuButton>
-      </SidebarMenuItem>
-    </SidebarMenu>
-  )
-}
+//   return (
+//     <SidebarMenu>
+//       <SidebarMenuItem>
+//         <SidebarMenuButton>
+//           <User2Icon /> {user!.name || user!.username || 'Unknown'}
+//         </SidebarMenuButton>
+//       </SidebarMenuItem>
+//     </SidebarMenu>
+//   )
+// }
 
-function LogoutButton() {
-  const queryClient = useQueryClient()
+// function LogoutButton() {
+//   const queryClient = useQueryClient()
 
-  const logoutMutation = useMutation({
-    mutationFn: () => trpcClient.auth.logout.mutate(),
-    onSuccess: async () => {
-      queryClient.clear()
-      window.location.reload()
-    },
-  })
+//   const logoutMutation = useMutation({
+//     mutationFn: () => trpcClient.auth.logout.mutate(),
+//     onSuccess: async () => {
+//       queryClient.clear()
+//       window.location.reload()
+//     },
+//   })
 
-  return (
-    <SidebarMenuButton
-      tooltip="Sign out"
-      disabled={logoutMutation.isPending}
-      onClick={() => logoutMutation.mutate()}
-    >
-      <LogOutIcon />
-      <span>{logoutMutation.isPending ? 'Signing out…' : 'Sign out'}</span>
-    </SidebarMenuButton>
-  )
-}
+//   return (
+//     <SidebarMenuButton
+//       tooltip="Sign out"
+//       disabled={logoutMutation.isPending}
+//       onClick={() => logoutMutation.mutate()}
+//     >
+//       <LogOutIcon />
+//       <span>{logoutMutation.isPending ? 'Signing out…' : 'Sign out'}</span>
+//     </SidebarMenuButton>
+//   )
+// }

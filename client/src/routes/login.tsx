@@ -5,19 +5,24 @@ import TextField from '@/components/inputs/TextField'
 import { Button } from '@/components/ui/button'
 import ErrorAlert from '@/components/errors/ErrorAlert'
 import { trpcClient } from '@/trpc'
+import { z } from 'zod'
 
 export const Route = createFileRoute('/login')({
   component: LoginPage,
+  validateSearch: z.object({
+    redirectTo: z.string().default('/'),
+  }),
 })
 
 function LoginPage() {
+  const { redirectTo } = Route.useSearch()
   const [username, setUsername] = useState('admin')
   const [password, setPassword] = useState('admin')
 
   const loginMutation = useMutation({
     mutationFn: () => trpcClient.auth.login.mutate({ username, password }),
     onSuccess: async () => {
-      window.location.reload()
+      window.location.href = redirectTo
     },
   })
 

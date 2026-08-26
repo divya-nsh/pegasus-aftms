@@ -1,5 +1,6 @@
 import { MoreHorizontal } from 'lucide-react'
-import { startTransition, type ReactNode } from 'react'
+import { startTransition } from 'react'
+import type { ReactNode } from 'react'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -51,10 +52,9 @@ export function ActionMenu({ actions, className }: Props) {
             return (
               <DropdownMenuItem
                 key={index}
-                onClick={() => {
-                  startTransition(() => {
-                    action.onClick?.()
-                  })
+                onClick={async () => {
+                  await wait(200) // Hack to prevent problem with not closing menu when component suspends
+                  action.onClick?.()
                 }}
                 variant={action.isDestructive ? 'destructive' : 'default'}
               >
@@ -68,3 +68,5 @@ export function ActionMenu({ actions, className }: Props) {
     </DropdownMenu>
   )
 }
+
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms))

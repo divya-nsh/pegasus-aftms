@@ -26,9 +26,9 @@ function RouteComponent() {
   return (
     <PageCard className="space-y-6">
       <PageHeader
-        title={`Schedule > ${schedule.scheduleNumber ?? id} - ${schedule.name ?? schedule.missionName ?? ''}`}
+        title={`Edit Schedule`}
         backTo="/schedules"
-        extra={<MissionStatusBadge status={schedule.status} />}
+        extra={<MissionStatusBadge status={schedule.status} size="md" />}
       />
       <ScheduleForm schedule={schedule} />
     </PageCard>
