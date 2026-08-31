@@ -6,7 +6,7 @@ import {
 // import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
 // import { TanStackDevtools } from '@tanstack/react-devtools'
 import '../styles.css'
-import Layout from '@/components/layout/RootLayout.tsx'
+import Layout, { traineeNavItems } from '@/components/layout/RootLayout.tsx'
 import { Toaster } from '@/components/ui/toast'
 import type { QueryClient } from '@tanstack/react-query'
 import FullPageSpinner from '@/components/loaders/page-loader'

@@ -54,7 +54,7 @@ type TScheduleListItem =
 const statusFilterOptions = [
   { label: 'All statuses', value: 'all' },
   { label: MISSION_STATUS_LABELS.draft, value: 'draft' },
-  { label: MISSION_STATUS_LABELS.published, value: 'published' },
+  { label: 'Published', value: 'published' },
   { label: MISSION_STATUS_LABELS.in_progress, value: 'in_progress' },
   { label: MISSION_STATUS_LABELS.completed, value: 'completed' },
   { label: MISSION_STATUS_LABELS.cancelled, value: 'cancelled' },

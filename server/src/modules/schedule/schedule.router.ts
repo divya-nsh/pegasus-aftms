@@ -9,8 +9,9 @@ import {
   personnelTable,
 } from "#/db/schema.js";
 import { protectedProcedure, router } from "#/trpc.js";
+import userService from "../user/user.service.js";
 import { TRPCError } from "@trpc/server";
-import { and, desc, eq, gte, lte, ne, type SQL } from "drizzle-orm";
+import { and, desc, eq, exists, gte, lte, ne, type SQL } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { z } from "zod";
 
@@ -104,6 +105,15 @@ async function getScheduleOrThrow(id: number) {
   return row;
 }
 
+async function getTraineeScope(userId: number) {
+  const user = await userService.getById(userId);
+  const personnelId = user?.personnel[0]?.id ?? null;
+  return {
+    isTrainee: user?.role === "trainee",
+    personnelId,
+  };
+}
+
 async function getMissionOrThrow(id: number) {
   const [row] = await db
     .select()
@@ -135,7 +145,31 @@ async function replaceTrainees(scheduleId: number, traineeIds: number[]) {
 }
 
 const scheduleRouter = router({
-  getAll: protectedProcedure.query(async () => {
+  getAll: protectedProcedure.query(async ({ ctx }) => {
+    const { isTrainee, personnelId } = await getTraineeScope(ctx.user.id);
+
+    if (isTrainee && personnelId == null) {
+      return { items: [], totalCount: 0 };
+    }
+
+    const traineeFilter =
+      isTrainee && personnelId != null
+        ? exists(
+            db
+              .select({ id: missionAssignmentTable.id })
+              .from(missionAssignmentTable)
+              .where(
+                and(
+                  eq(
+                    missionAssignmentTable.scheduleId,
+                    missionScheduleTable.id,
+                  ),
+                  eq(missionAssignmentTable.personId, personnelId),
+                ),
+              ),
+          )
+        : undefined;
+
     const items = await db
       .select({
         id: missionScheduleTable.id,
@@ -173,6 +207,7 @@ const scheduleRouter = router({
         eq(missionScheduleTable.instructorId, instructorTable.id),
       )
       .leftJoin(pilotTable, eq(missionScheduleTable.pilotId, pilotTable.id))
+      .where(traineeFilter)
       .orderBy(desc(missionScheduleTable.id));
 
     const assignments = await db
@@ -208,11 +243,18 @@ const scheduleRouter = router({
         status: missionStatusSchema.exclude(["draft"]).optional(),
       }),
     )
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      const { isTrainee, personnelId } = await getTraineeScope(ctx.user.id);
+      const assignedPersonId = isTrainee ? personnelId : input.personId;
+
+      if (isTrainee && assignedPersonId == null) {
+        return { items: [], totalCount: 0 };
+      }
+
       const conditions: SQL[] = [ne(missionScheduleTable.status, "draft")];
 
-      if (input.personId != null) {
-        conditions.push(eq(missionAssignmentTable.personId, input.personId));
+      if (assignedPersonId != null) {
+        conditions.push(eq(missionAssignmentTable.personId, assignedPersonId));
       }
 
       if (input.fromDate) {
@@ -290,7 +332,7 @@ const scheduleRouter = router({
 
   getById: protectedProcedure
     .input(z.object({ id: z.number() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
       const [row] = await db
         .select({
           id: missionScheduleTable.id,
@@ -363,6 +405,19 @@ const scheduleRouter = router({
           eq(missionAssignmentTable.personId, personnelTable.id),
         )
         .where(eq(missionAssignmentTable.scheduleId, input.id));
+
+      const { isTrainee, personnelId } = await getTraineeScope(ctx.user.id);
+      if (isTrainee) {
+        const isAssigned = assignments.some(
+          (assignment) => assignment.personId === personnelId,
+        );
+        if (!isAssigned) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Mission schedule not found",
+          });
+        }
+      }
 
       return {
         ...row,

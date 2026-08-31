@@ -35,7 +35,7 @@ type StatusAction = {
 
 const NEXT_ACTIONS: Partial<Record<MissionStatus, StatusAction[]>> = {
   draft: [
-    { status: 'published', label: 'Mark as not started' },
+    { status: 'published', label: 'Publish Shedule' },
     { status: 'cancelled', label: 'Mark as cancelled', variant: 'destructive' },
   ],
   published: [

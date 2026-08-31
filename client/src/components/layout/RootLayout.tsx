@@ -40,7 +40,7 @@ type NavGroup = {
 type NavItem = {
   title: string
   url: FileRouteTypes['to']
-  icon: LucideIcon
+  icon?: LucideIcon
 }
 
 const navItems: NavGroup[] = [
@@ -75,6 +75,10 @@ const navItems: NavGroup[] = [
       { title: 'Location', url: '/locations', icon: MapPinIcon },
     ],
   },
+  {
+    title: 'Reports',
+    items: [{ title: 'Readiness Report', url: '/' }],
+  },
   // {
   //   title: 'Future Modules',
   //   items: [
@@ -86,7 +90,7 @@ const navItems: NavGroup[] = [
   // }
 ]
 
-const traineeNavItems: NavGroup[] = [
+export const traineeNavItems: NavGroup[] = [
   {
     title: 'Training',
     items: [
@@ -100,6 +104,7 @@ const traineeNavItems: NavGroup[] = [
         url: '/my-personnel',
         icon: UserIcon,
       },
+      { title: 'My Shedules', url: '/schedules', icon: CalendarClockIcon },
     ],
   },
 ]
@@ -169,7 +174,7 @@ export function AppSidebar() {
                       tooltip={item.title}
                       render={<Link to={item.url} />}
                     >
-                      <item.icon />
+                      {item.icon && <item.icon />}
                       <span>{item.title}</span>
                     </SidebarMenuButton>
                   </SidebarMenuItem>
