@@ -23,6 +23,7 @@ export type BasicSelectProps = {
   readOnly?: boolean
   valueAsNumber?: boolean
   onBlur?: () => void
+  ['aria-invalid']?: boolean
 }
 
 export default function BasicSelect({
@@ -36,6 +37,7 @@ export default function BasicSelect({
   allowClear = true,
   readOnly = false,
   onBlur,
+  ['aria-invalid']: isInvalid,
 }: BasicSelectProps) {
   const [open, setOpen] = useState(false)
 
@@ -71,7 +73,10 @@ export default function BasicSelect({
       }}
       items={items}
     >
-      <SelectTrigger className={cn('w-full', className)}>
+      <SelectTrigger
+        className={cn('w-full', className)}
+        aria-invalid={isInvalid}
+      >
         <SelectValue placeholder={placeholder} />
       </SelectTrigger>
       <SelectContent alignItemWithTrigger={false}>

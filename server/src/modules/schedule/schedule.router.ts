@@ -15,7 +15,7 @@ import { alias } from "drizzle-orm/pg-core";
 import { z } from "zod";
 
 const optionalText = z.string().optional();
-const optionalId = z.number().optional();
+const optionalId = z.number().optional().nullable();
 
 const missionStatusSchema = z.enum([
   "draft",

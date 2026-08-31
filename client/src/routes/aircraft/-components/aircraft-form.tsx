@@ -3,6 +3,7 @@ import {
   useAppForm,
 } from '@/components/form/tanstack-form'
 import trpc, { trpcClient } from '@/trpc'
+import { revalidateLogic } from '@tanstack/react-form'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
 import toast from 'react-hot-toast'
@@ -58,7 +59,9 @@ export default function AircraftForm({
 
   const form = useAppForm({
     defaultValues: initialFormData,
+    validationLogic: revalidateLogic(),
     validators: {
+      onDynamic: schema,
       onSubmit: schema,
     },
     onSubmit: ({ value }) => mutation.mutateAsync(value),

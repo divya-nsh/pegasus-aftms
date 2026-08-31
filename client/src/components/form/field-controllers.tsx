@@ -8,9 +8,9 @@ import type {
   TextFieldProps,
 } from '@/components/inputs/TextField'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Label } from '@/components/ui/label'
 import { useId } from 'react'
 import { useFieldContext } from './form-context'
+import { Field, FieldLabel } from '../ui/field'
 
 // C = Controller, All are Binded Form Fields
 
@@ -102,15 +102,18 @@ export function CCheckbox({ label }: { label: string }) {
   const field = useFieldContext<boolean>()
   const id = useId()
 
+  const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid
+
   return (
-    <div className="flex items-center gap-2">
+    <Field className="flex items-center gap-2" orientation={'horizontal'}>
       <Checkbox
+        aria-invalid={isInvalid}
         id={id}
         checked={field.state.value}
         onCheckedChange={(checked) => field.handleChange(checked === true)}
         onBlur={() => field.handleBlur()}
       />
-      <Label htmlFor={id}>{label}</Label>
-    </div>
+      <FieldLabel htmlFor={id}>{label}</FieldLabel>
+    </Field>
   )
 }

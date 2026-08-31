@@ -4,6 +4,7 @@ import {
 } from '@/components/form/tanstack-form'
 import ErrorAlert from '@/components/errors/ErrorAlert'
 import { trpcClient } from '@/trpc'
+import { revalidateLogic } from '@tanstack/react-form'
 import { createFileRoute } from '@tanstack/react-router'
 import { useMutation } from '@tanstack/react-query'
 import { z } from 'zod'
@@ -34,8 +35,10 @@ function LoginPage() {
 
   const form = useAppForm({
     defaultValues: defaultFormData,
+    validationLogic: revalidateLogic(),
     validators: {
       onSubmit: schema,
+      onDynamic: schema,
     },
     onSubmit: ({ value }) => loginMutation.mutateAsync(value),
     onSubmitInvalid: handleSubmitInvalid,
@@ -78,6 +81,6 @@ function LoginPage() {
 }
 
 const defaultFormData: LoginFormData = {
-  username: 'admin',
-  password: 'admin',
+  username: '',
+  password: '',
 }

@@ -66,7 +66,7 @@ export function BasicSelectField({
       <FieldLabel htmlFor={id} required={rest.required}>
         {label}
       </FieldLabel>
-      <BasicSelect {...rest} />
+      <BasicSelect {...rest} aria-invalid={!!errors} />
       {errors && <FieldError errors={errors} />}
     </Field>
   )

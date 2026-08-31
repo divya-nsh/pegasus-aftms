@@ -3,7 +3,7 @@ import { CameraIcon, ImagePlusIcon, Trash2Icon, UserIcon } from 'lucide-react'
 import { useMutation } from '@tanstack/react-query'
 import { trpcClient } from '@/trpc'
 import { toast } from '@/components/ui/toast'
-import { Field, FieldLabel } from '@/components/ui/field'
+import { Field, FieldError, FieldLabel } from '@/components/ui/field'
 import { Spinner } from '@/components/ui/spinner'
 import { cn } from '@/lib/utils'
 import { getMediaUrl } from '@/lib/media'
@@ -16,12 +16,14 @@ export default function ProfilePhotoUpload({
   label = 'Photo',
   disabled,
   className,
+  errors,
 }: {
   value: number | null
   onValueChange: (mediaId: number | null) => void
   label?: string
   disabled?: boolean
   className?: string
+  errors?: Array<{ message?: string } | undefined>
 }) {
   const id = useId()
   const inputRef = useRef<HTMLInputElement>(null)
@@ -155,6 +157,7 @@ export default function ProfilePhotoUpload({
           handleFile(file)
         }}
       />
+      <FieldError errors={errors} />
     </Field>
   )
 }

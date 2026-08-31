@@ -236,7 +236,7 @@ export default function ScheduleForm({
           <BasicSelectField
             required
             className="col-span-2"
-            label="Mission*"
+            label="Mission"
             placeholder="Select a mission first"
             disabled={missionLocked}
             value={formState.missionId}

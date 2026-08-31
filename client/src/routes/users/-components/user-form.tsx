@@ -4,6 +4,7 @@ import {
 } from '@/components/form/tanstack-form'
 import { getErrorMessage } from '@/lib/utils'
 import trpc, { trpcClient } from '@/trpc'
+import { revalidateLogic } from '@tanstack/react-form'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { useMemo } from 'react'
@@ -75,8 +76,9 @@ export default function UserForm({
 
   const form = useAppForm({
     defaultValues: initialFormData,
+    validationLogic: revalidateLogic(),
     validators: {
-      onSubmit: schema,
+      onDynamic: schema,
     },
     onSubmit: ({ value }) => mutation.mutateAsync(value),
     onSubmitInvalid: handleSubmitInvalid,
@@ -122,7 +124,6 @@ export default function UserForm({
         name="username"
         validators={{
           onBlurAsync: validateUsernameUnique,
-          onSubmitAsync: validateUsernameUnique,
         }}
         children={(f) => (
           <f.CTextField required label="Username" autoComplete="username" />

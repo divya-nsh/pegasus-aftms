@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/no-unnecessary-condition */
 import TextField, { TextAreaField } from '@/components/inputs/TextField'
 import {
   Table,

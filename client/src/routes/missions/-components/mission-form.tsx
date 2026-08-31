@@ -11,6 +11,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import trpc, { trpcClient } from '@/trpc'
+import { revalidateLogic } from '@tanstack/react-form'
 import {
   useMutation,
   useQueryClient,
@@ -46,7 +47,8 @@ export default function MissionForm({
 
   const form = useAppForm({
     defaultValues: initialFormData ?? defaultValues,
-    validators: { onSubmit: schema },
+    validationLogic: revalidateLogic(),
+    validators: { onDynamic: schema, onSubmit: schema },
     onSubmit: ({ value }) => mutation.mutateAsync(value),
     onSubmitInvalid: handleSubmitInvalid,
   })

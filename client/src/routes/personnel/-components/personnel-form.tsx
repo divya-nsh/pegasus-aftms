@@ -1,74 +1,55 @@
 import ErrorAlert from '@/components/errors/ErrorAlert'
 import ProfilePhotoUpload from '@/components/inputs/profile-photo-upload'
-import TextField, {
-  BasicSelectField,
-  TextAreaField,
-} from '@/components/inputs/TextField'
-import { Button } from '@/components/ui/button'
 import LinkButton from '@/components/ui/link-button'
 import trpc, { trpcClient } from '@/trpc'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
-import { useState } from 'react'
 import type { ReactNode } from 'react'
-import { cn } from '@/lib/utils'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Label } from '@/components/ui/label'
+import { cn, getErrorMessage } from '@/lib/utils'
 import { toast } from 'react-hot-toast'
+import { z } from 'zod'
+import {
+  genderOptions,
+  medicalStatusOptions,
+  personnelTypeOptions,
+} from './options'
+import {
+  handleSubmitInvalid,
+  useAppForm,
+} from '@/components/form/tanstack-form'
+import { revalidateLogic } from '@tanstack/react-form'
 
 export type PersonnelType = 'pilot' | 'trainee' | 'instructor'
 export type Gender = 'male' | 'female' | 'other'
 export type MedicalStatus = 'fit' | 'unfit' | 'pending'
 
-export type PersonnelFormData = {
-  personnelType: PersonnelType | ''
-  batchNo: string
-  code: string
-  firstName: string
-  lastName: string
-  gender: Gender | ''
-  dateOfBirth: string
-  dateOfJoin: string
-  rank: string
-  phone: string
-  email: string
-  address: string
-  medicalStatus: MedicalStatus
-  medicalExamDate: string
-  medicalValidUntil: string
-  imageId: number | null
-  userId?: number | null
-  isCreateUser?: boolean
-  newUserUsername?: string
-  newUserPassword?: string
-  user?: {
-    username: string
-  }
+export type PersonnelFormData = z.infer<typeof schema>
+
+export type LinkedUser = {
+  id: number
+  username: string
 }
 
 export const defaultPersonnelFormData: PersonnelFormData = {
-  personnelType: '',
+  personnelType: '' as PersonnelType,
   batchNo: '',
   code: '',
   firstName: '',
   lastName: '',
-  gender: '',
+  gender: '' as Gender,
   dateOfBirth: '',
   dateOfJoin: '',
   rank: '',
   phone: '',
   email: '',
   address: '',
-  medicalStatus: 'pending',
+  medicalStatus: '' as MedicalStatus,
   medicalExamDate: '',
   medicalValidUntil: '',
   imageId: null,
-}
-
-export const MEDICAL_STATUS_LABELS: Record<MedicalStatus, string> = {
-  fit: 'Fit',
-  unfit: 'Unfit',
-  pending: 'Awaiting for review',
+  isCreateUser: false,
+  newUserUsername: '',
+  newUserPassword: '',
 }
 
 function toDateOnly(value: Date | string | null | undefined) {
@@ -88,30 +69,75 @@ export function getMedicalDisplayStatus(person: {
     if (validUntil && validUntil < today) {
       return 'Medical Expired'
     }
-    return MEDICAL_STATUS_LABELS.fit
+    return (
+      medicalStatusOptions.find(
+        (option) => option.value === person.medicalStatus,
+      )?.label ?? person.medicalStatus
+    )
   }
 
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
-  return MEDICAL_STATUS_LABELS[person.medicalStatus] ?? person.medicalStatus
+  return (
+    medicalStatusOptions.find((option) => option.value === person.medicalStatus)
+      ?.label ?? person.medicalStatus
+  )
 }
 
-const personnelTypeOptions = [
-  { label: 'Pilot', value: 'pilot' },
-  { label: 'Trainee', value: 'trainee' },
-  { label: 'Instructor', value: 'instructor' },
-]
+const schema = z
+  .object({
+    personnelType: z.enum(
+      personnelTypeOptions.map((option) => option.value),
+      'Required',
+    ),
+    batchNo: z.string(),
+    code: z.string().min(1, 'Required'),
+    firstName: z.string().min(1, 'Required'),
+    lastName: z.string().min(1, 'Required'),
+    gender: z.enum(
+      genderOptions.map((option) => option.value),
+      'Required',
+    ),
+    dateOfBirth: z.string().min(1, 'Required'),
+    dateOfJoin: z.string().min(1, 'Required'),
+    rank: z.string().min(1, 'Required'),
+    phone: z.string().min(1, 'Required'),
+    email: z.union([z.literal(''), z.email('Invalid email')]),
+    address: z.string().min(1, 'Required'),
+    medicalStatus: z.enum(
+      medicalStatusOptions.map((option) => option.value),
+      'Required',
+    ),
+    medicalExamDate: z.string().min(1, 'Required'),
+    medicalValidUntil: z.string().min(1, 'Required'),
+    imageId: z.number().nullable().optional(),
+    isCreateUser: z.boolean().optional(),
+    newUserUsername: z.string().optional(),
+    newUserPassword: z.string().optional(),
+  })
+  .superRefine((data, ctx) => {
+    if (!data.isCreateUser) return
 
-const genderOptions = [
-  { label: 'Male', value: 'male' },
-  { label: 'Female', value: 'female' },
-  { label: 'Other', value: 'other' },
-]
-
-const medicalStatusOptions = [
-  { label: MEDICAL_STATUS_LABELS.fit, value: 'fit' },
-  { label: MEDICAL_STATUS_LABELS.unfit, value: 'unfit' },
-  { label: MEDICAL_STATUS_LABELS.pending, value: 'pending' },
-]
+    if (!data.email.trim()) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Required',
+        path: ['email'],
+      })
+    }
+    if (!data.newUserUsername?.trim()) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Required',
+        path: ['newUserUsername'],
+      })
+    }
+    if (!data.newUserPassword?.trim()) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'Required',
+        path: ['newUserPassword'],
+      })
+    }
+  })
 
 function FormSection({
   title,
@@ -141,32 +167,35 @@ export default function PersonnelForm({
   mode,
   toEditId,
   initialFormData = defaultPersonnelFormData,
+  linkedUser,
 }: {
   mode: 'create' | 'edit' | 'view'
   toEditId?: number
   initialFormData?: PersonnelFormData
-  viewMode?: 'profile'
+  linkedUser?: LinkedUser | null
 }) {
-  const [formState, setFormState] = useState(initialFormData)
   const queryClient = useQueryClient()
   const navigate = useNavigate()
 
+  const form = useAppForm({
+    defaultValues: { ...defaultPersonnelFormData, ...initialFormData },
+    validationLogic: revalidateLogic(),
+    validators: {
+      onDynamic: schema,
+    },
+    onSubmit: ({ value }) => mutation.mutateAsync(value),
+    onSubmitInvalid: handleSubmitInvalid,
+  })
+
   const mutation = useMutation({
     mutationFn: (data: PersonnelFormData) => {
-      const payload = {
-        ...data,
-        personnelType: data.personnelType as PersonnelType,
-        gender: data.gender as Gender,
-        medicalStatus: data.medicalStatus,
-      }
-
       if (toEditId) {
         return trpcClient.personnel.update.mutate({
-          ...payload,
+          ...data,
           toEditId,
         })
       }
-      return trpcClient.personnel.create.mutate(payload)
+      return trpcClient.personnel.create.mutate(data)
     },
     onSuccess: () => {
       queryClient.resetQueries(trpc.personnel.pathFilter())
@@ -184,23 +213,28 @@ export default function PersonnelForm({
     },
   })
 
-  const updateFormState = (newState: Partial<PersonnelFormData>) => {
-    if (mode === 'view') return
-    setFormState((prev) => ({ ...prev, ...newState }))
-  }
-
   const isReadOnly = mode === 'view'
+
+  const validateUsernameUnique = async ({
+    value,
+  }: {
+    value: string | undefined
+  }) => {
+    if (!value?.trim()) return
+    try {
+      const isUsernameExists = await trpcClient.users.isUsernameExists.query({
+        username: value,
+      })
+      if (isUsernameExists) return 'Username already exists'
+    } catch (error) {
+      return getErrorMessage(error)
+    }
+  }
 
   return (
     <>
       <ErrorAlert error={mutation.error} />
-      <form
-        className="space-y-8 pb-6"
-        onSubmit={(e) => {
-          e.preventDefault()
-          mutation.mutate(formState)
-        }}
-      >
+      <div className="space-y-8 pb-6">
         <section className="space-y-4">
           <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase border-b pb-1">
             Identity
@@ -208,198 +242,242 @@ export default function PersonnelForm({
           <div className="flex items-start gap-8">
             <div className={cn('grid gap-6 flex-1', 'grid-cols-2')}>
               <div className="col-span-2">
-                <BasicSelectField
-                  readOnly={isReadOnly}
-                  label="Personnel Type*"
-                  className=" max-w-82"
-                  placeholder="Select personnel type"
-                  value={formState.personnelType}
-                  options={personnelTypeOptions}
-                  onValueChange={(personnelType) =>
-                    updateFormState({
-                      personnelType: String(personnelType ?? '') as
-                        PersonnelType | '',
-                    })
-                  }
+                <form.AppField
+                  name="personnelType"
+                  children={(f) => (
+                    <f.CBasicSelect
+                      readOnly={isReadOnly}
+                      label="Personnel Type"
+                      required
+                      className=" max-w-82"
+                      placeholder="Select personnel type"
+                      options={[...personnelTypeOptions]}
+                    />
+                  )}
                 />
               </div>
 
-              <TextField
-                readOnly={isReadOnly}
-                required
-                label="First Name*"
-                value={formState.firstName}
-                onValueChange={(firstName) => updateFormState({ firstName })}
+              <form.AppField
+                name="firstName"
+                children={(f) => (
+                  <f.CTextField
+                    label="First Name"
+                    required
+                    readOnly={isReadOnly}
+                  />
+                )}
               />
 
-              <TextField
-                readOnly={isReadOnly}
-                label="Last Name"
-                value={formState.lastName}
-                onValueChange={(lastName) => updateFormState({ lastName })}
+              <form.AppField
+                name="lastName"
+                children={(f) => (
+                  <f.CTextField
+                    label="Last Name"
+                    required
+                    readOnly={isReadOnly}
+                  />
+                )}
               />
 
-              <BasicSelectField
-                readOnly={isReadOnly}
-                label="Gender*"
-                placeholder="Select gender"
-                value={formState.gender}
-                options={genderOptions}
-                onValueChange={(gender) =>
-                  updateFormState({
-                    gender: String(gender ?? '') as Gender | '',
-                  })
-                }
+              <form.AppField
+                name="gender"
+                children={(f) => (
+                  <f.CBasicSelect
+                    readOnly={isReadOnly}
+                    required
+                    label="Gender"
+                    placeholder="Select gender"
+                    options={[...genderOptions]}
+                  />
+                )}
               />
 
-              <TextField
-                readOnly={isReadOnly}
-                label="Date of Birth"
-                type="date"
-                value={formState.dateOfBirth}
-                onValueChange={(dateOfBirth) =>
-                  updateFormState({ dateOfBirth })
-                }
+              <form.AppField
+                name="dateOfBirth"
+                children={(f) => (
+                  <f.CTextField
+                    label="Date of Birth"
+                    type="date"
+                    readOnly={isReadOnly}
+                    required
+                  />
+                )}
               />
             </div>
-            <ProfilePhotoUpload
-              className="row-span-2 h-40 w-50"
-              value={formState.imageId}
-              onValueChange={(imageId) => updateFormState({ imageId })}
+
+            <form.Field
+              name="imageId"
+              children={(f) => (
+                <ProfilePhotoUpload
+                  className="row-span-2 h-40 w-50"
+                  value={f.state.value ?? null}
+                  onValueChange={f.handleChange}
+                  errors={f.state.meta.errors}
+                  disabled={isReadOnly}
+                />
+              )}
             />
           </div>
         </section>
 
         <FormSection title="Service details">
-          <TextField
-            label="Personnel ID"
-            value={formState.code}
-            onValueChange={(code) => updateFormState({ code })}
+          <form.AppField
+            name="code"
+            children={(f) => (
+              <f.CTextField label="Civil Id" required readOnly={isReadOnly} />
+            )}
           />
-          <TextField
-            label="Batch No"
-            value={formState.batchNo}
-            onValueChange={(batchNo) => updateFormState({ batchNo })}
+          <form.AppField
+            name="batchNo"
+            children={(f) => (
+              <f.CTextField label="Batch No" readOnly={isReadOnly} />
+            )}
           />
-          <TextField
-            label="Rank"
-            value={formState.rank}
-            onValueChange={(rank) => updateFormState({ rank })}
+          <form.AppField
+            name="rank"
+            children={(f) => (
+              <f.CTextField label="Rank" required readOnly={isReadOnly} />
+            )}
           />
-          <TextField
-            label="Date of Joining"
-            type="date"
-            value={formState.dateOfJoin}
-            onValueChange={(dateOfJoin) => updateFormState({ dateOfJoin })}
+          <form.AppField
+            name="dateOfJoin"
+            children={(f) => (
+              <f.CTextField
+                label="Date of Joining"
+                type="date"
+                required
+                readOnly={isReadOnly}
+              />
+            )}
           />
         </FormSection>
 
         <FormSection title="Contact">
-          <TextField
-            label="Phone Number"
-            value={formState.phone}
-            onValueChange={(phone) => updateFormState({ phone })}
+          <form.AppField
+            name="phone"
+            children={(f) => (
+              <f.CTextField
+                label="Phone Number"
+                required
+                readOnly={isReadOnly}
+              />
+            )}
           />
-          <TextField
-            required={!!formState.isCreateUser}
-            label={formState.isCreateUser ? 'Email*' : 'Email'}
-            type="email"
-            value={formState.email}
-            onValueChange={(email) => updateFormState({ email })}
-          />
-          <TextAreaField
-            className="col-span-3"
-            label="Address"
-            value={formState.address}
-            onValueChange={(address) => updateFormState({ address })}
+          <form.Subscribe selector={(state) => state.values.isCreateUser}>
+            {(isCreateUser) => (
+              <form.AppField
+                name="email"
+                children={(f) => (
+                  <f.CTextField
+                    required={!!isCreateUser}
+                    label="Email"
+                    type="email"
+                    readOnly={isReadOnly}
+                  />
+                )}
+              />
+            )}
+          </form.Subscribe>
+          <form.AppField
+            name="address"
+            children={(f) => (
+              <f.CTextAreaField
+                className="col-span-3"
+                label="Address"
+                required
+                readOnly={isReadOnly}
+              />
+            )}
           />
         </FormSection>
 
         <FormSection title="Medical">
-          <BasicSelectField
-            readOnly={isReadOnly}
-            label="Medical Status"
-            placeholder="Select medical status"
-            value={formState.medicalStatus}
-            options={medicalStatusOptions}
-            onValueChange={(medicalStatus) =>
-              updateFormState({
-                medicalStatus: String(
-                  medicalStatus ?? 'pending',
-                ) as MedicalStatus,
-              })
-            }
+          <form.AppField
+            name="medicalStatus"
+            children={(f) => (
+              <f.CBasicSelect
+                readOnly={isReadOnly}
+                required
+                label="Medical Status"
+                placeholder="Select medical status"
+                options={[...medicalStatusOptions]}
+              />
+            )}
           />
-          <TextField
-            readOnly={isReadOnly}
-            label="Medical Exam Date"
-            type="date"
-            value={formState.medicalExamDate}
-            onValueChange={(medicalExamDate) =>
-              updateFormState({ medicalExamDate })
-            }
+          <form.AppField
+            name="medicalExamDate"
+            children={(f) => (
+              <f.CTextField
+                readOnly={isReadOnly}
+                label="Medical Exam Date"
+                type="date"
+                required
+              />
+            )}
           />
-          <TextField
-            readOnly={isReadOnly}
-            label="Medical Valid Until"
-            type="date"
-            value={formState.medicalValidUntil}
-            onValueChange={(medicalValidUntil) =>
-              updateFormState({ medicalValidUntil })
-            }
+          <form.AppField
+            name="medicalValidUntil"
+            children={(f) => (
+              <f.CTextField
+                readOnly={isReadOnly}
+                label="Medical Valid Until"
+                type="date"
+                required
+              />
+            )}
           />
         </FormSection>
 
         <FormSection title="User Configuration" columns={1}>
-          {formState.userId ? (
-            ''
-          ) : (
-            <div className="flex items-center gap-4 px-2">
-              <Checkbox
-                id="create-user-account"
-                checked={!!formState.isCreateUser}
-                onCheckedChange={(checked) =>
-                  updateFormState({ isCreateUser: checked === true })
-                }
-              />
-              <Label htmlFor="create-user-account">Create User Account</Label>
-            </div>
-          )}
-
-          {!formState.userId && formState.isCreateUser && (
-            <>
-              <TextField
-                readOnly={isReadOnly}
-                required
-                label="Username*"
-                placeholder="Enter username for user account"
-                value={formState.newUserUsername ?? ''}
-                onValueChange={(username) =>
-                  updateFormState({ newUserUsername: username })
-                }
-              />
-              <TextField
-                readOnly={isReadOnly}
-                required
-                label="Password*"
-                type="password"
-                placeholder="Enter password for user account"
-                value={formState.newUserPassword ?? ''}
-                onValueChange={(password) =>
-                  updateFormState({ newUserPassword: password })
-                }
-              />
-            </>
-          )}
-          {formState.userId && (
+          {linkedUser ? (
             <Link
               to="/users/$id/edit"
-              params={{ id: String(formState.userId) }}
+              params={{ id: String(linkedUser.id) }}
               className="text-sm text-blue-500"
             >
-              MANAGE USER (Username: {formState.user?.username})
+              MANAGE USER (Username: {linkedUser.username})
             </Link>
-          )}
+          ) : !isReadOnly ? (
+            <>
+              <form.AppField
+                name="isCreateUser"
+                children={(f) => <f.CCheckbox label="Create User Account" />}
+              />
+              <form.Subscribe selector={(state) => state.values.isCreateUser}>
+                {(isCreateUser) =>
+                  isCreateUser ? (
+                    <>
+                      <form.AppField
+                        name="newUserUsername"
+                        validators={{
+                          onBlurAsync: validateUsernameUnique,
+                        }}
+                        children={(f) => (
+                          <f.CTextField
+                            readOnly={isReadOnly}
+                            required
+                            label="Username"
+                            placeholder="Enter username for user account"
+                          />
+                        )}
+                      />
+                      <form.AppField
+                        name="newUserPassword"
+                        children={(f) => (
+                          <f.CTextField
+                            readOnly={isReadOnly}
+                            required
+                            label="Password"
+                            placeholder="Enter password for user account"
+                          />
+                        )}
+                      />
+                    </>
+                  ) : null
+                }
+              </form.Subscribe>
+            </>
+          ) : null}
         </FormSection>
 
         {mode !== 'view' && (
@@ -407,12 +485,14 @@ export default function PersonnelForm({
             <LinkButton to="/personnel" variant="outline">
               Cancel
             </LinkButton>
-            <Button type="submit" disabled={mutation.isPending}>
-              {mode === 'create' ? 'Create' : 'Save'}
-            </Button>
+            <form.AppForm>
+              <form.SubscribeButton
+                label={mode === 'create' ? 'Create' : 'Save'}
+              />
+            </form.AppForm>
           </div>
         )}
-      </form>
+      </div>
     </>
   )
 }

@@ -52,13 +52,13 @@ function FieldGroup({ className, ...props }: React.ComponentProps<'div'>) {
 
 function FieldColumns({
   className,
-  columns = 2,
+  cols = 2,
   ...props
-}: React.ComponentProps<'div'> & { columns?: 1 | 2 | 3 }) {
+}: React.ComponentProps<'div'> & { cols?: 1 | 2 | 3 }) {
   return (
     <div
       data-slot="field-group-column"
-      className={cn(`grid grid-cols-${columns} gap-4`, className)}
+      className={cn(`grid grid-cols-${cols} gap-4`, className)}
       {...props}
     />
   )

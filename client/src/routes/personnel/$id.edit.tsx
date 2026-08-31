@@ -45,9 +45,12 @@ function RouteComponent() {
           medicalExamDate: person.medicalExamDate ?? '',
           medicalValidUntil: person.medicalValidUntil ?? '',
           imageId: person.imageId ?? null,
-          userId: person.userId ?? null,
-          user: person.user ? { username: person.user.username } : undefined,
         }}
+        linkedUser={
+          person.userId && person.user
+            ? { id: person.userId, username: person.user.username }
+            : null
+        }
       />
     </div>
   )

@@ -12,6 +12,7 @@ import {
 } from '@/components/ui/dialog'
 import { getErrorMessage } from '@/lib/utils'
 import trpc, { trpcClient } from '@/trpc'
+import { revalidateLogic } from '@tanstack/react-form'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { z } from 'zod'
@@ -40,7 +41,9 @@ export default function AreaForm({
 }: AreaFormProps) {
   const form = useAppForm({
     defaultValues: initialFormData,
+    validationLogic: revalidateLogic(),
     validators: {
+      onDynamic: schema,
       onSubmit: schema,
     },
     onSubmit: ({ value }) => mutation.mutateAsync(value),
@@ -100,7 +103,6 @@ export default function AreaForm({
             name="code"
             validators={{
               onBlurAsync: validateCodeUnique,
-              onSubmitAsync: validateCodeUnique,
             }}
             children={(f) => (
               <f.CTextField

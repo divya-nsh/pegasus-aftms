@@ -203,6 +203,23 @@ export const sessionTable = snakeCase.table("session", {
   ...timeStampts,
 });
 
+// export const documentTypeEnum = pgEnum("document_type", [
+//   "personnel",
+//   "mission",
+//   "schedule",
+//   "location",
+//   "area",
+// ]);
+
+// export const documentSequence = snakeCase.table("document_sequence", {
+//   id: integer().primaryKey().generatedAlwaysAsIdentity(),
+//   documentype: documentTypeEnum().notNull(),
+//   prefix: varchar().notNull(),
+//   suffix: varchar().notNull(),
+//   currentSequence: integer().notNull().default(0),
+//   ...timeStampts,
+// });
+
 // export const roleTable = snakeCase.table("role", {
 //   id: integer().primaryKey().generatedAlwaysAsIdentity(),
 //   name: varchar().notNull(),
