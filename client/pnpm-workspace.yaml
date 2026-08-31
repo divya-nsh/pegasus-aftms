@@ -1,6 +1,0 @@
-allowBuilds:
-  esbuild: true
-  lightningcss: true
-  unrs-resolver: true
-minimumReleaseAgeExclude:
-  - '@tanstack/router-generator@1.167.25'

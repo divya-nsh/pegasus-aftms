@@ -33,6 +33,7 @@ export const Route = createRootRouteWithContext<RouterContext>()({
     if (auth?.isAuthenticated && isLoginRoute) {
       throw redirect({ to: '/' })
     }
+
     return { auth }
   },
   pendingComponent: () => (

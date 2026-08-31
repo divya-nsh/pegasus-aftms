@@ -166,8 +166,10 @@ function RouteComponent() {
             data: {
               name: row.name,
               description: row.description ?? '',
-              aircraftId: row.aircraftId ? String(row.aircraftId) : '',
-              durationMinutes: String(row.durationMinutes),
+              aircraftId: row.aircraftId ? Number(row.aircraftId) : null,
+              durationMinutes: row.durationMinutes
+                ? Number(row.durationMinutes)
+                : null,
             },
           })
         } else if (action === 'delete') {

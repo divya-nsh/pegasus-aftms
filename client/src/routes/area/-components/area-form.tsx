@@ -1,25 +1,29 @@
-import ErrorAlert from '@/components/errors/ErrorAlert'
-import TextField, { TextAreaField } from '@/components/inputs/TextField'
-import { Button } from '@/components/ui/button'
+import {
+  handleSubmitInvalid,
+  useAppForm,
+} from '@/components/form/tanstack-form'
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogFooter,
   DialogHeader,
+  DialogMain,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { toast } from '@/components/ui/toast'
+import { getErrorMessage } from '@/lib/utils'
 import trpc, { trpcClient } from '@/trpc'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { useState } from 'react'
+import toast from 'react-hot-toast'
+import { z } from 'zod'
 
-export type AreaFormData = {
-  name: string
-  description: string
-  code: string
-  address: string
-}
+const schema = z.object({
+  code: z.string().min(1, 'Required').min(3).uppercase(),
+  name: z.string().min(1, 'Required').min(3),
+  description: z.string().optional(),
+  address: z.string().optional(),
+})
+
+export type AreaFormData = z.infer<typeof schema>
 
 export type AreaFormProps = {
   mode: 'create' | 'edit'
@@ -34,10 +38,18 @@ export default function AreaForm({
   initialFormData = defaultFormData,
   onOpenChange,
 }: AreaFormProps) {
-  const [formState, setFormState] = useState(initialFormData)
+  const form = useAppForm({
+    defaultValues: initialFormData,
+    validators: {
+      onSubmit: schema,
+    },
+    onSubmit: ({ value }) => mutation.mutateAsync(value),
+    onSubmitInvalid: handleSubmitInvalid,
+  })
+
   const queryClient = useQueryClient()
   const mutation = useMutation({
-    mutationFn: (data: AreaFormData) => {
+    mutationFn: async (data: AreaFormData) => {
       if (toEditId) {
         return trpcClient.areas.update.mutate({
           ...data,
@@ -49,31 +61,33 @@ export default function AreaForm({
     },
     onSuccess: () => {
       queryClient.resetQueries(trpc.areas.pathFilter())
-      toast.add({
-        type: 'success',
-        title: 'Area Saved Successfully',
-      })
+      toast.success('Area Saved Successfully')
       onOpenChange(false)
     },
     onError: (error) => {
-      toast.add({
-        type: 'error',
-        title: 'Failed to Save Area',
-        description: error.message,
-      })
+      toast.error(error.message)
     },
   })
 
-  const updateFormState = (newState: Partial<AreaFormData>) => {
-    setFormState((prev) => ({ ...prev, ...newState }))
-  }
+  const title = mode === 'create' ? 'New Area' : 'Edit Area'
 
-  const title = mode === 'create' ? 'Create New Area' : 'Edit Area'
+  const validateCodeUnique = async ({ value }: { value: string }) => {
+    try {
+      const isCodeExists = await trpcClient.areas.isCodeExists.query({
+        code: value,
+        excludeId: toEditId,
+      })
+      if (isCodeExists) return 'Code already exists'
+    } catch (error) {
+      return getErrorMessage(error)
+    }
+  }
 
   return (
     <Dialog
       open={true}
       onOpenChange={(nextOpen) => {
+        if (mutation.isPending) return
         onOpenChange(nextOpen)
       }}
     >
@@ -81,61 +95,41 @@ export default function AreaForm({
         <DialogHeader className="">
           <DialogTitle className=" uppercase">{title}</DialogTitle>
         </DialogHeader>
-        <hr className="-mt-3" />
-        <ErrorAlert error={mutation.error} />
-        <form
-          className="grid gap-4 -mt-4"
-          onSubmit={(e) => {
-            e.preventDefault()
-            mutation.mutate(formState)
-          }}
-        >
-          <TextField
-            required
-            label="Area Code*"
-            placeholder="Must be unique and no spaces"
-            value={formState.code}
-            onValueChange={(code) =>
-              updateFormState({ code: code.trim().replace(/\s+/g, '') })
-            }
-          />
-          <TextField
-            required
-            minLength={3}
-            label="Area Name*"
-            value={formState.name}
-            onValueChange={(name) => updateFormState({ name })}
-          />
-          <TextAreaField
-            label="Address"
-            placeholder="Enter optional address"
-            value={formState.address}
-            onValueChange={(address) => updateFormState({ address })}
-          />
-          <TextAreaField
-            label="Note / Description"
-            placeholder="Enter Optional Note or description"
-            value={formState.description}
-            onValueChange={(note) => updateFormState({ description: note })}
-          />
-        </form>
-        <DialogFooter>
-          <DialogClose
-            render={<Button variant="outline" />}
-            autoFocus={!!toEditId}
-          >
-            Cancel
-          </DialogClose>
-          <Button
-            type="button"
-            form="area-form"
-            disabled={mutation.isPending}
-            onClick={() => {
-              mutation.mutate(formState)
+        <DialogMain className="grid gap-4">
+          <form.AppField
+            name="code"
+            validators={{
+              onBlurAsync: validateCodeUnique,
+              onSubmitAsync: validateCodeUnique,
             }}
-          >
-            {mode === 'create' ? 'Create' : 'Update'}
-          </Button>
+            children={(f) => (
+              <f.CTextField
+                valueAsUppercase
+                required
+                label="Area Code"
+                placeholder="Must be unique and no spaces"
+              />
+            )}
+          />
+          <form.AppField
+            name="name"
+            children={(f) => <f.CTextField required label="Area Name" />}
+          />
+          <form.AppField
+            name="address"
+            children={(f) => <f.CTextAreaField label="Address" />}
+          />
+          <form.AppField
+            name="description"
+            children={(f) => <f.CTextAreaField label="Note Or Description" />}
+          />
+        </DialogMain>
+        <DialogFooter>
+          <form.AppForm>
+            <form.SubscribeButton
+              label={mode === 'create' ? 'Create' : 'Update'}
+            />
+          </form.AppForm>
         </DialogFooter>
       </DialogContent>
     </Dialog>

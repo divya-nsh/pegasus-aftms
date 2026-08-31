@@ -130,7 +130,10 @@ class MediaService {
   }
 
   async getById(id: number) {
-    const [mediaRecord] = await db.select().from(mediaTable).where(eq(mediaTable.id, id));
+    const [mediaRecord] = await db
+      .select()
+      .from(mediaTable)
+      .where(eq(mediaTable.id, id));
     return mediaRecord;
   }
 

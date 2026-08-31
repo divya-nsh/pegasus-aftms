@@ -8,16 +8,20 @@ import { SESSION_COOKIE_NAME } from "./config/constants.js";
 import db, { testConnection } from "./db/db.js";
 import { ensureDefaultAdmin } from "./modules/user/seed-admin.js";
 import morgan from "morgan";
-import { mediaTable } from "./db/schema.js";
 import path from "path";
-import { eq } from "drizzle-orm";
-import { MEDIA_FOLDER_PATH, mediaService } from "./modules/media/media.service.js";
-  
+import {
+  MEDIA_FOLDER_PATH,
+  mediaService,
+} from "./modules/media/media.service.js";
+import { serveClient } from "./middleware/serveClient.js";
+import { DrizzleSessionStore } from "./lib/drizzle-session-store.js";
+
 const app = express();
 const port = 6001;
 
 app.use(
   session({
+    store: new DrizzleSessionStore(db),
     name: SESSION_COOKIE_NAME,
     secret: process.env.SESSION_SECRET ?? "dev-in-memory-session-secret",
     resave: false,
@@ -29,18 +33,26 @@ app.use(
     },
   }),
 );
+
+app.use(serveClient(path.join(process.cwd(), "client-dist")));
 app.use(morgan("dev"));
 
 app.get("/api", async (req, res) => res.send("Hello World!"));
 
+let mediaIdToPathCache = new Map<string, string>();
+
 app.get("/api/uploads/:mediaId", async (req, res) => {
   const mediaId = req.params.mediaId;
-  const media = await mediaService.getById(parseInt(mediaId));
-  if (!media) {
-    return res.status(404).send("Media not found");
+  if (!mediaIdToPathCache.has(mediaId)) {
+    const media = await mediaService.getById(parseInt(mediaId));
+    if (!media) {
+      return res.status(404).send("Media not found");
+    }
+    mediaIdToPathCache.set(mediaId, media.path);
   }
-  res.sendFile(path.join(MEDIA_FOLDER_PATH, media.path));
-})
+  const filePath = mediaIdToPathCache.get(mediaId)!;
+  res.sendFile(path.join(MEDIA_FOLDER_PATH, filePath!));
+});
 
 app.use(
   "/api/trpc",

@@ -7,6 +7,7 @@ import {
   date,
   index,
   boolean,
+  jsonb,
 } from "drizzle-orm/pg-core";
 
 export const genderEnum = pgEnum("gender", ["male", "female", "other"]);
@@ -190,6 +191,15 @@ export const areaTable = snakeCase.table("area", {
   code: varchar().notNull().unique(),
   address: varchar(),
   description: varchar(),
+  ...timeStampts,
+});
+
+// OTHERS
+export const sessionTable = snakeCase.table("session", {
+  sid: varchar().primaryKey().notNull(),
+  sess: jsonb().notNull(),
+  expireAt: timestamp().notNull(),
+  version: integer().notNull().default(1),
   ...timeStampts,
 });
 

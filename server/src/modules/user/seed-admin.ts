@@ -22,7 +22,7 @@ export async function ensureDefaultAdmin() {
     return;
   }
 
-  const isBcryptHash = existing.password.startsWith("$2");
+  const isBcryptHash = existing.password?.startsWith("$2");
   if (!isBcryptHash) {
     await db
       .update(userTable)

@@ -15,7 +15,7 @@ import type { ColumnDef } from '@tanstack/react-table'
 import { PencilIcon, PlusIcon, TrashIcon } from 'lucide-react'
 import { useState } from 'react'
 import LocationForm from './-components/location-form'
-import type { LocationFormData } from './-components/location-form'
+import type { LocationFormData as FormData } from './-components/location-form'
 import trpc, { trpcClient } from '@/trpc'
 import {
   useQueryClient,
@@ -122,7 +122,7 @@ function RouteComponent() {
   const queryClient = useQueryClient()
 
   const [formModel, setFormModel] = useState<{
-    data?: LocationFormData
+    data?: FormData
     open: boolean
     editItemId?: number
   } | null>({

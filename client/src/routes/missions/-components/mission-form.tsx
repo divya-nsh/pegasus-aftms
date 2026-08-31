@@ -1,28 +1,32 @@
-import ErrorAlert from '@/components/errors/ErrorAlert'
-import TextField, {
-  BasicSelectField,
-  TextAreaField,
-} from '@/components/inputs/TextField'
-import { Button } from '@/components/ui/button'
+import {
+  handleSubmitInvalid,
+  useAppForm,
+} from '@/components/form/tanstack-form'
 import {
   Dialog,
-  DialogClose,
   DialogContent,
   DialogFooter,
   DialogHeader,
+  DialogMain,
   DialogTitle,
 } from '@/components/ui/dialog'
-import { toast } from '@/components/ui/toast'
 import trpc, { trpcClient } from '@/trpc'
-import { useMutation, useQueryClient, useSuspenseQuery } from '@tanstack/react-query'
-import { useState } from 'react'
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from '@tanstack/react-query'
+import toast from 'react-hot-toast'
+import { z } from 'zod'
 
-export type MissionFormData = {
-  name: string
-  description: string
-  aircraftId: string
-  durationMinutes: string
-}
+const schema = z.object({
+  name: z.string().min(1, 'Required').min(3),
+  description: z.string(),
+  aircraftId: z.number().nullable(),
+  durationMinutes: z.number().nullable(),
+})
+
+export type MissionFormData = z.infer<typeof schema>
 
 export type MissionFormProps = {
   mode: 'create' | 'edit'
@@ -34,15 +38,21 @@ export type MissionFormProps = {
 export default function MissionForm({
   mode,
   toEditId,
-  initialFormData = defaultFormData,
+  initialFormData,
   onOpenChange,
 }: MissionFormProps) {
-  const [formState, setFormState] = useState(initialFormData)
   const queryClient = useQueryClient()
   const aircraftQ = useSuspenseQuery(trpc.aircraft.getAll.queryOptions())
 
+  const form = useAppForm({
+    defaultValues: initialFormData ?? defaultValues,
+    validators: { onSubmit: schema },
+    onSubmit: ({ value }) => mutation.mutateAsync(value),
+    onSubmitInvalid: handleSubmitInvalid,
+  })
+
   const mutation = useMutation({
-    mutationFn: (data: MissionFormData) => {
+    mutationFn: async (data: MissionFormData) => {
       const payload = {
         name: data.name,
         description: data.description,
@@ -50,118 +60,97 @@ export default function MissionForm({
         durationMinutes: Number(data.durationMinutes),
       }
       if (toEditId) {
-        return trpcClient.missions.update.mutate({
-          ...payload,
-          toEditId,
-        })
+        return trpcClient.missions.update.mutate({ ...payload, toEditId })
       }
       return trpcClient.missions.create.mutate(payload)
     },
     onSuccess: () => {
       queryClient.resetQueries(trpc.missions.pathFilter())
-      toast.add({
-        type: 'success',
-        title: 'Mission Saved Successfully',
-      })
+      toast.success('Mission Saved Successfully')
       onOpenChange(false)
     },
     onError: (error) => {
-      toast.add({
-        type: 'error',
-        title: 'Failed to Save Mission',
-        description: error.message,
-      })
+      toast.error(error.message)
     },
   })
 
-  const updateFormState = (newState: Partial<MissionFormData>) => {
-    setFormState((prev) => ({ ...prev, ...newState }))
-  }
-
-  const title = mode === 'create' ? 'Create New Mission' : 'Edit Mission'
+  const aircraftOptions = aircraftQ.data.items.map((item) => ({
+    value: item.id,
+    label: item.tailNumber ? `${item.name} (${item.tailNumber})` : item.name,
+  }))
 
   return (
     <Dialog
-      open={true}
+      open
       onOpenChange={(nextOpen) => {
+        if (mutation.isPending) return
         onOpenChange(nextOpen)
       }}
     >
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className=" uppercase">{title}</DialogTitle>
+          <DialogTitle className="uppercase">
+            {mode === 'create' ? 'New Mission' : 'Edit Mission'}
+          </DialogTitle>
         </DialogHeader>
-        <hr className="-mt-3" />
-        <ErrorAlert error={mutation.error} />
-        <form
-          className="grid gap-4 -mt-4"
-          onSubmit={(e) => {
-            e.preventDefault()
-            mutation.mutate(formState)
-          }}
-        >
-          <TextField
-            required
-            minLength={3}
-            label="Mission Name*"
-            value={formState.name}
-            onValueChange={(name) => updateFormState({ name })}
+        <DialogMain className="grid gap-4">
+          <form.AppField
+            name="name"
+            children={(f) => (
+              <f.CTextField
+                required
+                label="Mission Name"
+                placeholder="e.g. Chopper Fly"
+              />
+            )}
           />
-          <TextField
-            required
-            type="number"
-            min={1}
-            label="Duration (minutes)*"
-            placeholder="e.g. 60"
-            value={formState.durationMinutes}
-            onValueChange={(durationMinutes) =>
-              updateFormState({ durationMinutes })
-            }
+          <form.AppField
+            name="durationMinutes"
+            children={(f) => (
+              <f.CTextField
+                valueAsNumber
+                required
+                label="Duration (minutes)"
+                type="number"
+              />
+            )}
           />
-          <BasicSelectField
-            label="Aircraft"
-            placeholder="Select optional aircraft"
-            value={formState.aircraftId}
-            options={aircraftQ.data.items.map((item) => ({
-              value: String(item.id),
-              label: `${item.name}${item.tailNumber ? ` (${item.tailNumber})` : ''}`,
-            }))}
-            onValueChange={(aircraftId) =>
-              updateFormState({ aircraftId: String(aircraftId ?? '') })
-            }
+          <form.AppField
+            name="aircraftId"
+            children={(f) => (
+              <f.CBasicSelect
+                valueAsNumber
+                label="Aircraft"
+                placeholder="Select optional aircraft"
+                options={aircraftOptions}
+              />
+            )}
           />
-          <TextAreaField
-            label="Description"
-            placeholder="e.g. Fly with chopper for 1 hour in circle"
-            value={formState.description}
-            onValueChange={(description) => updateFormState({ description })}
+          <form.AppField
+            name="description"
+            children={(f) => (
+              <f.CTextAreaField
+                label="Description"
+                placeholder="e.g. Fly with chopper for 1 hour in circle"
+              />
+            )}
           />
-        </form>
+        </DialogMain>
         <DialogFooter>
-          <DialogClose
-            render={<Button variant="outline" />}
-            autoFocus={!!toEditId}
-          >
-            Cancel
-          </DialogClose>
-          <Button
-            type="button"
-            disabled={mutation.isPending}
-            onClick={() => {
-              mutation.mutate(formState)
-            }}
-          >
-            {mode === 'create' ? 'Create' : 'Update'}
-          </Button>
+          <form.AppForm>
+            <form.SubscribeButton
+              label={mode === 'create' ? 'Create' : 'Update'}
+            />
+          </form.AppForm>
         </DialogFooter>
       </DialogContent>
     </Dialog>
   )
 }
 
-const defaultFormData: MissionFormData = {
+const defaultValues: MissionFormData = {
   name: '',
   description: '',
-  aircraftId: '',
-  durationMinutes: '60',
+  aircraftId: null,
+  durationMinutes: null,
 }

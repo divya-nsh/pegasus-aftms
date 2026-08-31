@@ -4,116 +4,108 @@ import { cn } from '@/lib/utils.ts'
 import { Field, FieldError, FieldLabel } from '../ui/field'
 import { Textarea } from '../ui/textarea'
 import BasicSelect from './basic-select'
+import type { BasicSelectProps } from './basic-select'
 import ComboboxWrapper from './combox'
 import type { ComboboxWrapperProps } from './combox'
+
+export type TextFieldProps = {
+  label: string
+  onValueChange?: (value: string) => void
+  errors?: Array<{ message?: string } | undefined>
+  value?: string
+} & React.ComponentProps<'input'>
 
 export default function TextField({
   label,
   value,
   onValueChange = () => {},
   className,
-  error,
+  errors,
   id,
   ...rest
-}: {
-  label: string
-  onValueChange?: (value: string) => void
-  error?: string
-} & React.ComponentProps<'input'>) {
+}: TextFieldProps) {
   const generatedId = useId()
   const _id = id ?? generatedId
 
   return (
-    <Field className={cn(className)} data-invalid={!!error}>
-      <FieldLabel htmlFor={_id}>{label}</FieldLabel>
+    <Field className={cn(className)} data-invalid={!!errors}>
+      <FieldLabel htmlFor={_id} required={rest.required}>
+        {label}
+      </FieldLabel>
       <Input
-        aria-invalid={!!error}
+        aria-invalid={!!errors}
         className={cn('w-full')}
         id={_id}
-        value={value}
-        onChange={(e) =>
-          !rest.disabled && !rest.readOnly && onValueChange(e.target.value)
-        }
+        value={value ?? ''}
+        onChange={(e) => {
+          if (rest.disabled || rest.readOnly) return
+          onValueChange(e.target.value)
+        }}
         {...rest}
       />
-      {error && <FieldError>{error}</FieldError>}
+      {errors && <FieldError errors={errors} />}
     </Field>
   )
 }
+
+export type BasicSelectFieldProps = {
+  label: string
+  errors?: Array<{ message?: string } | undefined>
+} & BasicSelectProps
 
 export function BasicSelectField({
   label,
-  options,
-  onValueChange = () => {},
   className,
-  error,
-  value,
-  disabled,
-  placeholder = 'Select...',
-  required = false,
-  readOnly = false,
-}: {
-  label: string
-  value?: string | undefined | null | number
-  onValueChange?: (value: string | undefined | null | number) => void
-  error?: string
-  options: { label: string; value: string }[]
-  className?: string
-  disabled?: boolean
-  placeholder?: string
-  required?: boolean
-  readOnly?: boolean
-}) {
+  errors,
+  ...rest
+}: BasicSelectFieldProps) {
   const id = useId()
 
   return (
-    <Field className={cn(className)} data-invalid={!!error}>
-      <FieldLabel htmlFor={id}>{label}</FieldLabel>
-      <BasicSelect
-        options={options}
-        value={value}
-        onValueChange={onValueChange}
-        placeholder={placeholder}
-        required={required}
-        disabled={disabled}
-        readOnly={readOnly}
-        className={className}
-      />
-      {error && <FieldError>{error}</FieldError>}
+    <Field className={cn(className)} data-invalid={!!errors}>
+      <FieldLabel htmlFor={id} required={rest.required}>
+        {label}
+      </FieldLabel>
+      <BasicSelect {...rest} />
+      {errors && <FieldError errors={errors} />}
     </Field>
   )
 }
+
+export type TextAreaFieldProps = {
+  label: string
+  onValueChange?: (value: string) => void
+  errors?: Array<{ message?: string } | undefined>
+} & React.ComponentProps<'textarea'>
 
 export function TextAreaField({
   label,
   value,
   onValueChange = () => {},
   className,
-  error,
+  errors,
   id,
   ...rest
-}: {
-  label: string
-  onValueChange?: (value: string) => void
-  error?: string
-} & React.ComponentProps<'textarea'>) {
+}: TextAreaFieldProps) {
   const generatedId = useId()
   const _id = id ?? generatedId
 
   return (
-    <Field className={cn(className)} data-invalid={!!error}>
-      <FieldLabel htmlFor={_id}>{label}</FieldLabel>
+    <Field className={cn(className)} data-invalid={!!errors}>
+      <FieldLabel htmlFor={_id} required={rest.required}>
+        {label}
+      </FieldLabel>
       <Textarea
-        aria-invalid={!!error}
+        aria-invalid={!!errors}
         className={cn('w-full')}
         id={_id}
-        value={value}
+        value={value ?? ''}
         onChange={(e) =>
           !rest.disabled && !rest.readOnly && onValueChange(e.target.value)
         }
         {...rest}
       />
-      {error && <FieldError>{error}</FieldError>}
+      {errors && <FieldError errors={errors} />}
     </Field>
   )
 }
@@ -131,7 +123,9 @@ export function ComboboxField<T extends string | number = string>({
 
   return (
     <Field className={cn(className)} data-invalid={!!error}>
-      <FieldLabel htmlFor={id}>{label}</FieldLabel>
+      <FieldLabel htmlFor={id} required={rest.required}>
+        {label}
+      </FieldLabel>
       <ComboboxWrapper {...rest} />
       {error && <FieldError>{error}</FieldError>}
     </Field>

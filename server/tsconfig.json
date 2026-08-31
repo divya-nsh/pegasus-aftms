@@ -3,8 +3,10 @@
   "compilerOptions": {
     "forceConsistentCasingInFileNames": true,
     // File Layout
-    // "rootDir": "./src",
-    // "outDir": "./dist",
+    "rootDir": "./src",
+    "outDir": "./dist",
+    "composite": true,
+    "tsBuildInfoFile": "./dist/tsconfig.tsbuildinfo",
 
     // Environment Settings
     // See also https://aka.ms/tsconfig/module
@@ -22,7 +24,7 @@
     // Other Outputs
     "sourceMap": true,
     "declaration": true,
-    "declarationMap": true,
+    "declarationMap": false,
 
     // Stricter Typechecking Options
     "noUncheckedIndexedAccess": true,
@@ -32,7 +34,7 @@
     // "noImplicitReturns": true,
     // "noImplicitOverride": true,
     // "noUnusedLocals": true,
-    // "noUnusedParameters": true,
+    "noUnusedParameters": false,
     // "noFallthroughCasesInSwitch": true,
     // "noPropertyAccessFromIndexSignature": true,
 

@@ -1,12 +1,12 @@
 import db from "#/db/db.js";
 import { areaTable } from "#/db/schema.js";
 import { protectedProcedure, router } from "#/trpc.js";
-import { eq } from "drizzle-orm";
+import { and, eq, ne, sql } from "drizzle-orm";
 import { z } from "zod";
 
 const createSchema = z.object({
   name: z.string().min(1),
-  code: z.string().min(1),
+  code: z.string().min(1).toUpperCase(),
   address: z.string().optional(),
   description: z.string().optional(),
 });
@@ -28,6 +28,24 @@ const areaMasterRouter = router({
       totalCount: areas.length,
     };
   }),
+
+  isCodeExists: protectedProcedure
+    .input(z.object({ code: z.string(), excludeId: z.number().optional() }))
+    .query(async ({ input }) => {
+      const [area] = await db
+        .select({ id: areaTable.id })
+        .from(areaTable)
+        .where(
+          and(
+            sql`lower(${areaTable.code}) = ${input.code.toLowerCase()}`,
+            input.excludeId ? ne(areaTable.id, input.excludeId) : undefined,
+          ),
+        )
+        .limit(1);
+
+      return area?.id ?? false;
+    }),
+
   create: protectedProcedure.input(createSchema).mutation(async ({ input }) => {
     const { name, code, address, description } = input;
     const area = await db

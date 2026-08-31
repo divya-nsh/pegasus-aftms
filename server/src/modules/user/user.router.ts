@@ -3,7 +3,7 @@ import { userTable } from "#/db/schema.js";
 import { protectedProcedure, router } from "#/trpc.js";
 import { TRPCError } from "@trpc/server";
 import bcrypt from "bcrypt";
-import { eq } from "drizzle-orm";
+import { and, eq, ne, sql } from "drizzle-orm";
 import { z } from "zod";
 import userService from "./user.service.js";
 
@@ -40,6 +40,7 @@ const userRouter = router({
   }),
 
   getAll: protectedProcedure.query(async () => {
+    console.time("getAllUsers");
     const users = await db.query.userTable.findMany({
       columns: {
         id: true,
@@ -66,6 +67,8 @@ const userRouter = router({
       orderBy: { id: "desc" },
     });
 
+    console.timeEnd("getAllUsers");
+
     return {
       items: users,
       totalCount: users.length,
@@ -75,7 +78,31 @@ const userRouter = router({
   getById: protectedProcedure
     .input(z.object({ id: z.number() }))
     .query(async ({ input }) => {
-      return userService.getById(input.id);
+      const user = await userService.getById(input.id);
+      if (!user) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "User not found",
+        });
+      }
+      return user;
+    }),
+
+  isUsernameExists: protectedProcedure
+    .input(z.object({ username: z.string(), excludeId: z.number().optional() }))
+    .query(async ({ input }) => {
+      const [user] = await db
+        .select({ id: userTable.id })
+        .from(userTable)
+        .where(
+          and(
+            sql`lower(${userTable.username}) = ${input.username.toLowerCase()}`,
+            input.excludeId ? ne(userTable.id, input.excludeId) : undefined,
+          ),
+        )
+        .limit(1);
+
+      return user?.id ?? false;
     }),
 
   create: protectedProcedure.input(createSchema).mutation(async ({ input }) => {

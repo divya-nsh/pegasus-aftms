@@ -7,7 +7,23 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../ui/select'
-import { startTransition, useState } from 'react'
+import { startTransition, useMemo, useState } from 'react'
+
+export type SelectValue = string | null
+
+export type BasicSelectProps = {
+  options: { label: string; value: number | string }[]
+  value?: SelectValue
+  onValueChange?: (value: SelectValue) => void
+  placeholder?: string
+  required?: boolean
+  disabled?: boolean
+  className?: string
+  allowClear?: boolean
+  readOnly?: boolean
+  valueAsNumber?: boolean
+  onBlur?: () => void
+}
 
 export default function BasicSelect({
   options,
@@ -19,27 +35,30 @@ export default function BasicSelect({
   className,
   allowClear = true,
   readOnly = false,
-}: {
-  options: { label: string; value: string }[]
-  value?: string | undefined | null | number
-  onValueChange?: (value: string | undefined | null | number) => void
-  placeholder?: string
-  required?: boolean
-  disabled?: boolean
-  className?: string
-  allowClear?: boolean
-  readOnly?: boolean
-}) {
+  onBlur,
+}: BasicSelectProps) {
   const [open, setOpen] = useState(false)
+
+  const items = useMemo(() => {
+    return options.map((item) => ({
+      label: item.label,
+      value: item.value.toString(),
+    }))
+  }, [options])
 
   return (
     <Select
       open={readOnly ? false : open}
-      onOpenChange={setOpen}
+      onOpenChange={(v) => {
+        if (open === false) {
+          onBlur?.()
+        }
+        setOpen(v)
+      }}
       required={required}
       disabled={disabled}
       readOnly={readOnly}
-      value={value}
+      value={value?.toString() ?? null}
       onValueChange={(nextValue) => {
         if (readOnly) return
         setOpen(false)
@@ -50,7 +69,7 @@ export default function BasicSelect({
           onValueChange?.(nextValue)
         })
       }}
-      items={options}
+      items={items}
     >
       <SelectTrigger className={cn('w-full', className)}>
         <SelectValue placeholder={placeholder} />
@@ -58,9 +77,13 @@ export default function BasicSelect({
       <SelectContent alignItemWithTrigger={false}>
         <SelectGroup>
           {allowClear && (
-            <SelectItem value="" className="" showIndicator={false}>
-              <span className="text-muted-foreground text-center">
-                -- Select --
+            <SelectItem
+              value=""
+              className="hover:text-muted-foreground focus:text-muted-foreground"
+              showIndicator={false}
+            >
+              <span className="text-muted-foreground text-center hover:text-muted-foreground focus:text-muted-foreground">
+                -- Unselect --
               </span>
             </SelectItem>
           )}

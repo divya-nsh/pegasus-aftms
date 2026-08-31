@@ -19,7 +19,7 @@ const MAX_FILE_SIZE = 50 * 1024 * 1024; // 100MB
 const mediaRouter = router({
   uploadFile: publicProcedure
     .input(z.custom<globalThis.FormData>((value) => value instanceof FormData))
-    .mutation(async ({ ctx, input }) => {
+    .mutation(async ({ input }) => {
       const file = input.get("file");
       if (!file) {
         throw new TRPCError({

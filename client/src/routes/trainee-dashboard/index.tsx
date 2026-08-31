@@ -1,10 +1,6 @@
 import ErrorAlert from '@/components/errors/ErrorAlert'
-import BasicSelect from '@/components/inputs/basic-select'
-import TextField from '@/components/inputs/TextField'
-import { SearchInput } from '@/components/inputs/searchInput'
 import PageCard from '@/components/layout/PageCard'
 import FullPageSpinner from '@/components/loaders/page-loader'
-import { ColumnVisibility } from '@/components/table/column-visibility'
 import { TablePagination } from '@/components/table/table-pagination'
 import {
   AppTable,
@@ -25,34 +21,17 @@ import {
   CheckCircle2Icon,
   EyeIcon,
   ListTodoIcon,
+  TrophyIcon,
+  UserXIcon,
+  XCircleIcon,
 } from 'lucide-react'
 import { useMemo, useState } from 'react'
+import type { ReactNode } from 'react'
 import type { TrpcRouterOutputs } from 'server/router'
-import MissionStatusBadge, {
-  MISSION_STATUS_LABELS,
-} from '@/routes/schedules/-components/mission-stage-bar'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import MissionStatusBadge from '@/routes/schedules/-components/mission-stage-bar'
+import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
-const ASSIGNED_STATUSES = [
-  'published',
-  'in_progress',
-  'completed',
-  'cancelled',
-] as const
-
-type AssignedScheduleStatus = (typeof ASSIGNED_STATUSES)[number]
-
-const statusFilterOptions: { label: string; value: AssignedScheduleStatus }[] =
-  [
-    { label: MISSION_STATUS_LABELS.published, value: 'published' },
-    { label: MISSION_STATUS_LABELS.in_progress, value: 'in_progress' },
-    { label: MISSION_STATUS_LABELS.completed, value: 'completed' },
-    { label: MISSION_STATUS_LABELS.cancelled, value: 'cancelled' },
-  ]
-
-function toAssignedStatus(value: string): AssignedScheduleStatus | undefined {
-  return ASSIGNED_STATUSES.find((status) => status === value)
-}
+type StatusFilter = 'all' | 'completed' | 'in_progress' | 'published'
 
 export const Route = createFileRoute('/trainee-dashboard/')({
   component: RouteComponent,
@@ -180,11 +159,11 @@ const columns: ColumnDef<TTableFeatures, TAssignedMission>[] = ch.columns([
     header: 'Area',
     cell: (info) => info.getValue() || '-',
   }),
-  // ch.accessor('attendanceStatus', {
-  //   header: 'Attendance',
-  //   size: 120,
-  //   cell: (info) => ATTENDANCE_LABELS[info.getValue()] ?? info.getValue(),
-  // }),
+  ch.accessor('attendanceStatus', {
+    header: 'Attendance',
+    size: 120,
+    cell: (info) => ATTENDANCE_LABELS[info.getValue()] ?? info.getValue(),
+  }),
   ch.accessor('result', {
     header: 'Result',
     size: 110,
@@ -213,8 +192,8 @@ function StatCard({
 }: {
   label: string
   hint: string
-  value: number
-  icon: React.ReactNode
+  value: string | number
+  icon: ReactNode
 }) {
   return (
     <div className="flex items-start justify-between rounded-md border bg-background p-4">
@@ -230,17 +209,21 @@ function StatCard({
   )
 }
 
+function formatAverageScore(scores: number[]) {
+  if (scores.length === 0) return '—'
+  const average = scores.reduce((sum, score) => sum + score, 0) / scores.length
+  return Number.isInteger(average) ? String(average) : average.toFixed(1)
+}
+
 function RouteComponent() {
   const navigate = useNavigate()
   const { user } = useAuth()
   const personId = user?.personnel[0]?.id
   const displayName = traineeDisplayName(user)
 
-  const [statusFilter, setStatusFilter] = useState<
-    'completed' | 'in_progress' | 'published' | 'all'
-  >('published')
-  const [fromDate, setFromDate] = useState('')
-  const [toDate, setToDate] = useState('')
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>('published')
+  const [fromDate] = useState('')
+  const [toDate] = useState('')
   const [columnFilters, setColumnFilters] = useState('')
 
   const assignedQ = useSuspenseQuery(
@@ -251,10 +234,34 @@ function RouteComponent() {
 
   const stats = useMemo(() => {
     const items = assignedQ.data.items
+    const uniqueMissions = new Set(
+      items.map((item) => item.missionName).filter(Boolean),
+    ).size
+    const passed = items.filter((item) => item.result === 'passed').length
+    const failed = items.filter((item) => item.result === 'failed').length
+    const notAttended = items.filter(
+      (item) => item.attendanceStatus === 'absent',
+    ).length
+    const excused = items.filter(
+      (item) => item.attendanceStatus === 'excused',
+    ).length
+    const scores = items
+      .map((item) => item.score)
+      .filter((score): score is number => score != null)
+    const graded = passed + failed
+
     return {
       total: items.length,
+      uniqueMissions,
       notStarted: items.filter((item) => item.status === 'published').length,
       completed: items.filter((item) => item.status === 'completed').length,
+      passed,
+      failed,
+      notAttended,
+      excused,
+      averageScore: formatAverageScore(scores),
+      scoredCount: scores.length,
+      graded,
     }
   }, [assignedQ.data.items])
 
@@ -309,51 +316,79 @@ function RouteComponent() {
       <section className="space-y-4">
         <div className="border-b pb-3">
           <p className="text-sm text-muted-foreground">Trainee Dashboard</p>
-          <h1 className="text-2xl font-bold tracking-tight">
-            Hey {displayName}
+          <h1 className="text-lg font-bold tracking-tight">
+            Hey, {displayName}
           </h1>
+          {/* <p className="mt-1 text-sm text-muted-foreground">
+            Your assigned schedules, results, attendance, and scores
+          </p> */}
         </div>
-        <div className="grid gap-3 sm:grid-cols-3">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <StatCard
-            label="Not started"
-            hint="Assigned, still pending"
-            value={stats.notStarted}
-            icon={<CalendarClockIcon className="size-4" />}
+            label="Assigned"
+            hint={
+              stats.uniqueMissions
+                ? `${stats.uniqueMissions} mission type${stats.uniqueMissions === 1 ? '' : 's'}`
+                : 'Schedules you are part of'
+            }
+            value={stats.total}
+            icon={<ListTodoIcon className="size-4" />}
           />
           <StatCard
-            label="Completed"
-            hint="Missions you have done"
-            value={stats.completed}
+            label="Passed"
+            hint={
+              stats.graded
+                ? `${stats.passed} of ${stats.graded} graded`
+                : 'No graded results yet'
+            }
+            value={stats.passed}
             icon={<CheckCircle2Icon className="size-4" />}
           />
           <StatCard
-            label="Total assigned"
-            hint="All missions assigned to you"
-            value={stats.total}
-            icon={<ListTodoIcon className="size-4" />}
+            label="Failed"
+            hint={
+              stats.graded
+                ? `${stats.failed} of ${stats.graded} graded`
+                : 'No graded results yet'
+            }
+            value={stats.failed}
+            icon={<XCircleIcon className="size-4" />}
+          />
+          <StatCard
+            label="Not attended"
+            hint={stats.excused ? `${stats.excused} excused` : 'Marked absent'}
+            value={stats.notAttended}
+            icon={<UserXIcon className="size-4" />}
+          />
+          <StatCard
+            label="Average score"
+            hint={
+              stats.scoredCount
+                ? `From ${stats.scoredCount} scored ${stats.scoredCount === 1 ? 'schedule' : 'schedules'}`
+                : 'No scores recorded yet'
+            }
+            value={stats.averageScore}
+            icon={<TrophyIcon className="size-4" />}
+          />
+          <StatCard
+            label="Completed"
+            hint={`${stats.notStarted} still pending`}
+            value={stats.completed}
+            icon={<CalendarClockIcon className="size-4" />}
           />
         </div>
       </section>
 
       <section className="space-y-4">
-        <div className="border-b pb-2">
+        <div className="border-b pb-2 -mb-1">
           <h2 className="text-lg font-semibold">Missions</h2>
-          <p className="text-sm text-muted-foreground">
+          {/* <p className="text-sm text-muted-foreground">
             Filter and review your assigned missions
-          </p>
+          </p> */}
         </div>
         <ErrorAlert error={assignedQ.error} />
         <div className="flex flex-wrap items-end justify-between gap-3">
-          <div className="flex min-w-0 flex-wrap items-end gap-3">
-            {/* <div className="flex w-44 flex-col gap-2">
-              <span className="text-sm font-medium">Status</span>
-              <BasicSelect
-                value={statusFilter}
-                onValueChange={(value) => setStatusFilter(String(value ?? ''))}
-                placeholder="All"
-                options={statusFilterOptions}
-              />
-            </div> */}
+          {/* <div className="flex min-w-0 flex-wrap items-end gap-3">
             <TextField
               className="w-44"
               label="From date"
@@ -387,13 +422,13 @@ function RouteComponent() {
                 Clear filters
               </Button>
             ) : null}
-          </div>
-          <ColumnVisibility table={table} />
+          </div> */}
+          {/* <ColumnVisibility table={table} /> */}
         </div>
         <Tabs
           value={statusFilter}
           onValueChange={(value) => {
-            setStatusFilter(value as 'completed' | 'in_progress' | 'published')
+            setStatusFilter(value as StatusFilter)
           }}
         >
           <TabsList>

@@ -1,25 +1,24 @@
-import ErrorAlert from '@/components/errors/ErrorAlert'
-import TextField, {
-  BasicSelectField,
-  TextAreaField,
-} from '@/components/inputs/TextField'
-import { Button } from '@/components/ui/button'
-import LinkButton from '@/components/ui/link-button'
-import { toast } from '@/components/ui/toast'
+import {
+  handleSubmitInvalid,
+  useAppForm,
+} from '@/components/form/tanstack-form'
 import trpc, { trpcClient } from '@/trpc'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from '@tanstack/react-router'
-import { useState } from 'react'
+import toast from 'react-hot-toast'
+import { z } from 'zod'
 
-export type AircraftFormData = {
-  name: string
-  tailNumber: string
-  serialNumber: string
-  aircraftType: string
-  inductionDate: string
-  remarks: string
-  status: string
-}
+const schema = z.object({
+  name: z.string().min(1, 'Required'),
+  tailNumber: z.string().min(1, 'Required'),
+  serialNumber: z.string().optional(),
+  aircraftType: z.string().optional(),
+  inductionDate: z.string().optional(),
+  remarks: z.string().optional(),
+  status: z.string().optional(),
+})
+
+export type AircraftFormData = z.infer<typeof schema>
 
 export const defaultAircraftFormData: AircraftFormData = {
   name: '',
@@ -54,12 +53,20 @@ export default function AircraftForm({
   toEditId?: number
   initialFormData?: AircraftFormData
 }) {
-  const [formState, setFormState] = useState(initialFormData)
   const queryClient = useQueryClient()
   const navigate = useNavigate()
 
+  const form = useAppForm({
+    defaultValues: initialFormData,
+    validators: {
+      onSubmit: schema,
+    },
+    onSubmit: ({ value }) => mutation.mutateAsync(value),
+    onSubmitInvalid: handleSubmitInvalid,
+  })
+
   const mutation = useMutation({
-    mutationFn: (data: AircraftFormData) => {
+    mutationFn: async (data: AircraftFormData) => {
       if (toEditId) {
         return trpcClient.aircraft.update.mutate({
           ...data,
@@ -70,95 +77,73 @@ export default function AircraftForm({
     },
     onSuccess: () => {
       queryClient.resetQueries(trpc.aircraft.pathFilter())
-      toast.add({
-        type: 'success',
-        title:
-          mode === 'create'
-            ? 'Aircraft Created Successfully'
-            : 'Aircraft Updated Successfully',
-      })
+      toast.success(
+        mode === 'create' ? 'New Aircraft created' : 'Aircraft updated',
+      )
       navigate({ to: '/aircraft' })
     },
     onError: (error) => {
-      toast.add({
-        type: 'error',
-        title: 'Failed to Save Aircraft',
-        description: error.message,
-      })
+      toast.error(error.message)
     },
   })
 
-  const updateFormState = (newState: Partial<AircraftFormData>) => {
-    setFormState((prev) => ({ ...prev, ...newState }))
-  }
-
   return (
-    <>
-      <ErrorAlert error={mutation.error} />
-      <form
-        className="grid grid-cols-2 gap-6"
-        onSubmit={(e) => {
-          e.preventDefault()
-          mutation.mutate(formState)
-        }}
-      >
-        <TextField
-          required
-          label="Name*"
-          value={formState.name}
-          onValueChange={(name) => updateFormState({ name })}
-        />
-        <TextField
-          required
-          label="Tail Number / Call Sign*"
-          value={formState.tailNumber}
-          onValueChange={(tailNumber) => updateFormState({ tailNumber })}
-        />
-        <TextField
-          label="Serial Number"
-          value={formState.serialNumber}
-          onValueChange={(serialNumber) => updateFormState({ serialNumber })}
-        />
-        <BasicSelectField
-          label="Aircraft Type"
-          placeholder="Select aircraft type"
-          value={formState.aircraftType}
-          options={aircraftTypeOptions}
-          onValueChange={(aircraftType) =>
-            updateFormState({ aircraftType: String(aircraftType ?? '') })
-          }
-        />
-        <TextField
-          label="Induction Date"
-          type="date"
-          value={formState.inductionDate}
-          onValueChange={(inductionDate) => updateFormState({ inductionDate })}
-        />
-        <BasicSelectField
-          label="Status"
-          placeholder="Select status"
-          value={formState.status}
-          options={statusOptions}
-          onValueChange={(status) =>
-            updateFormState({ status: String(status ?? '') })
-          }
-        />
-        <TextAreaField
-          className="col-span-2"
-          label="Remarks"
-          placeholder="Enter optional remarks"
-          value={formState.remarks}
-          onValueChange={(remarks) => updateFormState({ remarks })}
-        />
-        <div className="col-span-2 flex justify-end gap-2 pt-2">
-          <LinkButton to="/aircraft" variant="outline">
-            Cancel
-          </LinkButton>
-          <Button type="submit" disabled={mutation.isPending}>
-            {mode === 'create' ? 'Create' : 'Update'}
-          </Button>
-        </div>
-      </form>
-    </>
+    <div className="grid grid-cols-2 gap-6">
+      <form.AppField
+        name="name"
+        children={(f) => <f.CTextField required label="Name" />}
+      />
+      <form.AppField
+        name="tailNumber"
+        children={(f) => (
+          <f.CTextField required label="Tail Number / Call Sign" />
+        )}
+      />
+      <form.AppField
+        name="serialNumber"
+        children={(f) => <f.CTextField label="Serial Number" />}
+      />
+      <form.AppField
+        name="aircraftType"
+        children={(f) => (
+          <f.CBasicSelect
+            label="Aircraft Type"
+            placeholder="Select aircraft type"
+            options={aircraftTypeOptions}
+          />
+        )}
+      />
+      <form.AppField
+        name="inductionDate"
+        children={(f) => <f.CTextField label="Induction Date" type="date" />}
+      />
+      <form.AppField
+        name="status"
+        children={(f) => (
+          <f.CBasicSelect
+            label="Status"
+            placeholder="Select status"
+            options={statusOptions}
+          />
+        )}
+      />
+      <form.AppField
+        name="remarks"
+        children={(f) => (
+          <f.CTextAreaField
+            className="col-span-2"
+            label="Remarks"
+            placeholder="Enter optional remarks"
+          />
+        )}
+      />
+      <div className="col-span-2 flex justify-end pt-2">
+        <form.AppForm>
+          <form.SubscribeButton
+            label={mode === 'create' ? 'Create' : 'Update'}
+          />
+        </form.AppForm>
+      </div>
+    </div>
   )
 }

@@ -1,16 +1,14 @@
-import ErrorAlert from '@/components/errors/ErrorAlert'
-import TextField, { BasicSelectField } from '@/components/inputs/TextField'
-import { Button } from '@/components/ui/button'
-import { Checkbox } from '@/components/ui/checkbox'
-import { Label } from '@/components/ui/label'
-import LinkButton from '@/components/ui/link-button'
-import { toast } from '@/components/ui/toast'
+import {
+  handleSubmitInvalid,
+  useAppForm,
+} from '@/components/form/tanstack-form'
+import { getErrorMessage } from '@/lib/utils'
 import trpc, { trpcClient } from '@/trpc'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
-import { useState } from 'react'
-
-export type UserRole = 'trainee' | 'instructor' | 'admin'
+import { useMemo } from 'react'
+import toast from 'react-hot-toast'
+import { z } from 'zod'
 
 export type LinkedPersonnel = {
   id: number
@@ -20,13 +18,22 @@ export type LinkedPersonnel = {
   personnelType: string
 }
 
-export type UserFormData = {
-  username: string
-  password: string
-  isActive: boolean
-  role: UserRole | null
-  name: string | null
+const roleEnum = z.enum(['admin', 'instructor', 'trainee'])
+
+function createSchema(mode: 'create' | 'edit') {
+  return z.object({
+    username: z.string().trim().min(1, 'Required').max(60),
+    password:
+      mode === 'create'
+        ? z.string().min(1, 'Required').trim()
+        : z.string().trim(),
+    isActive: z.boolean(),
+    name: z.string(),
+    role: roleEnum.nullable(),
+  })
 }
+
+export type UserFormData = z.infer<ReturnType<typeof createSchema>>
 
 const roleOptions = [
   { label: 'Admin', value: 'admin' },
@@ -48,7 +55,7 @@ export const defaultUserFormData: UserFormData = {
   password: '',
   isActive: true,
   role: null,
-  name: null,
+  name: '',
 }
 
 export default function UserForm({
@@ -62,129 +69,118 @@ export default function UserForm({
   initialFormData?: UserFormData
   linkedPersonnel?: LinkedPersonnel | null
 }) {
-  const [formState, setFormState] = useState(initialFormData)
   const queryClient = useQueryClient()
   const navigate = useNavigate()
+  const schema = useMemo(() => createSchema(mode), [mode])
+
+  const form = useAppForm({
+    defaultValues: initialFormData,
+    validators: {
+      onSubmit: schema,
+    },
+    onSubmit: ({ value }) => mutation.mutateAsync(value),
+    onSubmitInvalid: handleSubmitInvalid,
+  })
 
   const mutation = useMutation({
-    mutationFn: (data: UserFormData) => {
+    mutationFn: async (data: UserFormData) => {
       if (toEditId) {
         return trpcClient.users.update.mutate({
           toEditId,
-          username: data.username,
-          isActive: data.isActive,
-          password: data.password.trim() || undefined,
-          name: data.name?.trim() || null,
-          role: data.role,
+          ...data,
         })
       }
       return trpcClient.users.create.mutate({
-        username: data.username,
-        password: data.password,
-        isActive: data.isActive,
-        name: data.name?.trim() || null,
-        role: data.role,
+        ...data,
       })
     },
     onSuccess: () => {
       queryClient.resetQueries(trpc.users.pathFilter())
-      toast.add({
-        type: 'success',
-        title:
-          mode === 'create'
-            ? 'User Created Successfully'
-            : 'User Updated Successfully',
-      })
+      toast.success(mode === 'create' ? 'New user created' : 'User updated')
       navigate({ to: '/users' })
     },
     onError: (error) => {
-      toast.add({
-        type: 'error',
-        title: 'Failed to Save User',
-        description: error.message,
-      })
+      toast.error(error.message)
     },
   })
 
-  const updateFormState = (newState: Partial<UserFormData>) => {
-    setFormState((prev) => ({ ...prev, ...newState }))
+  const validateUsernameUnique = async ({ value }: { value: string }) => {
+    try {
+      const isUsernameExists = await trpcClient.users.isUsernameExists.query({
+        username: value,
+        excludeId: toEditId,
+      })
+      if (isUsernameExists) return 'Username already exists'
+    } catch (error) {
+      return getErrorMessage(error)
+    }
   }
 
   return (
-    <>
-      <ErrorAlert error={mutation.error} />
-      <form
-        className="grid grid-cols-2 gap-6"
-        onSubmit={(e) => {
-          e.preventDefault()
-          mutation.mutate(formState)
+    <div className="grid grid-cols-2 gap-6">
+      <form.AppField
+        name="username"
+        validators={{
+          onBlurAsync: validateUsernameUnique,
+          onSubmitAsync: validateUsernameUnique,
         }}
-      >
-        <TextField
-          required
-          label="Username*"
-          autoComplete="username"
-          value={formState.username}
-          onValueChange={(username) => updateFormState({ username })}
-        />
-
-        <TextField
-          required={mode === 'create'}
-          label={mode === 'create' ? 'Password*' : 'Password'}
-          type="password"
-          autoComplete="new-password"
-          placeholder={
-            mode === 'edit' ? 'Leave blank to keep current password' : undefined
-          }
-          value={formState.password}
-          onValueChange={(password) => updateFormState({ password })}
-        />
-        <TextField
-          label="Name"
-          value={formState.name ?? ''}
-          onValueChange={(name) => updateFormState({ name: name || null })}
-        />
-        <BasicSelectField
-          label="Role"
-          placeholder="Select role"
-          value={formState.role ?? ''}
-          options={roleOptions}
-          onValueChange={(role) =>
-            updateFormState({
-              role: role ? (String(role) as UserRole) : null,
-            })
-          }
-        />
-        {linkedPersonnel && (
-          <div className="col-span-2">
-            <Link
-              to="/personnel/$id/edit"
-              params={{ id: String(linkedPersonnel.id) }}
-              className="text-sm text-blue-500"
-            >
-              View linked personnel: {personnelLabel(linkedPersonnel)}
-            </Link>
-          </div>
+        children={(f) => (
+          <f.CTextField required label="Username" autoComplete="username" />
         )}
-        <div className="col-span-2 flex items-center gap-2">
-          <Checkbox
-            id="user-is-active"
-            checked={formState.isActive}
-            onCheckedChange={(checked) =>
-              updateFormState({ isActive: checked })
+      />
+      <form.AppField
+        name="password"
+        children={(f) => (
+          <f.CTextField
+            required={mode === 'create'}
+            label="Password"
+            type="password"
+            autoComplete="new-password"
+            placeholder={
+              mode === 'edit'
+                ? 'Leave blank to keep current password'
+                : undefined
             }
           />
-          <Label htmlFor="user-is-active">Active</Label>
+        )}
+      />
+      <form.AppField
+        name="name"
+        children={(f) => <f.CTextField label="Name" />}
+      />
+      <form.AppField
+        name="role"
+        children={(f) => (
+          <f.CBasicSelect
+            label="Role"
+            placeholder="Select role"
+            options={roleOptions}
+            emptyAsNull
+          />
+        )}
+      />
+      {linkedPersonnel && (
+        <div className="col-span-2">
+          <Link
+            to="/personnel/$id/edit"
+            params={{ id: String(linkedPersonnel.id) }}
+            className="text-sm text-blue-500"
+          >
+            View linked personnel: {personnelLabel(linkedPersonnel)}
+          </Link>
         </div>
-        <div className="col-span-2 flex justify-end gap-2 pt-2">
-          <LinkButton to="/users" variant="outline">
-            Cancel
-          </LinkButton>
-          <Button type="submit" disabled={mutation.isPending}>
-            {mode === 'create' ? 'Create' : 'Update'}
-          </Button>
-        </div>
-      </form>
-    </>
+      )}
+      <form.AppField
+        name="isActive"
+        children={(f) => <f.CCheckbox label="Active" />}
+      />
+      <div className="col-span-2 flex justify-end pt-2">
+        <form.AppForm>
+          <form.SubscribeButton
+            label={mode === 'create' ? 'Create' : 'Update'}
+          />
+        </form.AppForm>
+      </div>
+    </div>
   )
 }

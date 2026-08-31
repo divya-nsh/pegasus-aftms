@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MyPersonnelRouteImport } from './routes/my-personnel'
+import { Route as TestRouteImport } from './routes/test'
 import { Route as UploadRouteImport } from './routes/upload'
 import { Route as AircraftIndexRouteImport } from './routes/aircraft/index'
 import { Route as AircraftCreateRouteImport } from './routes/aircraft/create'
@@ -45,6 +46,11 @@ const LoginRoute = LoginRouteImport.update({
 const MyPersonnelRoute = MyPersonnelRouteImport.update({
   id: '/my-personnel',
   path: '/my-personnel',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TestRoute = TestRouteImport.update({
+  id: '/test',
+  path: '/test',
   getParentRoute: () => rootRouteImport,
 } as any)
 const UploadRoute = UploadRouteImport.update({
@@ -148,6 +154,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/my-personnel': typeof MyPersonnelRoute
+  '/test': typeof TestRoute
   '/upload': typeof UploadRoute
   '/aircraft/create': typeof AircraftCreateRoute
   '/personnel/create': typeof PersonnelCreateRoute
@@ -172,6 +179,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/my-personnel': typeof MyPersonnelRoute
+  '/test': typeof TestRoute
   '/upload': typeof UploadRoute
   '/aircraft/create': typeof AircraftCreateRoute
   '/personnel/create': typeof PersonnelCreateRoute
@@ -197,6 +205,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/login': typeof LoginRoute
   '/my-personnel': typeof MyPersonnelRoute
+  '/test': typeof TestRoute
   '/upload': typeof UploadRoute
   '/aircraft/create': typeof AircraftCreateRoute
   '/personnel/create': typeof PersonnelCreateRoute
@@ -223,6 +232,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/my-personnel'
+    | '/test'
     | '/upload'
     | '/aircraft/create'
     | '/personnel/create'
@@ -247,6 +257,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/my-personnel'
+    | '/test'
     | '/upload'
     | '/aircraft/create'
     | '/personnel/create'
@@ -271,6 +282,7 @@ export interface FileRouteTypes {
     | '/'
     | '/login'
     | '/my-personnel'
+    | '/test'
     | '/upload'
     | '/aircraft/create'
     | '/personnel/create'
@@ -296,6 +308,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   LoginRoute: typeof LoginRoute
   MyPersonnelRoute: typeof MyPersonnelRoute
+  TestRoute: typeof TestRoute
   UploadRoute: typeof UploadRoute
   AircraftCreateRoute: typeof AircraftCreateRoute
   PersonnelCreateRoute: typeof PersonnelCreateRoute
@@ -338,6 +351,13 @@ declare module '@tanstack/react-router' {
       path: '/my-personnel'
       fullPath: '/my-personnel'
       preLoaderRoute: typeof MyPersonnelRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/test': {
+      id: '/test'
+      path: '/test'
+      fullPath: '/test'
+      preLoaderRoute: typeof TestRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/upload': {
@@ -480,6 +500,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   LoginRoute: LoginRoute,
   MyPersonnelRoute: MyPersonnelRoute,
+  TestRoute: TestRoute,
   UploadRoute: UploadRoute,
   AircraftCreateRoute: AircraftCreateRoute,
   PersonnelCreateRoute: PersonnelCreateRoute,

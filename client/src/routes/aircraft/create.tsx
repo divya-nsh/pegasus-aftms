@@ -9,7 +9,7 @@ export const Route = createFileRoute('/aircraft/create')({
 function RouteComponent() {
   return (
     <div className="px-6 max-w-6xl mx-auto">
-      <PageHeader title="Create Aircraft" backTo="/aircraft" />
+      <PageHeader title="New Aircraft" backTo="/aircraft" />
       <AircraftForm mode="create" />
     </div>
   )

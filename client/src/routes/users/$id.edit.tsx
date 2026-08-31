@@ -17,7 +17,9 @@ export const Route = createFileRoute('/users/$id/edit')({
 function RouteComponent() {
   const { id } = Route.useParams()
   const userId = Number(id)
-  const userQ = useSuspenseQuery(trpc.users.getById.queryOptions({ id: userId }))
+  const userQ = useSuspenseQuery(
+    trpc.users.getById.queryOptions({ id: userId }),
+  )
   const user = userQ.data
 
   return (
@@ -30,8 +32,8 @@ function RouteComponent() {
           username: user.username,
           password: '',
           isActive: user.isActive,
-          name: user.name,
-          role: user.role,
+          name: user.name ?? '',
+          role: user.role ?? null,
         }}
         linkedPersonnel={user.personnel[0] ?? null}
       />

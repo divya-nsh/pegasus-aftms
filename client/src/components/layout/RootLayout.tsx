@@ -1,6 +1,4 @@
 import { Link, useRouterState } from '@tanstack/react-router'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
-import { trpcClient } from '@/trpc'
 import {
   SidebarProvider,
   Sidebar,
@@ -93,9 +91,9 @@ const traineeNavItems: NavGroup[] = [
     title: 'Training',
     items: [
       {
-        title: 'Missions',
+        title: 'Dashboard',
         url: '/trainee-dashboard',
-        icon: TargetIcon,
+        icon: GraduationCapIcon,
       },
       {
         title: 'My Profile',

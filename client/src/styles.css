@@ -134,7 +134,7 @@
     @apply bg-background text-foreground;
   }
   html {
-    font-family: "Inter", sans-serif;
+    font-family: 'Inter', sans-serif;
     font-optical-sizing: auto;
   }
   button:enabled {
@@ -148,6 +148,11 @@ html {
 
 .scroll-thin {
   /* Firefox */
+  scrollbar-width: thin;
+  scrollbar-color: rgba(173, 168, 168, 0.658) transparent;
+}
+
+* {
   scrollbar-width: thin;
   scrollbar-color: rgba(173, 168, 168, 0.658) transparent;
 }

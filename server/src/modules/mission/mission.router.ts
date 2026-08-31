@@ -1,5 +1,9 @@
 import db from "#/db/db.js";
-import { aircraftTable, missionScheduleTable, missionTable } from "#/db/schema.js";
+import {
+  aircraftTable,
+  missionScheduleTable,
+  missionTable,
+} from "#/db/schema.js";
 import { protectedProcedure, router } from "#/trpc.js";
 import { TRPCError } from "@trpc/server";
 import { desc, eq } from "drizzle-orm";
@@ -12,7 +16,7 @@ const createSchema = z.object({
   name: z.string().min(1),
   description: optionalText,
   aircraftId: optionalId,
-  durationMinutes: z.number().int().min(1),
+  durationMinutes: z.number().int().min(0).default(0),
 });
 
 const updateSchema = createSchema.extend({

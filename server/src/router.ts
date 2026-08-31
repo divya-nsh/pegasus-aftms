@@ -43,10 +43,21 @@ export const appRouter = router({
           .where(eq(userTable.username, input.username))
           .limit(1);
 
-        if (!user?.password) {
+        if (user && !user.password) {
           throw new TRPCError({
             code: "UNAUTHORIZED",
             message: "Please Setup your account password first",
+          });
+        }
+
+        const passwordMatches = user
+          ? await bcrypt.compare(input.password, user.password!)
+          : false;
+
+        if (!user || !passwordMatches) {
+          throw new TRPCError({
+            code: "UNAUTHORIZED",
+            message: "Invalid username or password",
           });
         }
 
@@ -54,17 +65,6 @@ export const appRouter = router({
           throw new TRPCError({
             code: "UNAUTHORIZED",
             message: "Your account is not active",
-          });
-        }
-
-        const passwordMatches = user
-          ? await bcrypt.compare(input.password, user.password)
-          : false;
-
-        if (!user || !user.isActive || !passwordMatches) {
-          throw new TRPCError({
-            code: "UNAUTHORIZED",
-            message: "Invalid username or password",
           });
         }
 

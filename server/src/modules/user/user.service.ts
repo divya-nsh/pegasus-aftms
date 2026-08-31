@@ -1,5 +1,5 @@
 import db, { type DBTransaction } from "#/db/db.js";
-import { roleEnum, userTable } from "#/db/schema.js";
+import { userTable } from "#/db/schema.js";
 import bcrypt from "bcrypt";
 import { eq } from "drizzle-orm";
 
