@@ -5,10 +5,12 @@ import trpc from '@/trpc'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import AircraftForm from './-components/aircraft-form'
+import { protectRouteBeforeLoad } from '@/lib/utils'
 
 export const Route = createFileRoute('/aircraft/$id/edit')({
   component: RouteComponent,
   pendingComponent: FullPageSpinner,
+  beforeLoad: protectRouteBeforeLoad('aircraft', 'edit'),
   errorComponent: ({ error }) => (
     <ErrorAlert error={error} title="Failed to Load Aircraft" />
   ),

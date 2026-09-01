@@ -75,10 +75,10 @@ const navItems: NavGroup[] = [
       { title: 'Location', url: '/locations', icon: MapPinIcon },
     ],
   },
-  {
-    title: 'Reports',
-    items: [{ title: 'Readiness Report', url: '/' }],
-  },
+  // {
+  //   title: 'Reports',
+  //   items: [{ title: 'Readiness Report', url: '/' }],
+  // },
   // {
   //   title: 'Future Modules',
   //   items: [
@@ -134,7 +134,7 @@ export function AppSidebar() {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
   const { user } = useAuth()
 
-  const isTrainee = user?.role === 'trainee'
+  const isTrainee = user!.role?.id === 'trainee'
 
   return (
     <Sidebar collapsible="icon">

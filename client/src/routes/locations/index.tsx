@@ -29,10 +29,12 @@ import { ActionMenu } from '@/components/table/action-menu'
 import { toast } from '@/components/ui/toast'
 import { BlockingLoaderOverlay } from '@/components/loaders/BlockingLoader'
 import PageCard from '@/components/layout/PageCard'
+import { protectRouteBeforeLoad } from '@/lib/utils'
 
 export const Route = createFileRoute('/locations/')({
   component: RouteComponent,
   pendingComponent: FullPageSpinner,
+  beforeLoad: protectRouteBeforeLoad('location', 'view'),
   errorComponent: ({ error }) => (
     <ErrorAlert error={error} title="Failed to Load Locations" />
   ),

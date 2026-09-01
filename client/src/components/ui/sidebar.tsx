@@ -1,5 +1,4 @@
 'use client'
-
 import * as React from 'react'
 import { mergeProps } from '@base-ui/react/merge-props'
 import { useRender } from '@base-ui/react/use-render'
@@ -135,7 +134,9 @@ function SidebarProvider({
             '--sidebar-width': SIDEBAR_WIDTH,
             '--sidebar-width-icon': SIDEBAR_WIDTH_ICON,
             display: 'grid',
-            gridTemplateColumns: isMobile ? 'minmax(0, 1fr)' : 'auto minmax(0, 1fr)',
+            gridTemplateColumns: isMobile
+              ? 'minmax(0, 1fr)'
+              : 'auto minmax(0, 1fr)',
             ...style,
           } as React.CSSProperties
         }

@@ -21,7 +21,7 @@ export const medicalStatusEnum = pgEnum("medical_status", [
   "unfit",
   "pending",
 ]);
-export const roleEnum = pgEnum("role", ["admin", "instructor", "trainee"]);
+
 export const mediaStatusEnum = pgEnum("media_status", [
   "draft",
   "active",
@@ -41,7 +41,7 @@ export const userTable = snakeCase.table("user", {
   username: varchar({ length: 60 }).notNull().unique(),
   email: varchar({ length: 255 }).unique(),
   name: varchar({ length: 255 }),
-  role: roleEnum(),
+  role: varchar(),
   // null password represents a user that has not set a password yet
   password: varchar(),
   lastLoginAt: timestamp(),

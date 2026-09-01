@@ -1,5 +1,6 @@
 import db from "#/db/db.js";
 import { personnelTable, userTable } from "#/db/schema.js";
+import { DEFAULT_TRAINEE_ROLE } from "#/config/roles.js";
 import { protectedProcedure, router } from "#/trpc.js";
 import { TRPCError } from "@trpc/server";
 import { desc, eq } from "drizzle-orm";
@@ -133,7 +134,7 @@ async function createLinkedUser(
       name: `${input.firstName} ${input.lastName}`,
       password,
       isActive: true,
-      role: "trainee",
+      role: DEFAULT_TRAINEE_ROLE,
     },
     tx,
   );

@@ -6,15 +6,14 @@ import bcrypt from "bcrypt";
 import { and, eq, ne, sql } from "drizzle-orm";
 import { z } from "zod";
 import userService from "./user.service.js";
-
-const roleSchema = z.enum(["admin", "instructor", "trainee"]).nullable();
+import roleService from "../role/role.service.js";
 
 const createSchema = z.object({
   username: z.string().trim().min(1).max(60),
   password: z.string().min(1),
   isActive: z.boolean().default(true),
   name: z.string().trim().max(255).nullable().optional(),
-  role: roleSchema.optional(),
+  role: z.string().optional(),
 });
 
 const updateSchema = z.object({
@@ -23,7 +22,7 @@ const updateSchema = z.object({
   password: z.string().optional(),
   isActive: z.boolean(),
   name: z.string().trim().max(255).nullable().optional(),
-  role: roleSchema.optional(),
+  role: z.string().optional(),
 });
 
 const deleteSchema = z.object({
@@ -36,7 +35,18 @@ async function hashPassword(password: string) {
 
 const userRouter = router({
   getMyProfile: protectedProcedure.query(async ({ ctx }) => {
-    return userService.getById(ctx.user.id);
+    const user = await userService.getById(ctx.user.id);
+    if (!user) {
+      throw new TRPCError({
+        code: "UNAUTHORIZED",
+        message: "You are not authorized to access this resource",
+      });
+    }
+
+    return {
+      ...user,
+      role: roleService.getById(user.role || ""),
+    };
   }),
 
   getAll: protectedProcedure.query(async () => {
@@ -66,8 +76,6 @@ const userRouter = router({
       },
       orderBy: { id: "desc" },
     });
-
-    console.timeEnd("getAllUsers");
 
     return {
       items: users,

@@ -2,6 +2,8 @@ import db, { type DBTransaction } from "#/db/db.js";
 import { userTable } from "#/db/schema.js";
 import bcrypt from "bcrypt";
 import { eq } from "drizzle-orm";
+import roleService from "../role/role.service.js";
+import { TRPCError } from "@trpc/server";
 
 type TCreateUser = {
   username: string;
@@ -9,7 +11,7 @@ type TCreateUser = {
   email?: string;
   name: string;
   isActive: boolean;
-  role?: "trainee" | "instructor" | "admin";
+  role: string;
 };
 
 const hashPassword = async (password: string) => {
@@ -22,6 +24,9 @@ const comparePassword = async (password: string, hash: string) => {
 
 class UserService {
   async createUser(values: TCreateUser, tx?: DBTransaction) {
+    if (!roleService.getById(values.role)) {
+      throw new TRPCError({ code: "BAD_REQUEST", message: "Role not found" });
+    }
     const user = await (tx ?? db)
       .insert(userTable)
       .values({
@@ -41,6 +46,9 @@ class UserService {
     values: Partial<TCreateUser>,
     tx?: DBTransaction,
   ) {
+    if (values.role && !roleService.getById(values.role)) {
+      throw new TRPCError({ code: "BAD_REQUEST", message: "Role not found" });
+    }
     await (tx ?? db)
       .update(userTable)
       .set({
@@ -57,17 +65,42 @@ class UserService {
       .returning();
   }
 
-  async getByUserPassword(username: string, password: string) {
+  async validateCredintials(username: string, password: string) {
     const [user] = await db
-      .select()
+      .select({
+        id: userTable.id,
+        password: userTable.password,
+        active: userTable.isActive,
+      })
       .from(userTable)
       .where(eq(userTable.username, username))
       .limit(1);
-    if (!user) return null;
+
+    if (!user) {
+      throw new TRPCError({
+        code: "UNAUTHORIZED",
+        message: "Invalid username or password",
+      });
+    }
 
     const isValid =
       user.password && (await comparePassword(password, user.password));
-    return isValid ? user : null;
+
+    if (!isValid) {
+      throw new TRPCError({
+        code: "UNAUTHORIZED",
+        message: "Invalid username or password",
+      });
+    }
+
+    if (!user.active) {
+      throw new TRPCError({
+        code: "UNAUTHORIZED",
+        message: "Your account is not active",
+      });
+    }
+
+    return user.id;
   }
 
   async getById(id: number) {

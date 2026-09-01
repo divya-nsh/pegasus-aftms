@@ -10,10 +10,9 @@ import z from "zod";
 import { TRPCError } from "@trpc/server";
 import userRouter from "./modules/user/user.router.js";
 import db from "./db/db.js";
-import { userTable } from "./db/schema.js";
-import { eq } from "drizzle-orm";
-import bcrypt from "bcrypt";
 import mediaRouter from "./modules/media/media.router.js";
+import roleRouter from "./modules/role/role.router.js";
+import userService from "./modules/user/user.service.js";
 
 export const appRouter = router({
   hello: protectedProcedure.query(() => {
@@ -26,6 +25,7 @@ export const appRouter = router({
   missions: missionRouter,
   schedules: scheduleRouter,
   users: userRouter,
+  roles: roleRouter,
   media: mediaRouter,
   auth: router({
     me: publicProcedure.query(({ ctx }) => ctx.user),
@@ -37,48 +37,22 @@ export const appRouter = router({
         }),
       )
       .mutation(async ({ ctx, input }) => {
-        const [user] = await db
-          .select()
-          .from(userTable)
-          .where(eq(userTable.username, input.username))
-          .limit(1);
+        const userId = await userService.validateCredintials(
+          input.username,
+          input.password,
+        );
 
-        if (user && !user.password) {
-          throw new TRPCError({
-            code: "UNAUTHORIZED",
-            message: "Please Setup your account password first",
-          });
-        }
+        const user = (await userService.getById(userId))!;
 
-        const passwordMatches = user
-          ? await bcrypt.compare(input.password, user.password!)
-          : false;
+        await ctx.login({
+          id: user.id,
+          username: user.username,
+          role: user.role,
+          name: user.name || user.username,
+          personnelId: user.personnel[0]?.id ?? null,
+        });
 
-        if (!user || !passwordMatches) {
-          throw new TRPCError({
-            code: "UNAUTHORIZED",
-            message: "Invalid username or password",
-          });
-        }
-
-        if (!user.isActive) {
-          throw new TRPCError({
-            code: "UNAUTHORIZED",
-            message: "Your account is not active",
-          });
-        }
-
-        await db
-          .update(userTable)
-          .set({ lastLoginAt: new Date() })
-          .where(eq(userTable.id, user.id));
-
-        await ctx.login({ id: user.id, username: user.username });
-
-        return {
-          success: true,
-          user: { id: user.id, username: user.username },
-        };
+        return { success: true };
       }),
     logout: publicProcedure.mutation(async ({ ctx }) => {
       await ctx.logout();

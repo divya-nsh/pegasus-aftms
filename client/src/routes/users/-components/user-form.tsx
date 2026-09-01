@@ -5,7 +5,11 @@ import {
 import { getErrorMessage } from '@/lib/utils'
 import trpc, { trpcClient } from '@/trpc'
 import { revalidateLogic } from '@tanstack/react-form'
-import { useMutation, useQueryClient } from '@tanstack/react-query'
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
 import { useMemo } from 'react'
 import toast from 'react-hot-toast'
@@ -19,8 +23,6 @@ export type LinkedPersonnel = {
   personnelType: string
 }
 
-const roleEnum = z.enum(['admin', 'instructor', 'trainee'])
-
 function createSchema(mode: 'create' | 'edit') {
   return z.object({
     username: z.string().trim().min(1, 'Required').max(60),
@@ -30,17 +32,11 @@ function createSchema(mode: 'create' | 'edit') {
         : z.string().trim(),
     isActive: z.boolean(),
     name: z.string(),
-    role: roleEnum.nullable(),
+    role: z.string(),
   })
 }
 
 export type UserFormData = z.infer<ReturnType<typeof createSchema>>
-
-const roleOptions = [
-  { label: 'Admin', value: 'admin' },
-  { label: 'Instructor', value: 'instructor' },
-  { label: 'Trainee', value: 'trainee' },
-]
 
 function personnelLabel(person: LinkedPersonnel) {
   const name = [person.firstName, person.lastName].filter(Boolean).join(' ')
@@ -55,7 +51,7 @@ export const defaultUserFormData: UserFormData = {
   username: '',
   password: '',
   isActive: true,
-  role: null,
+  role: '',
   name: '',
 }
 
@@ -73,6 +69,7 @@ export default function UserForm({
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const schema = useMemo(() => createSchema(mode), [mode])
+  const rolesQuery = useSuspenseQuery(trpc.roles.getOptions.queryOptions())
 
   const form = useAppForm({
     defaultValues: initialFormData,
@@ -155,7 +152,7 @@ export default function UserForm({
           <f.CBasicSelect
             label="Role"
             placeholder="Select role"
-            options={roleOptions}
+            options={rolesQuery.data}
             emptyAsNull
           />
         )}

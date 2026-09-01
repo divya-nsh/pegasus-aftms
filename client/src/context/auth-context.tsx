@@ -1,35 +1,18 @@
 import FullPageSpinner from '@/components/loaders/page-loader'
 import { trpc } from '@/trpc'
+import type { TrpcRouterOutputs } from '@/trpc'
 import { useQuery } from '@tanstack/react-query'
-import { createContext, useContext } from 'react'
+import { createContext, useCallback, useContext } from 'react'
+import type { RoleModule, ModuleAction } from 'server/types/role'
 
-type AuthUser = {
-  id: number
-  username: string
-  name: string | null
-  role: 'admin' | 'instructor' | 'trainee' | null
-  personnel: {
-    id: number
-    imageId: number | null
-    code: string | null
-    firstName: string | null
-    lastName: string | null
-    personnelType: 'instructor' | 'pilot' | 'trainee'
-  }[]
-}
+type AuthUser = TrpcRouterOutputs['users']['getMyProfile']
 
 export type AuthContextType = {
   user?: AuthUser | null
-  profile?: {
-    id: number
-    imageId: number | null
-    code: string | null
-    firstName: string | null
-    lastName: string | null
-    personnelType: 'instructor' | 'pilot' | 'trainee'
-  }
+  profile?: AuthUser['personnel'][number]
   isAuthenticated: boolean
   refetch: () => void
+  isUserCan: (module: RoleModule, action: ModuleAction) => boolean
 }
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
@@ -39,6 +22,19 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     refetch,
     isPending,
   } = useQuery(trpc.users.getMyProfile.queryOptions())
+
+  const isUserCan = useCallback(
+    (module: RoleModule, action: ModuleAction) => {
+      if (user?.role?.isAdmin) return true
+      return (
+        user?.role?.permissions.some(
+          (permission) =>
+            permission.module === module && permission.actions.includes(action),
+        ) ?? false
+      )
+    },
+    [user],
+  )
 
   // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   if (isPending)
@@ -52,7 +48,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, profile, refetch, isAuthenticated: !!user }}
+      value={{ user, profile, refetch, isAuthenticated: !!user, isUserCan }}
     >
       {children}
     </AuthContext.Provider>
@@ -65,4 +61,20 @@ export const useAuth = () => {
     throw new Error('useAuth must be used within an AuthProvider')
   }
   return context
+}
+
+export const PermissionController = ({
+  children,
+  module,
+  action,
+  fallback = null,
+}: {
+  children: React.ReactNode
+  module: RoleModule
+  action: ModuleAction
+  fallback?: React.ReactNode
+}) => {
+  const { isUserCan } = useAuth()
+
+  return isUserCan(module, action) ? children : fallback
 }

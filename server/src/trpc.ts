@@ -1,13 +1,9 @@
 import { initTRPC, TRPCError } from "@trpc/server";
 import type * as trpcExpress from "@trpc/server/adapters/express";
-import type {} from "express-session";
+import type { SessionData } from "express-session";
 import { SESSION_COOKIE_NAME } from "./config/constants.js";
 
-export type SessionUser = {
-  id: number;
-  username: string;
-  personnelId?: number;
-};
+type SessionUser = NonNullable<SessionData["user"]>;
 
 type TrpcContext = {
   user: SessionUser | null;

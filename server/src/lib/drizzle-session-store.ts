@@ -5,14 +5,15 @@ import { and, eq, gt, lt } from "drizzle-orm";
 
 type Database = typeof db;
 
-// IT Represent Session Data Schema Version as its store jsonb schema may change in the future
-const VERSION = 1;
-
 const PRUNE_INTERVAL_IN_MINUTES = 15; // 15 minutes
 // const ONE_DAY = 86400;
 
 export class DrizzleSessionStore extends Store {
-  constructor(private db: Database) {
+  constructor(
+    private db: Database,
+    // IT Represent Session Data Schema Version as its store jsonb schema may change in the future
+    public readonly version: number = 1,
+  ) {
     super();
     setInterval(
       () => this.pruneSessions(),
@@ -32,7 +33,7 @@ export class DrizzleSessionStore extends Store {
           and(
             eq(sessionTable.sid, sid),
             gt(sessionTable.expireAt, new Date()),
-            eq(sessionTable.version, VERSION),
+            eq(sessionTable.version, this.version),
           ),
         )
         .limit(1);
@@ -68,7 +69,7 @@ export class DrizzleSessionStore extends Store {
           //   userId,
           sess,
           expireAt,
-          version: VERSION,
+          version: this.version,
         })
         .onConflictDoUpdate({
           target: sessionTable.sid,
@@ -76,7 +77,7 @@ export class DrizzleSessionStore extends Store {
             // userId,
             sess,
             expireAt,
-            version: VERSION,
+            version: this.version,
           },
         });
 

@@ -21,9 +21,9 @@ const port = 6001;
 
 app.use(
   session({
-    store: new DrizzleSessionStore(db),
+    store: new DrizzleSessionStore(db, 2),
     name: SESSION_COOKIE_NAME,
-    secret: process.env.SESSION_SECRET ?? "dev-in-memory-session-secret",
+    secret: process.env.SESSION_SECRET ?? "random-secret-key",
     resave: false,
     saveUninitialized: false,
     cookie: {

@@ -26,10 +26,12 @@ import { formatDate } from '@/lib/date'
 import FullPageSpinner from '@/components/loaders/page-loader'
 import { toast } from '@/components/ui/toast'
 import { BlockingLoaderOverlay } from '@/components/loaders/BlockingLoader'
+import { protectRouteBeforeLoad } from '@/lib/utils'
 
 export const Route = createFileRoute('/aircraft/')({
   component: RouteComponent,
   pendingComponent: FullPageSpinner,
+  beforeLoad: protectRouteBeforeLoad('aircraft', 'view'),
   errorComponent: ({ error }) => (
     <ErrorAlert error={error} title="Failed to Load Aircraft" />
   ),

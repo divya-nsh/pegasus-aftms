@@ -10,6 +10,8 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AircraftRouteRouteImport } from './routes/aircraft/route'
+import { Route as AreaRouteRouteImport } from './routes/area/route'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MyPersonnelRouteImport } from './routes/my-personnel'
 import { Route as TestRouteImport } from './routes/test'
@@ -22,6 +24,8 @@ import { Route as LocationsIndexRouteImport } from './routes/locations/index'
 import { Route as MissionsIndexRouteImport } from './routes/missions/index'
 import { Route as PersonnelIndexRouteImport } from './routes/personnel/index'
 import { Route as PersonnelCreateRouteImport } from './routes/personnel/create'
+import { Route as RolesIndexRouteImport } from './routes/roles/index'
+import { Route as RolesCreateRouteImport } from './routes/roles/create'
 import { Route as SchedulesIndexRouteImport } from './routes/schedules/index'
 import { Route as SchedulesIdRouteImport } from './routes/schedules/$id'
 import { Route as SchedulesCreateRouteImport } from './routes/schedules/create'
@@ -31,11 +35,22 @@ import { Route as UsersIndexRouteImport } from './routes/users/index'
 import { Route as UsersCreateRouteImport } from './routes/users/create'
 import { Route as AircraftIdEditRouteImport } from './routes/aircraft/$id.edit'
 import { Route as PersonnelIdEditRouteImport } from './routes/personnel/$id.edit'
+import { Route as RolesIdEditRouteImport } from './routes/roles/$id.edit'
 import { Route as UsersIdEditRouteImport } from './routes/users/$id.edit'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AircraftRouteRoute = AircraftRouteRouteImport.update({
+  id: '/aircraft',
+  path: '/aircraft',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AreaRouteRoute = AreaRouteRouteImport.update({
+  id: '/area',
+  path: '/area',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -59,19 +74,19 @@ const UploadRoute = UploadRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const AircraftIndexRoute = AircraftIndexRouteImport.update({
-  id: '/aircraft/',
-  path: '/aircraft/',
-  getParentRoute: () => rootRouteImport,
+  id: '/',
+  path: '/',
+  getParentRoute: () => AircraftRouteRoute,
 } as any)
 const AircraftCreateRoute = AircraftCreateRouteImport.update({
-  id: '/aircraft/create',
-  path: '/aircraft/create',
-  getParentRoute: () => rootRouteImport,
+  id: '/create',
+  path: '/create',
+  getParentRoute: () => AircraftRouteRoute,
 } as any)
 const AreaIndexRoute = AreaIndexRouteImport.update({
-  id: '/area/',
-  path: '/area/',
-  getParentRoute: () => rootRouteImport,
+  id: '/',
+  path: '/',
+  getParentRoute: () => AreaRouteRoute,
 } as any)
 const InstructorDashboardIndexRoute =
   InstructorDashboardIndexRouteImport.update({
@@ -97,6 +112,16 @@ const PersonnelIndexRoute = PersonnelIndexRouteImport.update({
 const PersonnelCreateRoute = PersonnelCreateRouteImport.update({
   id: '/personnel/create',
   path: '/personnel/create',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RolesIndexRoute = RolesIndexRouteImport.update({
+  id: '/roles/',
+  path: '/roles/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RolesCreateRoute = RolesCreateRouteImport.update({
+  id: '/roles/create',
+  path: '/roles/create',
   getParentRoute: () => rootRouteImport,
 } as any)
 const SchedulesIndexRoute = SchedulesIndexRouteImport.update({
@@ -135,13 +160,18 @@ const UsersCreateRoute = UsersCreateRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const AircraftIdEditRoute = AircraftIdEditRouteImport.update({
-  id: '/aircraft/$id/edit',
-  path: '/aircraft/$id/edit',
-  getParentRoute: () => rootRouteImport,
+  id: '/$id/edit',
+  path: '/$id/edit',
+  getParentRoute: () => AircraftRouteRoute,
 } as any)
 const PersonnelIdEditRoute = PersonnelIdEditRouteImport.update({
   id: '/personnel/$id/edit',
   path: '/personnel/$id/edit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const RolesIdEditRoute = RolesIdEditRouteImport.update({
+  id: '/roles/$id/edit',
+  path: '/roles/$id/edit',
   getParentRoute: () => rootRouteImport,
 } as any)
 const UsersIdEditRoute = UsersIdEditRouteImport.update({
@@ -152,12 +182,15 @@ const UsersIdEditRoute = UsersIdEditRouteImport.update({
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/aircraft': typeof AircraftRouteRouteWithChildren
+  '/area': typeof AreaRouteRouteWithChildren
   '/login': typeof LoginRoute
   '/my-personnel': typeof MyPersonnelRoute
   '/test': typeof TestRoute
   '/upload': typeof UploadRoute
   '/aircraft/create': typeof AircraftCreateRoute
   '/personnel/create': typeof PersonnelCreateRoute
+  '/roles/create': typeof RolesCreateRoute
   '/schedules/$id': typeof SchedulesIdRoute
   '/schedules/create': typeof SchedulesCreateRoute
   '/trainee-dashboard/$id': typeof TraineeDashboardIdRoute
@@ -168,11 +201,13 @@ export interface FileRoutesByFullPath {
   '/locations/': typeof LocationsIndexRoute
   '/missions/': typeof MissionsIndexRoute
   '/personnel/': typeof PersonnelIndexRoute
+  '/roles/': typeof RolesIndexRoute
   '/schedules/': typeof SchedulesIndexRoute
   '/trainee-dashboard/': typeof TraineeDashboardIndexRoute
   '/users/': typeof UsersIndexRoute
   '/aircraft/$id/edit': typeof AircraftIdEditRoute
   '/personnel/$id/edit': typeof PersonnelIdEditRoute
+  '/roles/$id/edit': typeof RolesIdEditRoute
   '/users/$id/edit': typeof UsersIdEditRoute
 }
 export interface FileRoutesByTo {
@@ -183,6 +218,7 @@ export interface FileRoutesByTo {
   '/upload': typeof UploadRoute
   '/aircraft/create': typeof AircraftCreateRoute
   '/personnel/create': typeof PersonnelCreateRoute
+  '/roles/create': typeof RolesCreateRoute
   '/schedules/$id': typeof SchedulesIdRoute
   '/schedules/create': typeof SchedulesCreateRoute
   '/trainee-dashboard/$id': typeof TraineeDashboardIdRoute
@@ -193,22 +229,27 @@ export interface FileRoutesByTo {
   '/locations': typeof LocationsIndexRoute
   '/missions': typeof MissionsIndexRoute
   '/personnel': typeof PersonnelIndexRoute
+  '/roles': typeof RolesIndexRoute
   '/schedules': typeof SchedulesIndexRoute
   '/trainee-dashboard': typeof TraineeDashboardIndexRoute
   '/users': typeof UsersIndexRoute
   '/aircraft/$id/edit': typeof AircraftIdEditRoute
   '/personnel/$id/edit': typeof PersonnelIdEditRoute
+  '/roles/$id/edit': typeof RolesIdEditRoute
   '/users/$id/edit': typeof UsersIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/aircraft': typeof AircraftRouteRouteWithChildren
+  '/area': typeof AreaRouteRouteWithChildren
   '/login': typeof LoginRoute
   '/my-personnel': typeof MyPersonnelRoute
   '/test': typeof TestRoute
   '/upload': typeof UploadRoute
   '/aircraft/create': typeof AircraftCreateRoute
   '/personnel/create': typeof PersonnelCreateRoute
+  '/roles/create': typeof RolesCreateRoute
   '/schedules/$id': typeof SchedulesIdRoute
   '/schedules/create': typeof SchedulesCreateRoute
   '/trainee-dashboard/$id': typeof TraineeDashboardIdRoute
@@ -219,23 +260,28 @@ export interface FileRoutesById {
   '/locations/': typeof LocationsIndexRoute
   '/missions/': typeof MissionsIndexRoute
   '/personnel/': typeof PersonnelIndexRoute
+  '/roles/': typeof RolesIndexRoute
   '/schedules/': typeof SchedulesIndexRoute
   '/trainee-dashboard/': typeof TraineeDashboardIndexRoute
   '/users/': typeof UsersIndexRoute
   '/aircraft/$id/edit': typeof AircraftIdEditRoute
   '/personnel/$id/edit': typeof PersonnelIdEditRoute
+  '/roles/$id/edit': typeof RolesIdEditRoute
   '/users/$id/edit': typeof UsersIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/aircraft'
+    | '/area'
     | '/login'
     | '/my-personnel'
     | '/test'
     | '/upload'
     | '/aircraft/create'
     | '/personnel/create'
+    | '/roles/create'
     | '/schedules/$id'
     | '/schedules/create'
     | '/trainee-dashboard/$id'
@@ -246,11 +292,13 @@ export interface FileRouteTypes {
     | '/locations/'
     | '/missions/'
     | '/personnel/'
+    | '/roles/'
     | '/schedules/'
     | '/trainee-dashboard/'
     | '/users/'
     | '/aircraft/$id/edit'
     | '/personnel/$id/edit'
+    | '/roles/$id/edit'
     | '/users/$id/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -261,6 +309,7 @@ export interface FileRouteTypes {
     | '/upload'
     | '/aircraft/create'
     | '/personnel/create'
+    | '/roles/create'
     | '/schedules/$id'
     | '/schedules/create'
     | '/trainee-dashboard/$id'
@@ -271,21 +320,26 @@ export interface FileRouteTypes {
     | '/locations'
     | '/missions'
     | '/personnel'
+    | '/roles'
     | '/schedules'
     | '/trainee-dashboard'
     | '/users'
     | '/aircraft/$id/edit'
     | '/personnel/$id/edit'
+    | '/roles/$id/edit'
     | '/users/$id/edit'
   id:
     | '__root__'
     | '/'
+    | '/aircraft'
+    | '/area'
     | '/login'
     | '/my-personnel'
     | '/test'
     | '/upload'
     | '/aircraft/create'
     | '/personnel/create'
+    | '/roles/create'
     | '/schedules/$id'
     | '/schedules/create'
     | '/trainee-dashboard/$id'
@@ -296,37 +350,40 @@ export interface FileRouteTypes {
     | '/locations/'
     | '/missions/'
     | '/personnel/'
+    | '/roles/'
     | '/schedules/'
     | '/trainee-dashboard/'
     | '/users/'
     | '/aircraft/$id/edit'
     | '/personnel/$id/edit'
+    | '/roles/$id/edit'
     | '/users/$id/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AircraftRouteRoute: typeof AircraftRouteRouteWithChildren
+  AreaRouteRoute: typeof AreaRouteRouteWithChildren
   LoginRoute: typeof LoginRoute
   MyPersonnelRoute: typeof MyPersonnelRoute
   TestRoute: typeof TestRoute
   UploadRoute: typeof UploadRoute
-  AircraftCreateRoute: typeof AircraftCreateRoute
   PersonnelCreateRoute: typeof PersonnelCreateRoute
+  RolesCreateRoute: typeof RolesCreateRoute
   SchedulesIdRoute: typeof SchedulesIdRoute
   SchedulesCreateRoute: typeof SchedulesCreateRoute
   TraineeDashboardIdRoute: typeof TraineeDashboardIdRoute
   UsersCreateRoute: typeof UsersCreateRoute
-  AircraftIndexRoute: typeof AircraftIndexRoute
-  AreaIndexRoute: typeof AreaIndexRoute
   InstructorDashboardIndexRoute: typeof InstructorDashboardIndexRoute
   LocationsIndexRoute: typeof LocationsIndexRoute
   MissionsIndexRoute: typeof MissionsIndexRoute
   PersonnelIndexRoute: typeof PersonnelIndexRoute
+  RolesIndexRoute: typeof RolesIndexRoute
   SchedulesIndexRoute: typeof SchedulesIndexRoute
   TraineeDashboardIndexRoute: typeof TraineeDashboardIndexRoute
   UsersIndexRoute: typeof UsersIndexRoute
-  AircraftIdEditRoute: typeof AircraftIdEditRoute
   PersonnelIdEditRoute: typeof PersonnelIdEditRoute
+  RolesIdEditRoute: typeof RolesIdEditRoute
   UsersIdEditRoute: typeof UsersIdEditRoute
 }
 
@@ -337,6 +394,20 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/aircraft': {
+      id: '/aircraft'
+      path: '/aircraft'
+      fullPath: '/aircraft'
+      preLoaderRoute: typeof AircraftRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/area': {
+      id: '/area'
+      path: '/area'
+      fullPath: '/area'
+      preLoaderRoute: typeof AreaRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -369,24 +440,24 @@ declare module '@tanstack/react-router' {
     }
     '/aircraft/': {
       id: '/aircraft/'
-      path: '/aircraft'
+      path: '/'
       fullPath: '/aircraft/'
       preLoaderRoute: typeof AircraftIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AircraftRouteRoute
     }
     '/aircraft/create': {
       id: '/aircraft/create'
-      path: '/aircraft/create'
+      path: '/create'
       fullPath: '/aircraft/create'
       preLoaderRoute: typeof AircraftCreateRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AircraftRouteRoute
     }
     '/area/': {
       id: '/area/'
-      path: '/area'
+      path: '/'
       fullPath: '/area/'
       preLoaderRoute: typeof AreaIndexRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AreaRouteRoute
     }
     '/instructor-dashboard/': {
       id: '/instructor-dashboard/'
@@ -421,6 +492,20 @@ declare module '@tanstack/react-router' {
       path: '/personnel/create'
       fullPath: '/personnel/create'
       preLoaderRoute: typeof PersonnelCreateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/roles/': {
+      id: '/roles/'
+      path: '/roles'
+      fullPath: '/roles/'
+      preLoaderRoute: typeof RolesIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/roles/create': {
+      id: '/roles/create'
+      path: '/roles/create'
+      fullPath: '/roles/create'
+      preLoaderRoute: typeof RolesCreateRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/schedules/': {
@@ -474,16 +559,23 @@ declare module '@tanstack/react-router' {
     }
     '/aircraft/$id/edit': {
       id: '/aircraft/$id/edit'
-      path: '/aircraft/$id/edit'
+      path: '/$id/edit'
       fullPath: '/aircraft/$id/edit'
       preLoaderRoute: typeof AircraftIdEditRouteImport
-      parentRoute: typeof rootRouteImport
+      parentRoute: typeof AircraftRouteRoute
     }
     '/personnel/$id/edit': {
       id: '/personnel/$id/edit'
       path: '/personnel/$id/edit'
       fullPath: '/personnel/$id/edit'
       preLoaderRoute: typeof PersonnelIdEditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/roles/$id/edit': {
+      id: '/roles/$id/edit'
+      path: '/roles/$id/edit'
+      fullPath: '/roles/$id/edit'
+      preLoaderRoute: typeof RolesIdEditRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/users/$id/edit': {
@@ -496,29 +588,58 @@ declare module '@tanstack/react-router' {
   }
 }
 
+interface AircraftRouteRouteChildren {
+  AircraftCreateRoute: typeof AircraftCreateRoute
+  AircraftIndexRoute: typeof AircraftIndexRoute
+  AircraftIdEditRoute: typeof AircraftIdEditRoute
+}
+
+const AircraftRouteRouteChildren: AircraftRouteRouteChildren = {
+  AircraftCreateRoute: AircraftCreateRoute,
+  AircraftIndexRoute: AircraftIndexRoute,
+  AircraftIdEditRoute: AircraftIdEditRoute,
+}
+
+const AircraftRouteRouteWithChildren = AircraftRouteRoute._addFileChildren(
+  AircraftRouteRouteChildren,
+)
+
+interface AreaRouteRouteChildren {
+  AreaIndexRoute: typeof AreaIndexRoute
+}
+
+const AreaRouteRouteChildren: AreaRouteRouteChildren = {
+  AreaIndexRoute: AreaIndexRoute,
+}
+
+const AreaRouteRouteWithChildren = AreaRouteRoute._addFileChildren(
+  AreaRouteRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AircraftRouteRoute: AircraftRouteRouteWithChildren,
+  AreaRouteRoute: AreaRouteRouteWithChildren,
   LoginRoute: LoginRoute,
   MyPersonnelRoute: MyPersonnelRoute,
   TestRoute: TestRoute,
   UploadRoute: UploadRoute,
-  AircraftCreateRoute: AircraftCreateRoute,
   PersonnelCreateRoute: PersonnelCreateRoute,
+  RolesCreateRoute: RolesCreateRoute,
   SchedulesIdRoute: SchedulesIdRoute,
   SchedulesCreateRoute: SchedulesCreateRoute,
   TraineeDashboardIdRoute: TraineeDashboardIdRoute,
   UsersCreateRoute: UsersCreateRoute,
-  AircraftIndexRoute: AircraftIndexRoute,
-  AreaIndexRoute: AreaIndexRoute,
   InstructorDashboardIndexRoute: InstructorDashboardIndexRoute,
   LocationsIndexRoute: LocationsIndexRoute,
   MissionsIndexRoute: MissionsIndexRoute,
   PersonnelIndexRoute: PersonnelIndexRoute,
+  RolesIndexRoute: RolesIndexRoute,
   SchedulesIndexRoute: SchedulesIndexRoute,
   TraineeDashboardIndexRoute: TraineeDashboardIndexRoute,
   UsersIndexRoute: UsersIndexRoute,
-  AircraftIdEditRoute: AircraftIdEditRoute,
   PersonnelIdEditRoute: PersonnelIdEditRoute,
+  RolesIdEditRoute: RolesIdEditRoute,
   UsersIdEditRoute: UsersIdEditRoute,
 }
 export const routeTree = rootRouteImport
