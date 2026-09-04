@@ -63,7 +63,7 @@ export const useAuth = () => {
   return context
 }
 
-export const PermissionController = ({
+export const AccessControl = ({
   children,
   module,
   action,

@@ -1,5 +1,5 @@
 import { roles } from "#/config/roles.js";
-import type { Module, ModuleAction } from "#/types/role.js";
+import type { RoleModule, ModuleAction } from "#/types/role.js";
 
 class RoleService {
   constructor() {}
@@ -13,7 +13,7 @@ class RoleService {
   }
 
   /** Return The scope of the action if has permission, otherwise return false */
-  canDo(roleId: string, module: Module, action: ModuleAction) {
+  canDo(roleId: string, module: RoleModule, action: ModuleAction) {
     const role = this.getById(roleId);
     if (!role) throw new Error("Role not found");
 
@@ -22,7 +22,7 @@ class RoleService {
         permission.module === module && permission.actions.includes(action),
     );
     if (!scope) return false;
-    return scope;
+    return scope.scope;
   }
 }
 

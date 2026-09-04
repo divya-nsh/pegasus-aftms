@@ -39,6 +39,8 @@ import MissionStatusBadge, {
 } from './-components/mission-stage-bar'
 import PageCard from '@/components/layout/PageCard'
 import RefetchButton from '@/components/table/refresh-button'
+import { AccessControl } from '@/context/auth-context'
+import { DropdownMenuItem } from '@/components/ui/dropdown-menu'
 
 export const Route = createFileRoute('/schedules/')({
   component: RouteComponent,
@@ -66,26 +68,30 @@ const columns: ColumnDef<TTableFeatures, TScheduleListItem>[] = ch.columns([
   ch.display({
     header: '-',
     cell: (info) => {
+      const handleClick = (action: 'edit' | 'view' | 'delete') => () => {
+        info.table.options.meta?.onRowAction?.(action, info.row.id)
+      }
       return (
-        <ActionMenu
-          actions={[
-            {
-              label: 'Edit',
-              icon: <PencilIcon className="h-4 w-4" />,
-              onClick: () => {
-                info.table.options.meta?.onRowAction?.('edit', info.row.id)
-              },
-            },
-            {
-              label: 'Delete',
-              isDestructive: true,
-              icon: <TrashIcon className="h-4 w-4" />,
-              onClick: () => {
-                info.table.options.meta?.onRowAction?.('delete', info.row.id)
-              },
-            },
-          ]}
-        />
+        <ActionMenu>
+          <AccessControl module="schedule" action="view">
+            <DropdownMenuItem onClick={handleClick('view')}>
+              <PencilIcon className="h-4 w-4" />
+              View
+            </DropdownMenuItem>
+          </AccessControl>
+          <AccessControl module="schedule" action="edit">
+            <DropdownMenuItem onClick={handleClick('edit')}>
+              <PencilIcon className="h-4 w-4" />
+              Edit
+            </DropdownMenuItem>
+          </AccessControl>
+          <AccessControl module="schedule" action="delete">
+            <DropdownMenuItem onClick={handleClick('delete')}>
+              <TrashIcon className="h-4 w-4" />
+              Delete
+            </DropdownMenuItem>
+          </AccessControl>
+        </ActionMenu>
       )
     },
     size: 70,
@@ -95,28 +101,9 @@ const columns: ColumnDef<TTableFeatures, TScheduleListItem>[] = ch.columns([
     },
     minSize: 70,
   }),
-  ch.accessor('createdAt', {
-    header: 'Created At',
-    size: 130,
-    cell: (info) => {
-      const value = info.getValue()
-      return (
-        <span className="text-sm" title={formatDate(value, true)}>
-          {formatDate(value, false)}
-        </span>
-      )
-    },
-  }),
   ch.accessor('scheduleNumber', {
     header: 'No',
     size: 140,
-    cell: (info) => info.getValue() || '-',
-  }),
-  ch.accessor('name', {
-    header: 'Schedule',
-  }),
-  ch.accessor('missionName', {
-    header: 'Mission',
     cell: (info) => info.getValue() || '-',
   }),
   ch.accessor('status', {
@@ -131,6 +118,20 @@ const columns: ColumnDef<TTableFeatures, TScheduleListItem>[] = ch.columns([
       return value ? formatDate(value, true) : '-'
     },
   }),
+  ch.accessor('endDateTime', {
+    header: 'End',
+    cell: (info) => {
+      const value = info.getValue()
+      return value ? formatDate(value, true) : '-'
+    },
+  }),
+  ch.accessor('name', {
+    header: 'Schedule',
+  }),
+  ch.accessor('missionName', {
+    header: 'Mission',
+    cell: (info) => info.getValue() || '-',
+  }),
   ch.accessor(
     (row) =>
       [row.instructorFirstName, row.instructorLastName]
@@ -139,14 +140,6 @@ const columns: ColumnDef<TTableFeatures, TScheduleListItem>[] = ch.columns([
     {
       id: 'instructor',
       header: 'Instructor',
-      cell: (info) => info.getValue() || '-',
-    },
-  ),
-  ch.accessor(
-    (row) => [row.pilotFirstName, row.pilotLastName].filter(Boolean).join(' '),
-    {
-      id: 'pilot',
-      header: 'Pilot',
       cell: (info) => info.getValue() || '-',
     },
   ),
@@ -164,14 +157,22 @@ const columns: ColumnDef<TTableFeatures, TScheduleListItem>[] = ch.columns([
     header: 'Area',
     cell: (info) => info.getValue() || '-',
   }),
-  ch.accessor('traineeCount', {
-    header: 'Trainees',
-    size: 100,
+  ch.accessor('createdAt', {
+    header: 'Created At',
+    size: 130,
+    cell: (info) => {
+      const value = info.getValue()
+      return (
+        <span className="text-sm" title={formatDate(value, true)}>
+          {formatDate(value, false)}
+        </span>
+      )
+    },
   }),
 ])
 
 function RouteComponent() {
-  const schedulesQ = useSuspenseQuery(trpc.schedules.getAll.queryOptions())
+  const schedulesQ = useSuspenseQuery(trpc.schedules.getAll.queryOptions({}))
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const [columnFilters, setColumnFilters] = useState<string>('')
@@ -215,14 +216,21 @@ function RouteComponent() {
     },
     meta: {
       onRowAction: (action, rowId) => {
-        if (action === 'edit') {
-          navigate({ to: '/schedules/$id', params: { id: rowId } })
-        } else {
-          const confirm = window.confirm(
-            'Are you sure you want to delete this schedule?',
-          )
-          if (confirm) {
-            deleteMutation.mutate({ toDeleteId: Number(rowId) })
+        switch (action) {
+          case 'edit':
+            navigate({ to: '/schedules/$id/edit', params: { id: rowId } })
+            break
+          case 'view':
+            navigate({ to: '/schedules/$id/view', params: { id: rowId } })
+            break
+          case 'delete': {
+            const confirm = window.confirm(
+              'Are you sure you want to delete this schedule?',
+            )
+            if (confirm) {
+              deleteMutation.mutate({ toDeleteId: Number(rowId) })
+            }
+            break
           }
         }
       },
@@ -244,7 +252,9 @@ function RouteComponent() {
             isPending={schedulesQ.isFetching}
             disabled={schedulesQ.isFetching}
           />
-          <LinkButton to="/schedules/create" newButton />
+          <AccessControl module="schedule" action="create">
+            <LinkButton to="/schedules/create" newButton />
+          </AccessControl>
         </div>
       </div>
       <ErrorAlert error={schedulesQ.error} />

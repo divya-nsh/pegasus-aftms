@@ -27,7 +27,6 @@ import { Route as PersonnelCreateRouteImport } from './routes/personnel/create'
 import { Route as RolesIndexRouteImport } from './routes/roles/index'
 import { Route as RolesCreateRouteImport } from './routes/roles/create'
 import { Route as SchedulesIndexRouteImport } from './routes/schedules/index'
-import { Route as SchedulesIdRouteImport } from './routes/schedules/$id'
 import { Route as SchedulesCreateRouteImport } from './routes/schedules/create'
 import { Route as TraineeDashboardIndexRouteImport } from './routes/trainee-dashboard/index'
 import { Route as TraineeDashboardIdRouteImport } from './routes/trainee-dashboard/$id'
@@ -36,6 +35,8 @@ import { Route as UsersCreateRouteImport } from './routes/users/create'
 import { Route as AircraftIdEditRouteImport } from './routes/aircraft/$id.edit'
 import { Route as PersonnelIdEditRouteImport } from './routes/personnel/$id.edit'
 import { Route as RolesIdEditRouteImport } from './routes/roles/$id.edit'
+import { Route as SchedulesIdEditRouteImport } from './routes/schedules/$id.edit'
+import { Route as SchedulesIdViewRouteImport } from './routes/schedules/$id.view'
 import { Route as UsersIdEditRouteImport } from './routes/users/$id.edit'
 
 const IndexRoute = IndexRouteImport.update({
@@ -129,11 +130,6 @@ const SchedulesIndexRoute = SchedulesIndexRouteImport.update({
   path: '/schedules/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SchedulesIdRoute = SchedulesIdRouteImport.update({
-  id: '/schedules/$id',
-  path: '/schedules/$id',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const SchedulesCreateRoute = SchedulesCreateRouteImport.update({
   id: '/schedules/create',
   path: '/schedules/create',
@@ -174,6 +170,16 @@ const RolesIdEditRoute = RolesIdEditRouteImport.update({
   path: '/roles/$id/edit',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SchedulesIdEditRoute = SchedulesIdEditRouteImport.update({
+  id: '/schedules/$id/edit',
+  path: '/schedules/$id/edit',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SchedulesIdViewRoute = SchedulesIdViewRouteImport.update({
+  id: '/schedules/$id/view',
+  path: '/schedules/$id/view',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const UsersIdEditRoute = UsersIdEditRouteImport.update({
   id: '/users/$id/edit',
   path: '/users/$id/edit',
@@ -191,7 +197,6 @@ export interface FileRoutesByFullPath {
   '/aircraft/create': typeof AircraftCreateRoute
   '/personnel/create': typeof PersonnelCreateRoute
   '/roles/create': typeof RolesCreateRoute
-  '/schedules/$id': typeof SchedulesIdRoute
   '/schedules/create': typeof SchedulesCreateRoute
   '/trainee-dashboard/$id': typeof TraineeDashboardIdRoute
   '/users/create': typeof UsersCreateRoute
@@ -208,6 +213,8 @@ export interface FileRoutesByFullPath {
   '/aircraft/$id/edit': typeof AircraftIdEditRoute
   '/personnel/$id/edit': typeof PersonnelIdEditRoute
   '/roles/$id/edit': typeof RolesIdEditRoute
+  '/schedules/$id/edit': typeof SchedulesIdEditRoute
+  '/schedules/$id/view': typeof SchedulesIdViewRoute
   '/users/$id/edit': typeof UsersIdEditRoute
 }
 export interface FileRoutesByTo {
@@ -219,7 +226,6 @@ export interface FileRoutesByTo {
   '/aircraft/create': typeof AircraftCreateRoute
   '/personnel/create': typeof PersonnelCreateRoute
   '/roles/create': typeof RolesCreateRoute
-  '/schedules/$id': typeof SchedulesIdRoute
   '/schedules/create': typeof SchedulesCreateRoute
   '/trainee-dashboard/$id': typeof TraineeDashboardIdRoute
   '/users/create': typeof UsersCreateRoute
@@ -236,6 +242,8 @@ export interface FileRoutesByTo {
   '/aircraft/$id/edit': typeof AircraftIdEditRoute
   '/personnel/$id/edit': typeof PersonnelIdEditRoute
   '/roles/$id/edit': typeof RolesIdEditRoute
+  '/schedules/$id/edit': typeof SchedulesIdEditRoute
+  '/schedules/$id/view': typeof SchedulesIdViewRoute
   '/users/$id/edit': typeof UsersIdEditRoute
 }
 export interface FileRoutesById {
@@ -250,7 +258,6 @@ export interface FileRoutesById {
   '/aircraft/create': typeof AircraftCreateRoute
   '/personnel/create': typeof PersonnelCreateRoute
   '/roles/create': typeof RolesCreateRoute
-  '/schedules/$id': typeof SchedulesIdRoute
   '/schedules/create': typeof SchedulesCreateRoute
   '/trainee-dashboard/$id': typeof TraineeDashboardIdRoute
   '/users/create': typeof UsersCreateRoute
@@ -267,6 +274,8 @@ export interface FileRoutesById {
   '/aircraft/$id/edit': typeof AircraftIdEditRoute
   '/personnel/$id/edit': typeof PersonnelIdEditRoute
   '/roles/$id/edit': typeof RolesIdEditRoute
+  '/schedules/$id/edit': typeof SchedulesIdEditRoute
+  '/schedules/$id/view': typeof SchedulesIdViewRoute
   '/users/$id/edit': typeof UsersIdEditRoute
 }
 export interface FileRouteTypes {
@@ -282,7 +291,6 @@ export interface FileRouteTypes {
     | '/aircraft/create'
     | '/personnel/create'
     | '/roles/create'
-    | '/schedules/$id'
     | '/schedules/create'
     | '/trainee-dashboard/$id'
     | '/users/create'
@@ -299,6 +307,8 @@ export interface FileRouteTypes {
     | '/aircraft/$id/edit'
     | '/personnel/$id/edit'
     | '/roles/$id/edit'
+    | '/schedules/$id/edit'
+    | '/schedules/$id/view'
     | '/users/$id/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -310,7 +320,6 @@ export interface FileRouteTypes {
     | '/aircraft/create'
     | '/personnel/create'
     | '/roles/create'
-    | '/schedules/$id'
     | '/schedules/create'
     | '/trainee-dashboard/$id'
     | '/users/create'
@@ -327,6 +336,8 @@ export interface FileRouteTypes {
     | '/aircraft/$id/edit'
     | '/personnel/$id/edit'
     | '/roles/$id/edit'
+    | '/schedules/$id/edit'
+    | '/schedules/$id/view'
     | '/users/$id/edit'
   id:
     | '__root__'
@@ -340,7 +351,6 @@ export interface FileRouteTypes {
     | '/aircraft/create'
     | '/personnel/create'
     | '/roles/create'
-    | '/schedules/$id'
     | '/schedules/create'
     | '/trainee-dashboard/$id'
     | '/users/create'
@@ -357,6 +367,8 @@ export interface FileRouteTypes {
     | '/aircraft/$id/edit'
     | '/personnel/$id/edit'
     | '/roles/$id/edit'
+    | '/schedules/$id/edit'
+    | '/schedules/$id/view'
     | '/users/$id/edit'
   fileRoutesById: FileRoutesById
 }
@@ -370,7 +382,6 @@ export interface RootRouteChildren {
   UploadRoute: typeof UploadRoute
   PersonnelCreateRoute: typeof PersonnelCreateRoute
   RolesCreateRoute: typeof RolesCreateRoute
-  SchedulesIdRoute: typeof SchedulesIdRoute
   SchedulesCreateRoute: typeof SchedulesCreateRoute
   TraineeDashboardIdRoute: typeof TraineeDashboardIdRoute
   UsersCreateRoute: typeof UsersCreateRoute
@@ -384,6 +395,8 @@ export interface RootRouteChildren {
   UsersIndexRoute: typeof UsersIndexRoute
   PersonnelIdEditRoute: typeof PersonnelIdEditRoute
   RolesIdEditRoute: typeof RolesIdEditRoute
+  SchedulesIdEditRoute: typeof SchedulesIdEditRoute
+  SchedulesIdViewRoute: typeof SchedulesIdViewRoute
   UsersIdEditRoute: typeof UsersIdEditRoute
 }
 
@@ -515,13 +528,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SchedulesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/schedules/$id': {
-      id: '/schedules/$id'
-      path: '/schedules/$id'
-      fullPath: '/schedules/$id'
-      preLoaderRoute: typeof SchedulesIdRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/schedules/create': {
       id: '/schedules/create'
       path: '/schedules/create'
@@ -578,6 +584,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RolesIdEditRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/schedules/$id/edit': {
+      id: '/schedules/$id/edit'
+      path: '/schedules/$id/edit'
+      fullPath: '/schedules/$id/edit'
+      preLoaderRoute: typeof SchedulesIdEditRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/schedules/$id/view': {
+      id: '/schedules/$id/view'
+      path: '/schedules/$id/view'
+      fullPath: '/schedules/$id/view'
+      preLoaderRoute: typeof SchedulesIdViewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/users/$id/edit': {
       id: '/users/$id/edit'
       path: '/users/$id/edit'
@@ -626,7 +646,6 @@ const rootRouteChildren: RootRouteChildren = {
   UploadRoute: UploadRoute,
   PersonnelCreateRoute: PersonnelCreateRoute,
   RolesCreateRoute: RolesCreateRoute,
-  SchedulesIdRoute: SchedulesIdRoute,
   SchedulesCreateRoute: SchedulesCreateRoute,
   TraineeDashboardIdRoute: TraineeDashboardIdRoute,
   UsersCreateRoute: UsersCreateRoute,
@@ -640,6 +659,8 @@ const rootRouteChildren: RootRouteChildren = {
   UsersIndexRoute: UsersIndexRoute,
   PersonnelIdEditRoute: PersonnelIdEditRoute,
   RolesIdEditRoute: RolesIdEditRoute,
+  SchedulesIdEditRoute: SchedulesIdEditRoute,
+  SchedulesIdViewRoute: SchedulesIdViewRoute,
   UsersIdEditRoute: UsersIdEditRoute,
 }
 export const routeTree = rootRouteImport

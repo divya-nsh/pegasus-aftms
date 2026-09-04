@@ -14,6 +14,7 @@ import { TRPCError } from "@trpc/server";
 import { and, desc, eq, exists, gte, lte, ne, type SQL } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { z } from "zod";
+import roleService from "../role/role.service.js";
 
 const optionalText = z.string().optional();
 const optionalId = z.number().optional().nullable();
@@ -145,16 +146,27 @@ async function replaceTrainees(scheduleId: number, traineeIds: number[]) {
 }
 
 const scheduleRouter = router({
-  getAll: protectedProcedure.query(async ({ ctx }) => {
-    const { isTrainee, personnelId } = await getTraineeScope(ctx.user.id);
+  getAll: protectedProcedure
+    .input(
+      z.object({
+        status: missionStatusSchema.optional(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      const scope = roleService.canDo(ctx.user.role || "", "schedule", "view");
+      if (!scope) {
+        throw new TRPCError({
+          code: "UNAUTHORIZED",
+          message: "You are not authorized to view schedules",
+        });
+      }
 
-    if (isTrainee && personnelId == null) {
-      return { items: [], totalCount: 0 };
-    }
+      const conditions: SQL[] = [];
 
-    const traineeFilter =
-      isTrainee && personnelId != null
-        ? exists(
+      if (scope === "assigned" && ctx.user.personnelId != null) {
+        conditions.push(ne(missionScheduleTable.status, "draft"));
+        conditions.push(
+          exists(
             db
               .select({ id: missionAssignmentTable.id })
               .from(missionAssignmentTable)
@@ -164,111 +176,11 @@ const scheduleRouter = router({
                     missionAssignmentTable.scheduleId,
                     missionScheduleTable.id,
                   ),
-                  eq(missionAssignmentTable.personId, personnelId),
+                  eq(missionAssignmentTable.personId, ctx.user.personnelId),
                 ),
               ),
-          )
-        : undefined;
-
-    const items = await db
-      .select({
-        id: missionScheduleTable.id,
-        scheduleNumber: missionScheduleTable.scheduleNumber,
-        name: missionScheduleTable.name,
-        status: missionScheduleTable.status,
-        startDateTime: missionScheduleTable.startDateTime,
-        endDateTime: missionScheduleTable.endDateTime,
-        remarks: missionScheduleTable.remarks,
-        createdAt: missionScheduleTable.createdAt,
-        updatedAt: missionScheduleTable.updatedAt,
-        missionId: missionScheduleTable.missionId,
-        missionName: missionTable.name,
-        durationMinutes: missionTable.durationMinutes,
-        aircraftName: aircraftTable.name,
-        aircraftTailNumber: aircraftTable.tailNumber,
-        areaName: areaTable.name,
-        instructorFirstName: instructorTable.firstName,
-        instructorLastName: instructorTable.lastName,
-        pilotFirstName: pilotTable.firstName,
-        pilotLastName: pilotTable.lastName,
-      })
-      .from(missionScheduleTable)
-      .leftJoin(
-        missionTable,
-        eq(missionScheduleTable.missionId, missionTable.id),
-      )
-      .leftJoin(
-        aircraftTable,
-        eq(missionScheduleTable.aircraftId, aircraftTable.id),
-      )
-      .leftJoin(areaTable, eq(missionScheduleTable.areaId, areaTable.id))
-      .leftJoin(
-        instructorTable,
-        eq(missionScheduleTable.instructorId, instructorTable.id),
-      )
-      .leftJoin(pilotTable, eq(missionScheduleTable.pilotId, pilotTable.id))
-      .where(traineeFilter)
-      .orderBy(desc(missionScheduleTable.id));
-
-    const assignments = await db
-      .select({
-        scheduleId: missionAssignmentTable.scheduleId,
-      })
-      .from(missionAssignmentTable);
-
-    const countBySchedule = assignments.reduce<Record<number, number>>(
-      (acc, row) => {
-        if (!row.scheduleId) return acc;
-        acc[row.scheduleId] = (acc[row.scheduleId] ?? 0) + 1;
-        return acc;
-      },
-      {},
-    );
-
-    return {
-      items: items.map((item) => ({
-        ...item,
-        traineeCount: countBySchedule[item.id] ?? 0,
-      })),
-      totalCount: items.length,
-    };
-  }),
-
-  getAssigned: protectedProcedure
-    .input(
-      z.object({
-        personId: z.number().optional(),
-        fromDate: z.string().optional(),
-        toDate: z.string().optional(),
-        status: missionStatusSchema.exclude(["draft"]).optional(),
-      }),
-    )
-    .query(async ({ ctx, input }) => {
-      const { isTrainee, personnelId } = await getTraineeScope(ctx.user.id);
-      const assignedPersonId = isTrainee ? personnelId : input.personId;
-
-      if (isTrainee && assignedPersonId == null) {
-        return { items: [], totalCount: 0 };
-      }
-
-      const conditions: SQL[] = [ne(missionScheduleTable.status, "draft")];
-
-      if (assignedPersonId != null) {
-        conditions.push(eq(missionAssignmentTable.personId, assignedPersonId));
-      }
-
-      if (input.fromDate) {
-        const from = toDate(`${input.fromDate}T00:00:00`);
-        if (from) {
-          conditions.push(gte(missionScheduleTable.startDateTime, from));
-        }
-      }
-
-      if (input.toDate) {
-        const to = toDate(`${input.toDate}T23:59:59.999`);
-        if (to) {
-          conditions.push(lte(missionScheduleTable.startDateTime, to));
-        }
+          ),
+        );
       }
 
       if (input.status) {
@@ -277,13 +189,16 @@ const scheduleRouter = router({
 
       const items = await db
         .select({
-          assignmentId: missionAssignmentTable.id,
-          scheduleId: missionScheduleTable.id,
+          id: missionScheduleTable.id,
           scheduleNumber: missionScheduleTable.scheduleNumber,
           name: missionScheduleTable.name,
           status: missionScheduleTable.status,
           startDateTime: missionScheduleTable.startDateTime,
           endDateTime: missionScheduleTable.endDateTime,
+          remarks: missionScheduleTable.remarks,
+          createdAt: missionScheduleTable.createdAt,
+          updatedAt: missionScheduleTable.updatedAt,
+          missionId: missionScheduleTable.missionId,
           missionName: missionTable.name,
           durationMinutes: missionTable.durationMinutes,
           aircraftName: aircraftTable.name,
@@ -291,19 +206,10 @@ const scheduleRouter = router({
           areaName: areaTable.name,
           instructorFirstName: instructorTable.firstName,
           instructorLastName: instructorTable.lastName,
-          personId: missionAssignmentTable.personId,
-          traineeFirstName: traineeTable.firstName,
-          traineeLastName: traineeTable.lastName,
-          traineeCode: traineeTable.code,
-          attendanceStatus: missionAssignmentTable.attendanceStatus,
-          score: missionAssignmentTable.score,
-          result: missionAssignmentTable.result,
+          pilotFirstName: pilotTable.firstName,
+          pilotLastName: pilotTable.lastName,
         })
-        .from(missionAssignmentTable)
-        .innerJoin(
-          missionScheduleTable,
-          eq(missionAssignmentTable.scheduleId, missionScheduleTable.id),
-        )
+        .from(missionScheduleTable)
         .leftJoin(
           missionTable,
           eq(missionScheduleTable.missionId, missionTable.id),
@@ -317,15 +223,12 @@ const scheduleRouter = router({
           instructorTable,
           eq(missionScheduleTable.instructorId, instructorTable.id),
         )
-        .leftJoin(
-          traineeTable,
-          eq(missionAssignmentTable.personId, traineeTable.id),
-        )
-        .where(conditions.length ? and(...conditions) : undefined)
-        .orderBy(desc(missionScheduleTable.startDateTime));
+        .leftJoin(pilotTable, eq(missionScheduleTable.pilotId, pilotTable.id))
+        .where(and(...conditions))
+        .orderBy(desc(missionScheduleTable.id));
 
       return {
-        items,
+        items: items,
         totalCount: items.length,
       };
     }),

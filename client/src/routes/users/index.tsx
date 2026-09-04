@@ -108,7 +108,7 @@ function RouteComponent() {
   const usersQ = useSuspenseQuery(trpc.users.getAll.queryOptions())
   const queryClient = useQueryClient()
   const navigate = useNavigate()
-  const [columnFilters, setColumnFilters] = useState<string>('')
+  const [searchText, setSearchText] = useState<string>('')
 
   const deleteMutation = useMutation({
     mutationFn: ({ toDeleteId }: { toDeleteId: number }) => {
@@ -156,9 +156,9 @@ function RouteComponent() {
       },
     },
     state: {
-      globalFilter: columnFilters,
+      globalFilter: searchText,
     },
-    onGlobalFilterChange: setColumnFilters,
+    onGlobalFilterChange: setSearchText,
     globalFilterFn: 'includesString',
   })
 
@@ -177,8 +177,8 @@ function RouteComponent() {
       <ErrorAlert error={usersQ.error} />
       <div className=" mb-3 flex items-center justify-between">
         <SearchInput
-          value={table.state.globalFilter ?? ''}
-          onValueChange={(value) => table.setGlobalFilter(value)}
+          value={searchText}
+          onValueChange={setSearchText}
           placeholder="Search..."
           className="shadow-none max-w-75"
         />

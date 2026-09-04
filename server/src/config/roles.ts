@@ -16,6 +16,11 @@ export const roles: Role[] = [
         actions: ["view"],
         scope: "assigned",
       },
+      {
+        module: "schedule",
+        actions: ["view"],
+        scope: "assigned",
+      },
     ],
   },
   {

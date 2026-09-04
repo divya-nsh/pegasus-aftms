@@ -145,7 +145,7 @@ export default function ScheduleForm({
       })
       if (!scheduleId) {
         navigate({
-          to: '/schedules/$id',
+          to: '/schedules/$id/edit',
           params: { id: String(result.id) },
         })
       }

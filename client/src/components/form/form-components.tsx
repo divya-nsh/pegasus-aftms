@@ -7,10 +7,12 @@ function SubscribeButton({
   label = 'Save',
   className,
   size,
+  noSubmit = false,
 }: {
   label?: string
   className?: string
   size?: 'sm' | 'lg'
+  noSubmit?: boolean
 }) {
   const form = useFormContext()
 
@@ -21,7 +23,7 @@ function SubscribeButton({
           size={size ?? 'default'}
           type="submit"
           disabled={isSubmitting}
-          onClick={() => form.handleSubmit()}
+          onClick={noSubmit ? undefined : () => form.handleSubmit()}
           className={cn('min-w-20', className)}
         >
           {isSubmitting ? <Spinner className="w-4 h-4 mr-2" /> : null}

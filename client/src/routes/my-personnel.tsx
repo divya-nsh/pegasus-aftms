@@ -4,6 +4,7 @@ import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import PersonnelForm from './personnel/-components/personnel-form'
 import { trpc } from '@/trpc'
+import PageCard from '@/components/layout/PageCard'
 
 export const Route = createFileRoute('/my-personnel')({
   component: RouteComponent,
@@ -18,7 +19,7 @@ function RouteComponent() {
   )
 
   return (
-    <div>
+    <PageCard>
       <PageHeader title="My Personnel" />
       <PersonnelForm
         mode="view"
@@ -47,6 +48,6 @@ function RouteComponent() {
             : null
         }
       />
-    </div>
+    </PageCard>
   )
 }

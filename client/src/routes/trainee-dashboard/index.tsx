@@ -1,37 +1,48 @@
 import ErrorAlert from '@/components/errors/ErrorAlert'
 import PageCard from '@/components/layout/PageCard'
 import FullPageSpinner from '@/components/loaders/page-loader'
-import { TablePagination } from '@/components/table/table-pagination'
-import {
-  AppTable,
-  baseTableOptions,
-  // eslint-disable-next-line import/consistent-type-specifier-style
-  type TTableFeatures,
-} from '@/components/table/table.tsx'
-import { Button } from '@/components/ui/button'
 import { useAuth } from '@/context/auth-context'
 import { formatDate } from '@/lib/date'
+import { cn } from '@/lib/utils'
+import MissionStatusBadge from '@/routes/schedules/-components/mission-stage-bar'
 import trpc from '@/trpc'
 import { useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
-import { createColumnHelper, useTable } from '@tanstack/react-table'
-import type { ColumnDef } from '@tanstack/react-table'
+import { createFileRoute, Link } from '@tanstack/react-router'
+import { format, isToday, startOfDay } from 'date-fns'
 import {
   CalendarClockIcon,
+  CalendarOffIcon,
   CheckCircle2Icon,
-  EyeIcon,
+  Clock3Icon,
   ListTodoIcon,
+  MapPinIcon,
+  PlaneIcon,
+  TrendingUp,
   TrophyIcon,
+  UserIcon,
   UserXIcon,
   XCircleIcon,
 } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import type { ReactNode } from 'react'
 import type { TrpcRouterOutputs } from 'server/router'
-import MissionStatusBadge from '@/routes/schedules/-components/mission-stage-bar'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-
-type StatusFilter = 'all' | 'completed' | 'in_progress' | 'published'
+import { Bar, BarChart, CartesianGrid, XAxis } from 'recharts'
+import {
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+} from '@/components/ui/chart'
+import type { ChartConfig } from '@/components/ui/chart'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
 
 export const Route = createFileRoute('/trainee-dashboard/')({
   component: RouteComponent,
@@ -41,140 +52,8 @@ export const Route = createFileRoute('/trainee-dashboard/')({
   ),
 })
 
-type TAssignedMission =
-  TrpcRouterOutputs['schedules']['getAssigned']['items'][number]
-
-const ATTENDANCE_LABELS: Record<string, string> = {
-  pending: 'Pending',
-  present: 'Present',
-  absent: 'Absent',
-  excused: 'Excused',
-}
-
-const RESULT_LABELS: Record<string, string> = {
-  pending: 'Pending',
-  passed: 'Passed',
-  failed: 'Failed',
-}
-
-const ch = createColumnHelper<TTableFeatures, TAssignedMission>()
-
-const columns: ColumnDef<TTableFeatures, TAssignedMission>[] = ch.columns([
-  ch.display({
-    header: '-',
-    cell: (info) => (
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={() => {
-          info.table.options.meta?.onRowAction?.('view', info.row.id)
-        }}
-      >
-        <EyeIcon />
-      </Button>
-    ),
-    size: 70,
-    id: 'actions',
-    meta: { align: 'center' },
-    minSize: 70,
-  }),
-  ch.accessor('scheduleNumber', {
-    header: 'Schedule No',
-    size: 140,
-    cell: (info) => info.getValue() || '-',
-  }),
-  ch.accessor('name', {
-    header: 'Schedule',
-    cell: (info) => {
-      const row = info.row.original
-      return (
-        <Link
-          to="/trainee-dashboard/$id"
-          params={{ id: String(row.scheduleId) }}
-          className="font-medium text-primary hover:underline"
-        >
-          {info.getValue() || row.missionName || 'View'}
-        </Link>
-      )
-    },
-  }),
-  ch.accessor('missionName', {
-    header: 'Mission',
-    cell: (info) => info.getValue() || '-',
-  }),
-  ch.accessor(
-    (row) =>
-      [row.traineeFirstName, row.traineeLastName].filter(Boolean).join(' '),
-    {
-      id: 'trainee',
-      header: 'Trainee',
-      cell: (info) => {
-        const row = info.row.original
-        const name = info.getValue() || '-'
-        return row.traineeCode ? `${name} (${row.traineeCode})` : name
-      },
-    },
-  ),
-  ch.accessor('status', {
-    header: 'Status',
-    size: 130,
-    cell: (info) => <MissionStatusBadge status={info.getValue()} />,
-  }),
-  ch.accessor('startDateTime', {
-    header: 'Start',
-    cell: (info) => {
-      const value = info.getValue()
-      return value ? formatDate(value, true) : '-'
-    },
-  }),
-  ch.accessor('endDateTime', {
-    header: 'End',
-    cell: (info) => {
-      const value = info.getValue()
-      return value ? formatDate(value, true) : '-'
-    },
-  }),
-  ch.accessor(
-    (row) =>
-      [row.instructorFirstName, row.instructorLastName]
-        .filter(Boolean)
-        .join(' '),
-    {
-      id: 'instructor',
-      header: 'Instructor',
-      cell: (info) => info.getValue() || '-',
-    },
-  ),
-  ch.accessor('aircraftName', {
-    header: 'Aircraft',
-    cell: (info) => {
-      const row = info.row.original
-      if (!row.aircraftName) return '-'
-      return row.aircraftTailNumber
-        ? `${row.aircraftName} (${row.aircraftTailNumber})`
-        : row.aircraftName
-    },
-  }),
-  ch.accessor('areaName', {
-    header: 'Area',
-    cell: (info) => info.getValue() || '-',
-  }),
-  ch.accessor('attendanceStatus', {
-    header: 'Attendance',
-    size: 120,
-    cell: (info) => ATTENDANCE_LABELS[info.getValue()] ?? info.getValue(),
-  }),
-  ch.accessor('result', {
-    header: 'Result',
-    size: 110,
-    cell: (info) => RESULT_LABELS[info.getValue()] ?? info.getValue(),
-  }),
-  ch.accessor('score', {
-    header: 'Score',
-    size: 90,
-    cell: (info) => info.getValue() ?? '0',
-  }),
-])
+type AssignedSchedule =
+  TrpcRouterOutputs['schedules']['getAll']['items'][number]
 
 function traineeDisplayName(user: ReturnType<typeof useAuth>['user']) {
   const person = user?.personnel[0]
@@ -184,145 +63,211 @@ function traineeDisplayName(user: ReturnType<typeof useAuth>['user']) {
   return user?.name || personnelName || user?.username || 'there'
 }
 
+function personName(first?: string | null, last?: string | null) {
+  return [first, last].filter(Boolean).join(' ')
+}
+
+function missionTimeRange(
+  start?: string | Date | null,
+  end?: string | Date | null,
+) {
+  const startTime = start ? formatDate(start, true).split(', ')[1] : null
+  const endTime = end ? formatDate(end, true).split(', ')[1] : null
+  if (!startTime && !endTime) return 'Time not set'
+  if (!endTime) return startTime
+  return `${startTime} – ${endTime}`
+}
+
 function StatCard({
   label,
   hint,
   value,
   icon,
+  tone = 'default',
 }: {
   label: string
   hint: string
   value: string | number
   icon: ReactNode
+  tone?: 'default' | 'success' | 'danger' | 'warning' | 'info'
 }) {
+  const iconTone = {
+    default: 'bg-muted text-muted-foreground',
+    success: 'bg-emerald-600/10 text-emerald-700 dark:text-emerald-400',
+    danger: 'bg-destructive/10 text-destructive',
+    warning: 'bg-amber-500/15 text-amber-800 dark:text-amber-400',
+    info: 'bg-sky-600/10 text-sky-700 dark:text-sky-400',
+  }[tone]
+
   return (
-    <div className="flex items-start justify-between rounded-md border bg-background p-4">
-      <div className="space-y-1">
+    <div className="flex items-start justify-between gap-3 rounded-md border bg-background p-4">
+      <div className="min-w-0 space-y-1">
         <p className="text-sm font-medium text-muted-foreground">{label}</p>
         <p className="text-3xl font-semibold tracking-tight">{value}</p>
         <p className="text-xs text-muted-foreground">{hint}</p>
       </div>
-      <span className="rounded-md bg-muted p-2 text-muted-foreground">
-        {icon}
-      </span>
+      <span className={cn('rounded-md p-2', iconTone)}>{icon}</span>
     </div>
   )
 }
 
-function formatAverageScore(scores: number[]) {
-  if (scores.length === 0) return '—'
-  const average = scores.reduce((sum, score) => sum + score, 0) / scores.length
-  return Number.isInteger(average) ? String(average) : average.toFixed(1)
+function EmptyMissions({
+  title,
+  description,
+}: {
+  title: string
+  description: string
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center rounded-md border border-dashed bg-muted/20 px-4 py-10 text-center">
+      <CalendarOffIcon className="mb-3 size-8 text-muted-foreground" />
+      <p className="font-medium">{title}</p>
+      <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+        {description}
+      </p>
+    </div>
+  )
+}
+
+function MissionCard({
+  mission,
+  compact = false,
+}: {
+  mission: AssignedSchedule
+  compact?: boolean
+}) {
+  const instructor = personName(
+    mission.instructorFirstName,
+    mission.instructorLastName,
+  )
+
+  return (
+    <Link
+      to="/trainee-dashboard/$id"
+      params={{ id: String(mission.id) }}
+      className="block rounded-md border bg-background p-4 transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+    >
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div className="min-w-0 space-y-1">
+          <p className="text-xs text-muted-foreground">
+            {mission.scheduleNumber}
+          </p>
+          <p className="font-medium">{mission.name}</p>
+          {mission.missionName ? (
+            <p className="text-sm text-muted-foreground">
+              {mission.missionName}
+            </p>
+          ) : null}
+        </div>
+        <MissionStatusBadge status={mission.status} />
+      </div>
+
+      {compact ? (
+        <p className="mt-3 text-sm text-muted-foreground">
+          {formatDate(mission.startDateTime ?? '', true)}
+          {mission.aircraftTailNumber ? ` · ${mission.aircraftTailNumber}` : ''}
+        </p>
+      ) : (
+        <div className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
+          <p className="flex items-center gap-2">
+            <Clock3Icon className="size-3.5 shrink-0 text-muted-foreground" />
+            <span>
+              {missionTimeRange(mission.startDateTime, mission.endDateTime)}
+            </span>
+          </p>
+          <p className="flex items-center gap-2">
+            <PlaneIcon className="size-3.5 shrink-0 text-muted-foreground" />
+            <span>
+              {mission.aircraftName || 'Aircraft TBA'}
+              {mission.aircraftTailNumber
+                ? ` (${mission.aircraftTailNumber})`
+                : ''}
+            </span>
+          </p>
+          <p className="flex items-center gap-2">
+            <MapPinIcon className="size-3.5 shrink-0 text-muted-foreground" />
+            <span>{mission.areaName || 'Area TBA'}</span>
+          </p>
+          <p className="flex items-center gap-2">
+            <UserIcon className="size-3.5 shrink-0 text-muted-foreground" />
+            <span>{instructor || 'Instructor TBA'}</span>
+          </p>
+        </div>
+      )}
+    </Link>
+  )
 }
 
 function RouteComponent() {
-  const navigate = useNavigate()
   const { user } = useAuth()
-  const personId = user?.personnel[0]?.id
   const displayName = traineeDisplayName(user)
+  const assignedQ = useSuspenseQuery(trpc.schedules.getAll.queryOptions({}))
 
-  const [statusFilter, setStatusFilter] = useState<StatusFilter>('published')
-  const [fromDate] = useState('')
-  const [toDate] = useState('')
-  const [columnFilters, setColumnFilters] = useState('')
-
-  const assignedQ = useSuspenseQuery(
-    trpc.schedules.getAssigned.queryOptions({
-      personId: personId ?? -1,
-    }),
-  )
-
-  const stats = useMemo(() => {
+  const { stats, todayMissions, upcomingMissions } = useMemo(() => {
     const items = assignedQ.data.items
     const uniqueMissions = new Set(
-      items.map((item) => item.missionName).filter(Boolean),
+      items.map((item) => item.missionId).filter(Boolean),
     ).size
-    const passed = items.filter((item) => item.result === 'passed').length
-    const failed = items.filter((item) => item.result === 'failed').length
-    const notAttended = items.filter(
-      (item) => item.attendanceStatus === 'absent',
+    const notStarted = items.filter(
+      (item) => item.status === 'published',
     ).length
-    const excused = items.filter(
-      (item) => item.attendanceStatus === 'excused',
-    ).length
-    const scores = items
-      .map((item) => item.score)
-      .filter((score): score is number => score != null)
-    const graded = passed + failed
+    const completed = items.filter((item) => item.status === 'completed').length
+
+    const today = items
+      .filter(
+        (item) => item.startDateTime && isToday(new Date(item.startDateTime)),
+      )
+      .sort(
+        (a, b) =>
+          new Date(a.startDateTime ?? 0).getTime() -
+          new Date(b.startDateTime ?? 0).getTime(),
+      )
+
+    const upcoming = items
+      .filter((item) => {
+        if (!item.startDateTime) return false
+        return startOfDay(new Date(item.startDateTime)) > startOfDay(new Date())
+      })
+      .sort(
+        (a, b) =>
+          new Date(a.startDateTime ?? 0).getTime() -
+          new Date(b.startDateTime ?? 0).getTime(),
+      )
+      .slice(0, 5)
 
     return {
-      total: items.length,
-      uniqueMissions,
-      notStarted: items.filter((item) => item.status === 'published').length,
-      completed: items.filter((item) => item.status === 'completed').length,
-      passed,
-      failed,
-      notAttended,
-      excused,
-      averageScore: formatAverageScore(scores),
-      scoredCount: scores.length,
-      graded,
+      stats: {
+        total: items.length,
+        uniqueMissions,
+        notStarted,
+        completed,
+        passed: 0,
+        failed: 0,
+        notAttended: 0,
+        excused: 0,
+        averageScore: 0,
+        scoredCount: 0,
+        graded: 0,
+      },
+      todayMissions: today,
+      upcomingMissions: upcoming,
     }
   }, [assignedQ.data.items])
 
-  const tableItems = useMemo(() => {
-    return assignedQ.data.items.filter((item) => {
-      if (statusFilter !== 'all' && item.status !== statusFilter) return false
-      if (fromDate) {
-        const start = item.startDateTime ? new Date(item.startDateTime) : null
-        if (!start || start < new Date(`${fromDate}T00:00:00`)) return false
-      }
-      if (toDate) {
-        const start = item.startDateTime ? new Date(item.startDateTime) : null
-        if (!start || start > new Date(`${toDate}T23:59:59.999`)) return false
-      }
-      return true
-    })
-  }, [assignedQ.data.items, fromDate, statusFilter, toDate])
-
-  const table = useTable({
-    ...baseTableOptions<TAssignedMission>(),
-    data: tableItems,
-    getRowId: (row) => String(row.assignmentId),
-    columns,
-    initialState: {
-      pagination: {
-        pageIndex: 0,
-        pageSize: 50,
-      },
-    },
-    meta: {
-      onRowAction: (action, rowId) => {
-        const row = tableItems.find(
-          (item) => String(item.assignmentId) === rowId,
-        )
-        if (action === 'view' && row) {
-          navigate({
-            to: '/trainee-dashboard/$id',
-            params: { id: String(row.scheduleId) },
-          })
-        }
-      },
-    },
-    state: {
-      globalFilter: columnFilters,
-    },
-    onGlobalFilterChange: setColumnFilters,
-    globalFilterFn: 'includesString',
-  })
-
   return (
-    <PageCard className="space-y-8">
+    <PageCard className="space-y-8 bg-neutral-50">
       <section className="space-y-4">
-        <div className="border-b pb-3">
+        <div className=" pb-1">
           <p className="text-sm text-muted-foreground">Trainee Dashboard</p>
-          <h1 className="text-lg font-bold tracking-tight">
+          <h1 className="text-xl font-bold tracking-tight">
             Hey, {displayName}
           </h1>
-          {/* <p className="mt-1 text-sm text-muted-foreground">
-            Your assigned schedules, results, attendance, and scores
-          </p> */}
+          <p className="mt-1 text-sm text-muted-foreground">
+            {format(new Date(), 'EEEE, dd MMM yyyy')} · your assigned schedules
+            and results
+          </p>
         </div>
+
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <StatCard
             label="Assigned"
@@ -343,6 +288,7 @@ function RouteComponent() {
             }
             value={stats.passed}
             icon={<CheckCircle2Icon className="size-4" />}
+            tone="success"
           />
           <StatCard
             label="Failed"
@@ -353,12 +299,14 @@ function RouteComponent() {
             }
             value={stats.failed}
             icon={<XCircleIcon className="size-4" />}
+            tone="danger"
           />
           <StatCard
             label="Not attended"
             hint={stats.excused ? `${stats.excused} excused` : 'Marked absent'}
             value={stats.notAttended}
             icon={<UserXIcon className="size-4" />}
+            tone="warning"
           />
           <StatCard
             label="Average score"
@@ -369,78 +317,129 @@ function RouteComponent() {
             }
             value={stats.averageScore}
             icon={<TrophyIcon className="size-4" />}
+            tone="info"
           />
           <StatCard
             label="Completed"
             hint={`${stats.notStarted} still pending`}
             value={stats.completed}
             icon={<CalendarClockIcon className="size-4" />}
+            tone="success"
           />
         </div>
       </section>
 
-      <section className="space-y-4">
-        <div className="border-b pb-2 -mb-1">
-          <h2 className="text-lg font-semibold">Missions</h2>
-          {/* <p className="text-sm text-muted-foreground">
-            Filter and review your assigned missions
-          </p> */}
-        </div>
-        <ErrorAlert error={assignedQ.error} />
-        <div className="flex flex-wrap items-end justify-between gap-3">
-          {/* <div className="flex min-w-0 flex-wrap items-end gap-3">
-            <TextField
-              className="w-44"
-              label="From date"
-              type="date"
-              value={fromDate}
-              onValueChange={setFromDate}
-            />
-            <TextField
-              className="w-44"
-              label="To date"
-              type="date"
-              value={toDate}
-              onValueChange={setToDate}
-            />
-            <SearchInput
-              value={table.state.globalFilter ?? ''}
-              onValueChange={(value) => table.setGlobalFilter(value)}
-              placeholder="Search..."
-              className="max-w-75 shadow-none"
-            />
-            {fromDate || toDate || statusFilter !== 'all' ? (
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => {
-                  setStatusFilter('all')
-                  setFromDate('')
-                  setToDate('')
-                }}
-              >
-                Clear filters
-              </Button>
-            ) : null}
-          </div> */}
-          {/* <ColumnVisibility table={table} /> */}
-        </div>
-        <Tabs
-          value={statusFilter}
-          onValueChange={(value) => {
-            setStatusFilter(value as StatusFilter)
-          }}
-        >
-          <TabsList>
-            <TabsTrigger value="all">All</TabsTrigger>
-            <TabsTrigger value="published">Pending</TabsTrigger>
-            <TabsTrigger value="in_progress">Started</TabsTrigger>
-            <TabsTrigger value="completed">Completed</TabsTrigger>
-          </TabsList>
-        </Tabs>
-        <AppTable table={table} />
-        <TablePagination table={table} />
-      </section>
+      <div className="flex gap-8">
+        <Card className="min-w-[300px] space-y-4 flex-1">
+          <CardHeader>
+            <CardTitle>Today&apos;s missions</CardTitle>
+            <CardDescription>
+              {todayMissions.length
+                ? `${todayMissions.length} scheduled for today`
+                : 'Nothing on the board for today'}
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            {todayMissions.length ? (
+              <ul className="space-y-3">
+                {todayMissions.map((mission) => (
+                  <li key={mission.id}>
+                    <MissionCard mission={mission} />
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <EmptyMissions
+                title="No missions today"
+                description="You do not have any assigned sorties scheduled for today."
+              />
+            )}
+          </CardContent>
+        </Card>
+        <DummyChartCard />
+      </div>
+
+      <div className="flex gap-8 items-start flex-wrap">
+        <Card className="basis-[600px] space-y-4">
+          <CardHeader>
+            <CardTitle>Coming up</CardTitle>
+            <CardDescription>Next assigned missions</CardDescription>
+          </CardHeader>
+          <CardContent>
+            {upcomingMissions.length ? (
+              <ul className="space-y-3">
+                {upcomingMissions.map((mission) => (
+                  <li key={mission.id}>
+                    <MissionCard mission={mission} compact />
+                  </li>
+                ))}
+              </ul>
+            ) : (
+              <EmptyMissions
+                title="Nothing coming up"
+                description="No later missions are assigned yet."
+              />
+            )}
+          </CardContent>
+        </Card>
+      </div>
     </PageCard>
+  )
+}
+
+const chartData = [
+  { month: 'January', desktop: 186, mobile: 80 },
+  { month: 'February', desktop: 305, mobile: 200 },
+  { month: 'March', desktop: 237, mobile: 120 },
+  { month: 'April', desktop: 73, mobile: 190 },
+  { month: 'May', desktop: 209, mobile: 130 },
+  { month: 'June', desktop: 214, mobile: 140 },
+]
+
+const chartConfig = {
+  desktop: {
+    label: 'Desktop',
+    color: '#2563eb',
+  },
+  mobile: {
+    label: 'Mobile',
+    color: '#60a5fa',
+  },
+} satisfies ChartConfig
+
+function DummyChartCard() {
+  return (
+    <Card className="min-w-[600px] flex-1">
+      <CardHeader>
+        <CardTitle>Bar Chart</CardTitle>
+        <CardDescription>January - June 2024</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <ChartContainer config={chartConfig} className="h-70 w-full">
+          <BarChart accessibilityLayer data={chartData}>
+            <CartesianGrid vertical={false} />
+            <XAxis
+              dataKey="month"
+              tickLine={false}
+              tickMargin={10}
+              axisLine={false}
+              tickFormatter={(value) => value.slice(0, 3)}
+            />
+            <ChartTooltip content={<ChartTooltipContent />} />
+            <ChartLegend content={<ChartLegendContent />} />
+            <Bar dataKey="desktop" fill="var(--color-desktop)" radius={4} />
+            <Bar dataKey="mobile" fill="var(--color-mobile)" radius={4} />
+          </BarChart>
+        </ChartContainer>
+        <CardFooter className="flex-col items-start gap-2 text-sm">
+          <div className="flex gap-2 leading-none font-medium">
+            Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
+          </div>
+          <div className="leading-none text-muted-foreground">
+            Showing total visitors for the last 6 months
+          </div>
+        </CardFooter>
+      </CardContent>
+    </Card>
   )
 }

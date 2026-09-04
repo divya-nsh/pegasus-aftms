@@ -23,11 +23,12 @@ export type MenuAction =
   | { type: 'separator'; hidden?: boolean }
 
 type Props = {
-  actions: Array<MenuAction | false | null | undefined>
+  actions?: Array<MenuAction | false | null | undefined>
   className?: string
+  children?: ReactNode
 }
 
-export function ActionMenu({ actions, className }: Props) {
+export function ActionMenu({ actions = [], className, children }: Props) {
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -42,6 +43,7 @@ export function ActionMenu({ actions, className }: Props) {
         <DropdownMenuGroup>
           <DropdownMenuLabel>Actions</DropdownMenuLabel>
           <DropdownMenuSeparator />
+          {children}
           {actions.map((action, index) => {
             if (!action) return null
             if (action.type === 'separator') {

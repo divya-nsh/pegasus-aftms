@@ -46,7 +46,13 @@ function LoginPage() {
 
   return (
     <div className="flex min-h-svh items-center justify-center bg-slate-200 p-4">
-      <div className="w-full max-w-sm border space-y-5 bg-card rounded-lg p-6 shadow-sm">
+      <form
+        onSubmit={(e) => {
+          e.preventDefault()
+          form.handleSubmit()
+        }}
+        className="w-full max-w-sm border space-y-5 bg-card rounded-lg p-6 shadow-sm"
+      >
         <div className="space-y-1">
           <h1 className="text-xl font-semibold">Sign in to your account</h1>
           <p className="text-sm text-muted-foreground">Pegasus AFTMS</p>
@@ -73,9 +79,9 @@ function LoginPage() {
         />
 
         <form.AppForm>
-          <form.SubscribeButton label="Sign in" className="w-full" />
+          <form.SubscribeButton label="Sign in" className="w-full" noSubmit />
         </form.AppForm>
-      </div>
+      </form>
     </div>
   )
 }

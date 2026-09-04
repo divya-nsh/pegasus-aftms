@@ -26,7 +26,7 @@ export function ColumnVisibility<TData extends RowData>({
       >
         <Settings2Icon /> Views
       </DropdownMenuTrigger>
-      <DropdownMenuContent align="end">
+      <DropdownMenuContent align="end" className="w-max">
         <DropdownMenuGroup>
           <DropdownMenuLabel>Toggle Columns</DropdownMenuLabel>
           <DropdownMenuSeparator />
