@@ -78,14 +78,17 @@ export function baseTableOptions<TData extends RowData>() {
 export function AppTable<TData extends RowData>({
   table,
   className,
+  rounded = true,
 }: {
   table: ReactTable<typeof features, TData>
   className?: string
+  rounded?: boolean
 }) {
   return (
     <div
       className={cn(
-        'min-w-0 w-full overflow-hidden border rounded-md',
+        'min-w-0 w-full overflow-hidden border',
+        rounded && 'rounded-md',
         className,
       )}
     >

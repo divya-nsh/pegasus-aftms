@@ -1,4 +1,15 @@
+import { useAppForm } from '@/components/form/tanstack-form'
 import { ActionMenu } from '@/components/table/action-menu'
+import { Button } from '@/components/ui/button'
+import {
+  SheetClose,
+  SheetContent,
+  SheetFooter,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+  Sheet,
+} from '@/components/ui/sheet'
 import {
   Table,
   TableBody,
@@ -132,10 +143,17 @@ function RouteComponent() {
           <h3 className="font-semibold text-sm tracking-wide">
             Basic Information
           </h3>
-          <div className="text-sm text-blue-500 cursor-pointer">Edit</div>
+          <EditBasicInfoSheet>
+            <button
+              type="button"
+              className=" uppercase text-sm text-primary hover:underline active:translate-y-0.5 transition-transform duration-100"
+            >
+              Edit
+            </button>
+          </EditBasicInfoSheet>
         </div>
 
-        <div className="flex items-start gap-6 px-4 py-5">
+        <div className="flex items-start gap-6 px-4 py-5 pb-6">
           <div className="grid flex-1 gap-5 grid-cols-3">
             <KeyValuePair label="Personnel Type" value="Pilot" />
             <KeyValuePair label="Full Name" value="Divyansh Soni" />
@@ -151,6 +169,7 @@ function RouteComponent() {
               label="Address"
               value="123, Main Street, Anytown, USA"
             />
+            <KeyValuePair label="Fitness Status" value="Fit" />
           </div>
 
           <div className="flex h-40 w-36 shrink-0 flex-col items-center justify-center gap-2 rounded-md border border-dashed bg-muted/40 text-muted-foreground">
@@ -159,6 +178,42 @@ function RouteComponent() {
           </div>
         </div>
       </section>
+
+      {/* Basic Information — form fields (compare with key/value above) */}
+      {/* <section className="bg-card rounded-md shadown-sm border">
+        <div className="flex justify-between items-center border-b px-4 py-3">
+          <h3 className="font-semibold text-sm tracking-wide">
+            Basic Information (Form Fields)
+          </h3>
+          <div className="text-sm text-blue-500 cursor-pointer">Edit</div>
+        </div>
+
+        <div className="flex items-start gap-6 px-4 py-5">
+          <div className="grid flex-1 gap-5 grid-cols-3">
+            <TextField readOnly label="Personnel Type" value="Pilot" />
+            <TextField readOnly label="Full Name" value="Divyansh Soni" />
+            <TextField readOnly label="Service ID" value="1234567890" />
+            <TextField readOnly label="Date of Birth" value="12/01/1990" />
+            <TextField readOnly label="Gender" value="Male" />
+            <TextField readOnly label="Date of Joining" value="12/01/2020" />
+            <TextField readOnly label="Unit / Squadron" value="1234567890" />
+            <TextField readOnly label="Rank" value="Captain" />
+            <TextField readOnly label="Phone Number" value="+91 9876543210" />
+            <TextField readOnly label="Email" value="divyansh@gmail.com" />
+            <TextAreaField
+              readOnly
+              className="col-span-2"
+              label="Address"
+              value="123, Main Street, Anytown, USA"
+            />
+          </div>
+
+          <div className="flex h-40 w-36 shrink-0 flex-col items-center justify-center gap-2 rounded-md border border-dashed bg-muted/40 text-muted-foreground">
+            <UserIcon className="h-10 w-10" />
+            <span className="text-xs">Profile photo</span>
+          </div>
+        </div>
+      </section> */}
 
       {/* Medical Information */}
       <section className="bg-card rounded-md shadown-sm border">
@@ -292,5 +347,94 @@ function KeyValuePair({
       </span>
       <span className=" ">{value}</span>
     </div>
+  )
+}
+
+function EditBasicInfoSheet({ children }: { children: React.ReactElement }) {
+  const form = useAppForm({
+    defaultValues: {
+      personnelType: '',
+      batchNo: '',
+      code: '',
+      firstName: '',
+      lastName: '',
+      gender: '',
+      dateOfBirth: '',
+      dateOfJoin: '',
+      rank: '',
+      phone: '',
+      email: '',
+      address: '',
+    },
+  })
+
+  return (
+    <Sheet>
+      <SheetTrigger render={children} />
+      <SheetContent>
+        <SheetHeader className="border-b bg-muted/60">
+          <SheetTitle>Edit Basic Information</SheetTitle>
+        </SheetHeader>
+        <div className="grid gap-4 flex-1 auto-rows-min px-4 overflow-auto">
+          <form.AppField
+            name="personnelType"
+            children={(f) => <f.CTextField label="Personnel Type" />}
+          />
+          <form.AppField
+            name="code"
+            children={(f) => <f.CTextField label="Service ID" />}
+          />
+          <form.AppField
+            name="firstName"
+            children={(f) => <f.CTextField label="First Name" />}
+          />
+          <form.AppField
+            name="lastName"
+            children={(f) => <f.CTextField label="Last Name" />}
+          />
+          <form.AppField
+            name="batchNo"
+            children={(f) => <f.CTextField label="Batch No" />}
+          />
+          <form.AppField
+            name="gender"
+            children={(f) => <f.CTextField label="Gender" />}
+          />
+          <form.AppField
+            name="dateOfBirth"
+            children={(f) => <f.CTextField label="Date of Birth" />}
+          />
+          <form.AppField
+            name="dateOfJoin"
+            children={(f) => <f.CTextField label="Date of Joining" />}
+          />
+          <form.AppField
+            name="rank"
+            children={(f) => <f.CTextField label="Rank" />}
+          />
+          <div className="h-4" /> {/* spacer */}
+          <form.AppField
+            name="phone"
+            children={(f) => <f.CTextField label="Phone Number" />}
+          />
+          <form.AppField
+            name="email"
+            children={(f) => <f.CTextField label="Email" />}
+          />
+          <form.AppField
+            name="address"
+            children={(f) => <f.CTextAreaField label="Address" />}
+          />
+        </div>
+
+        <SheetFooter className="flex gap-2 justify-between flex-row border-t bg-muted/70">
+          <SheetClose render={<Button variant="outline">Close</Button>} />
+
+          <form.AppForm>
+            <form.SubscribeButton />
+          </form.AppForm>
+        </SheetFooter>
+      </SheetContent>
+    </Sheet>
   )
 }

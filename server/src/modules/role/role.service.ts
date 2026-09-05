@@ -22,7 +22,7 @@ class RoleService {
         permission.module === module && permission.actions.includes(action),
     );
     if (!scope) return false;
-    return scope.scope;
+    return scope.scope || "all";
   }
 }
 

@@ -1,14 +1,23 @@
+import { DATE_FORMAT, TIME_FORMAT, WEEKDAY_FORMAT } from '@/config/constants'
 import { format } from 'date-fns'
 
 export const formatDate = (
   date: Date | string,
   includeTime = false,
+  addWeekDay = false,
 ): string => {
   const dateObj = new Date(date)
   if (isNaN(dateObj.getTime())) {
     return 'Invalid date'
   }
-  return format(dateObj, includeTime ? 'dd MMM yyyy, hh:mm a' : 'dd MMM yyyy')
+  const pattern = [
+    addWeekDay ? WEEKDAY_FORMAT : null,
+    DATE_FORMAT,
+    includeTime ? TIME_FORMAT : null,
+  ]
+    .filter(Boolean)
+    .join(', ')
+  return format(dateObj, pattern)
 }
 
 export const toDateTimeLocal = (

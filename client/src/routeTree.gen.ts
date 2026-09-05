@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AircraftRouteRouteImport } from './routes/aircraft/route'
 import { Route as AreaRouteRouteImport } from './routes/area/route'
+import { Route as DateRouteImport } from './routes/date'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MyPersonnelRouteImport } from './routes/my-personnel'
 import { Route as TestRouteImport } from './routes/test'
@@ -52,6 +53,11 @@ const AircraftRouteRoute = AircraftRouteRouteImport.update({
 const AreaRouteRoute = AreaRouteRouteImport.update({
   id: '/area',
   path: '/area',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DateRoute = DateRouteImport.update({
+  id: '/date',
+  path: '/date',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -190,6 +196,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/aircraft': typeof AircraftRouteRouteWithChildren
   '/area': typeof AreaRouteRouteWithChildren
+  '/date': typeof DateRoute
   '/login': typeof LoginRoute
   '/my-personnel': typeof MyPersonnelRoute
   '/test': typeof TestRoute
@@ -219,6 +226,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/date': typeof DateRoute
   '/login': typeof LoginRoute
   '/my-personnel': typeof MyPersonnelRoute
   '/test': typeof TestRoute
@@ -251,6 +259,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/aircraft': typeof AircraftRouteRouteWithChildren
   '/area': typeof AreaRouteRouteWithChildren
+  '/date': typeof DateRoute
   '/login': typeof LoginRoute
   '/my-personnel': typeof MyPersonnelRoute
   '/test': typeof TestRoute
@@ -284,6 +293,7 @@ export interface FileRouteTypes {
     | '/'
     | '/aircraft'
     | '/area'
+    | '/date'
     | '/login'
     | '/my-personnel'
     | '/test'
@@ -313,6 +323,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/date'
     | '/login'
     | '/my-personnel'
     | '/test'
@@ -344,6 +355,7 @@ export interface FileRouteTypes {
     | '/'
     | '/aircraft'
     | '/area'
+    | '/date'
     | '/login'
     | '/my-personnel'
     | '/test'
@@ -376,6 +388,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AircraftRouteRoute: typeof AircraftRouteRouteWithChildren
   AreaRouteRoute: typeof AreaRouteRouteWithChildren
+  DateRoute: typeof DateRoute
   LoginRoute: typeof LoginRoute
   MyPersonnelRoute: typeof MyPersonnelRoute
   TestRoute: typeof TestRoute
@@ -421,6 +434,13 @@ declare module '@tanstack/react-router' {
       path: '/area'
       fullPath: '/area'
       preLoaderRoute: typeof AreaRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/date': {
+      id: '/date'
+      path: '/date'
+      fullPath: '/date'
+      preLoaderRoute: typeof DateRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -640,6 +660,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AircraftRouteRoute: AircraftRouteRouteWithChildren,
   AreaRouteRoute: AreaRouteRouteWithChildren,
+  DateRoute: DateRoute,
   LoginRoute: LoginRoute,
   MyPersonnelRoute: MyPersonnelRoute,
   TestRoute: TestRoute,

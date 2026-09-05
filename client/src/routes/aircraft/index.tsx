@@ -27,6 +27,7 @@ import FullPageSpinner from '@/components/loaders/page-loader'
 import { toast } from '@/components/ui/toast'
 import { BlockingLoaderOverlay } from '@/components/loaders/BlockingLoader'
 import { protectRouteBeforeLoad } from '@/lib/utils'
+import PageCard from '@/components/layout/PageCard'
 
 export const Route = createFileRoute('/aircraft/')({
   component: RouteComponent,
@@ -164,7 +165,7 @@ function RouteComponent() {
   })
 
   return (
-    <div className="px-6 max-w-6xl mx-auto space-y-4">
+    <PageCard>
       <div className="items-center gap-1 border-b mb-4 pb-1 flex justify-between">
         <h1 className="text-xl font-bold">Aircraft</h1>
         <LinkButton to="/aircraft/create" newButton />
@@ -184,6 +185,6 @@ function RouteComponent() {
       <AppTable table={table} />
       <TablePagination table={table} />
       <BlockingLoaderOverlay show={deleteMutation.isPending} />
-    </div>
+    </PageCard>
   )
 }

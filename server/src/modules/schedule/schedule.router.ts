@@ -154,12 +154,12 @@ const scheduleRouter = router({
     )
     .query(async ({ ctx, input }) => {
       const scope = roleService.canDo(ctx.user.role || "", "schedule", "view");
-      if (!scope) {
-        throw new TRPCError({
-          code: "UNAUTHORIZED",
-          message: "You are not authorized to view schedules",
-        });
-      }
+      // if (!scope) {
+      //   throw new TRPCError({
+      //     code: "UNAUTHORIZED",
+      //     message: "You are not authorized to view schedules",
+      //   });
+      // }
 
       const conditions: SQL[] = [];
 

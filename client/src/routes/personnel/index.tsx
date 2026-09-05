@@ -36,6 +36,7 @@ import { toast } from '@/components/ui/toast'
 import { BlockingLoaderOverlay } from '@/components/loaders/BlockingLoader'
 import { getMedicalDisplayStatus } from './-components/personnel-form'
 import { getMediaUrl } from '@/lib/media'
+import PageCard from '@/components/layout/PageCard'
 
 export const Route = createFileRoute('/personnel/')({
   component: RouteComponent,
@@ -225,51 +226,54 @@ function RouteComponent() {
   })
 
   return (
-    <div className="px-6 max-w-6xl mx-auto space-y-4">
-      <div className="items-center gap-1 border-b mb-4 pb-1 flex justify-between">
-        <h1 className="text-xl font-bold">Personnel</h1>
-        <LinkButton to="/personnel/create" newButton />
-      </div>
-      <ErrorAlert error={personnelQ.error} />
-      <div className=" mb-3 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3 min-w-0">
-          <SearchInput
-            value={table.state.globalFilter ?? ''}
-            onValueChange={(value) => table.setGlobalFilter(value)}
-            placeholder="Search..."
-            className="shadow-none max-w-75"
-          />
-          <Select
-            value={typeFilter}
-            onValueChange={(value) =>
-              setTypeFilter(
-                String(value ?? 'all') as
-                  'all' | 'trainee' | 'instructor' | 'pilot',
-              )
-            }
-            items={[...typeFilterOptions]}
-          >
-            <SelectTrigger className="w-40">
-              <SelectValue placeholder="Filter by type" />
-            </SelectTrigger>
-            <SelectContent alignItemWithTrigger={false}>
-              <SelectGroup>
-                {typeFilterOptions.map((option) => (
-                  <SelectItem key={option.value} value={option.value}>
-                    {option.label}
-                  </SelectItem>
-                ))}
-              </SelectGroup>
-            </SelectContent>
-          </Select>
+    <PageCard>
+      <div className="bg-white rounded-sm">
+        <div className="items-center gap-1 mb-4 pb-1 flex justify-between border-b">
+          <h1 className="text-xl font-bold">Personnel</h1>
+          <LinkButton to="/personnel/create" newButton />
         </div>
-        <div className="flex items-center gap-2">
-          <ColumnVisibility table={table} />
+        <ErrorAlert error={personnelQ.error} />
+        <div className=" mb-3 flex items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
+            <SearchInput
+              value={table.state.globalFilter ?? ''}
+              onValueChange={(value) => table.setGlobalFilter(value)}
+              placeholder="Search..."
+              className="shadow-none max-w-75"
+            />
+            <Select
+              value={typeFilter}
+              onValueChange={(value) =>
+                setTypeFilter(
+                  String(value ?? 'all') as
+                    'all' | 'trainee' | 'instructor' | 'pilot',
+                )
+              }
+              items={[...typeFilterOptions]}
+            >
+              <SelectTrigger className="w-40">
+                <SelectValue placeholder="Filter by type" />
+              </SelectTrigger>
+              <SelectContent alignItemWithTrigger={false}>
+                <SelectGroup>
+                  {typeFilterOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
+                </SelectGroup>
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-2">
+            <ColumnVisibility table={table} />
+          </div>
         </div>
+        <AppTable table={table} rounded={false} />
+        <TablePagination table={table} className="py-2 pb-4" />
       </div>
-      <AppTable table={table} />
-      <TablePagination table={table} />
+
       <BlockingLoaderOverlay show={deleteMutation.isPending} />
-    </div>
+    </PageCard>
   )
 }
