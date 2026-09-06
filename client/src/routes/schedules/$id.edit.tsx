@@ -12,7 +12,7 @@ export const Route = createFileRoute('/schedules/$id/edit')({
   component: RouteComponent,
   pendingComponent: FullPageSpinner,
   errorComponent: ({ error }) => (
-    <ErrorAlert error={error} title="Failed to Load Mission Schedule" />
+    <ErrorAlert error={error} title="Failed to Load Event Schedule" />
   ),
 })
 
@@ -26,7 +26,7 @@ function RouteComponent() {
   return (
     <PageCard className="space-y-6">
       <PageHeader
-        title={`Edit Schedule`}
+        title="Edit Event Schedule"
         backTo="/schedules"
         extra={<MissionStatusBadge status={schedule.status} size="md" />}
       />

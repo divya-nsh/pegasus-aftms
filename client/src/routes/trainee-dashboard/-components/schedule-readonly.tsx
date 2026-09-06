@@ -50,7 +50,7 @@ export default function ScheduleReadonly({
         <TextField
           readOnly
           className="col-span-2"
-          label="Mission"
+          label="Event"
           value={schedule.missionName ?? ''}
         />
         <TextField

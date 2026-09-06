@@ -16,98 +16,9 @@ import {
   SidebarRail,
   SidebarSeparator,
 } from '@/components/ui/sidebar'
-import {
-  CalendarClockIcon,
-  GraduationCapIcon,
-  ShieldCheckIcon,
-  MapPinIcon,
-  MapPinnedIcon,
-  PlaneIcon,
-  TargetIcon,
-  UserIcon,
-  UsersIcon,
-} from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
-import type { FileRouteTypes } from '@/routeTree.gen'
 import { useAuth } from '@/context/auth-context'
 import { NavUser } from './nav-user'
-
-type NavGroup = {
-  title: string
-  items: NavItem[]
-}
-
-type NavItem = {
-  title: string
-  url: FileRouteTypes['to']
-  icon?: LucideIcon
-}
-
-const navItems: NavGroup[] = [
-  {
-    title: 'Operations',
-    items: [
-      {
-        title: 'Mission Schedules',
-        url: '/schedules',
-        icon: CalendarClockIcon,
-      },
-      {
-        title: 'Trainee Dashboard',
-        url: '/trainee-dashboard',
-        icon: GraduationCapIcon,
-      },
-      {
-        title: 'Instructor Dashboard',
-        url: '/instructor-dashboard',
-        icon: ShieldCheckIcon,
-      },
-    ],
-  },
-  {
-    title: 'Masters',
-    items: [
-      { title: 'Personnel', url: '/personnel', icon: UsersIcon },
-      { title: 'Missions', url: '/missions', icon: TargetIcon },
-      { title: 'Aircraft', url: '/aircraft', icon: PlaneIcon },
-      { title: 'Area', url: '/area', icon: MapPinnedIcon },
-      { title: 'Users', url: '/users', icon: UserIcon },
-      { title: 'Location', url: '/locations', icon: MapPinIcon },
-    ],
-  },
-  // {
-  //   title: 'Reports',
-  //   items: [{ title: 'Readiness Report', url: '/' }],
-  // },
-  // {
-  //   title: 'Future Modules',
-  //   items: [
-  //     { title: 'Aircraft Type', url: '/aircraft-type' },
-  //     { title: 'Flight Log ', url: '/flight-log' },
-  //     { title: 'User', url: '/user' },
-  //     { title: 'Squadron', url: '/' },
-  //   ],
-  // }
-]
-
-export const traineeNavItems: NavGroup[] = [
-  {
-    title: 'Training',
-    items: [
-      {
-        title: 'Dashboard',
-        url: '/trainee-dashboard',
-        icon: GraduationCapIcon,
-      },
-      {
-        title: 'My Profile',
-        url: '/my-personnel',
-        icon: UserIcon,
-      },
-      { title: 'My Shedules', url: '/schedules', icon: CalendarClockIcon },
-    ],
-  },
-]
+import { traineeNavItems, navItems } from './nav-items'
 
 function isNavActive(pathname: string, url: string) {
   return pathname === url || pathname.startsWith(`${url}/`)

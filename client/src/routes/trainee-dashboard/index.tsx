@@ -273,7 +273,7 @@ function RouteComponent() {
             label="Assigned"
             hint={
               stats.uniqueMissions
-                ? `${stats.uniqueMissions} mission type${stats.uniqueMissions === 1 ? '' : 's'}`
+                ? `${stats.uniqueMissions} event type${stats.uniqueMissions === 1 ? '' : 's'}`
                 : 'Schedules you are part of'
             }
             value={stats.total}

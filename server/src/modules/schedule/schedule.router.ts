@@ -100,7 +100,7 @@ async function getScheduleOrThrow(id: number) {
   if (!row) {
     throw new TRPCError({
       code: "NOT_FOUND",
-      message: "Mission schedule not found",
+      message: "Event schedule not found",
     });
   }
   return row;
@@ -123,7 +123,7 @@ async function getMissionOrThrow(id: number) {
   if (!row) {
     throw new TRPCError({
       code: "NOT_FOUND",
-      message: "Mission not found",
+      message: "Event not found",
     });
   }
   return row;
@@ -283,7 +283,7 @@ const scheduleRouter = router({
       if (!row) {
         throw new TRPCError({
           code: "NOT_FOUND",
-          message: "Mission schedule not found",
+          message: "Event schedule not found",
         });
       }
 
@@ -344,7 +344,7 @@ const scheduleRouter = router({
     if (!created) {
       throw new TRPCError({
         code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to create mission schedule",
+        message: "Failed to create event schedule",
       });
     }
 
@@ -375,7 +375,7 @@ const scheduleRouter = router({
     if (!updated) {
       throw new TRPCError({
         code: "NOT_FOUND",
-        message: "Mission schedule not found",
+        message: "Event schedule not found",
       });
     }
 

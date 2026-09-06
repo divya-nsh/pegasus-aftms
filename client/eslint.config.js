@@ -1,11 +1,11 @@
 //  @ts-check
 import { tanstackConfig } from '@tanstack/eslint-config'
-import reactHooks from 'eslint-plugin-react-hooks';
-import { defineConfig } from 'eslint/config';
+import reactHooks from 'eslint-plugin-react-hooks'
+import { defineConfig } from 'eslint/config'
 
 export default defineConfig([
   ...tanstackConfig,
-   reactHooks.configs.flat['recommended-latest'],
+  reactHooks.configs.flat['recommended-latest'],
   {
     rules: {
       'import/no-cycle': 'off',
@@ -17,6 +17,6 @@ export default defineConfig([
     },
   },
   {
-    ignores: ['eslint.config.js', 'prettier.config.js'],
+    ignores: ['eslint.config.js', 'prettier.config.js', 'src/routeTree.gen.ts'],
   },
 ])

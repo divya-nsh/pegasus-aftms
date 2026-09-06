@@ -46,7 +46,7 @@ export const Route = createFileRoute('/schedules/')({
   component: RouteComponent,
   pendingComponent: FullPageSpinner,
   errorComponent: ({ error }) => (
-    <ErrorAlert error={error} title="Failed to Load Mission Schedules" />
+    <ErrorAlert error={error} title="Failed to Load Event Schedules" />
   ),
 })
 
@@ -102,9 +102,12 @@ const columns: ColumnDef<TTableFeatures, TScheduleListItem>[] = ch.columns([
     minSize: 70,
   }),
   ch.accessor('scheduleNumber', {
-    header: 'No',
+    header: 'Schedule No',
     size: 140,
     cell: (info) => info.getValue() || '-',
+  }),
+  ch.accessor('name', {
+    header: 'Schedule Name',
   }),
   ch.accessor('status', {
     header: 'Status',
@@ -112,47 +115,45 @@ const columns: ColumnDef<TTableFeatures, TScheduleListItem>[] = ch.columns([
     cell: (info) => <MissionStatusBadge status={info.getValue()} size="sm" />,
   }),
   ch.accessor('startDateTime', {
-    header: 'Start',
+    header: 'Start Date',
     cell: (info) => {
       const value = info.getValue()
       return value ? formatDate(value, true) : '-'
     },
   }),
   ch.accessor('endDateTime', {
-    header: 'End',
+    header: 'End Date',
     cell: (info) => {
       const value = info.getValue()
       return value ? formatDate(value, true) : '-'
     },
   }),
-  ch.accessor('name', {
-    header: 'Schedule',
-  }),
-  ch.accessor('missionName', {
-    header: 'Mission',
-    cell: (info) => info.getValue() || '-',
-  }),
-  ch.accessor(
-    (row) =>
-      [row.instructorFirstName, row.instructorLastName]
-        .filter(Boolean)
-        .join(' '),
-    {
-      id: 'instructor',
-      header: 'Instructor',
-      cell: (info) => info.getValue() || '-',
-    },
-  ),
-  ch.accessor('aircraftName', {
-    header: 'Aircraft',
-    cell: (info) => {
-      const row = info.row.original
-      if (!row.aircraftName) return '-'
-      return row.aircraftTailNumber
-        ? `${row.aircraftName} (${row.aircraftTailNumber})`
-        : row.aircraftName
-    },
-  }),
+
+  // ch.accessor('missionName', {
+  //   header: 'Mission',
+  //   cell: (info) => info.getValue() || '-',
+  // }),
+  // ch.accessor(
+  //   (row) =>
+  //     [row.instructorFirstName, row.instructorLastName]
+  //       .filter(Boolean)
+  //       .join(' '),
+  //   {
+  //     id: 'instructor',
+  //     header: 'Instructor',
+  //     cell: (info) => info.getValue() || '-',
+  //   },
+  // ),
+  // ch.accessor('aircraftName', {
+  //   header: 'Aircraft',
+  //   cell: (info) => {
+  //     const row = info.row.original
+  //     if (!row.aircraftName) return '-'
+  //     return row.aircraftTailNumber
+  //       ? `${row.aircraftName} (${row.aircraftTailNumber})`
+  //       : row.aircraftName
+  //   },
+  // }),
   ch.accessor('areaName', {
     header: 'Area',
     cell: (info) => info.getValue() || '-',
@@ -191,13 +192,13 @@ function RouteComponent() {
       queryClient.resetQueries(trpc.schedules.pathFilter())
       toast.add({
         type: 'success',
-        title: 'Schedule Deleted Successfully',
+        title: 'Event schedule deleted successfully',
       })
     },
     onError: (error) => {
       toast.add({
         type: 'error',
-        title: 'Failed to Delete Schedule',
+        title: 'Failed to delete event schedule',
         description: error.message,
       })
     },
@@ -225,7 +226,7 @@ function RouteComponent() {
             break
           case 'delete': {
             const confirm = window.confirm(
-              'Are you sure you want to delete this schedule?',
+              'Are you sure you want to delete this event schedule?',
             )
             if (confirm) {
               deleteMutation.mutate({ toDeleteId: Number(rowId) })
@@ -245,7 +246,7 @@ function RouteComponent() {
   return (
     <PageCard className="space-y-4">
       <div className="items-center gap-1 border-b mb-4 pb-1 flex justify-between">
-        <h1 className="text-xl font-bold">Mission Schedules</h1>
+        <h1 className="text-xl font-bold">Event Schedules</h1>
         <div className="flex items-center gap-2">
           <RefetchButton
             onClick={() => schedulesQ.refetch()}

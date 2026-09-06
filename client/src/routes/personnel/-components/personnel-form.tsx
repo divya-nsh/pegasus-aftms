@@ -18,6 +18,7 @@ import {
   useAppForm,
 } from '@/components/form/tanstack-form'
 import { revalidateLogic } from '@tanstack/react-form'
+import { pilotQualificationOptions } from '@repo/shared'
 
 export type PersonnelType = 'pilot' | 'trainee' | 'instructor'
 export type Gender = 'male' | 'female' | 'other'
@@ -38,8 +39,10 @@ export const defaultPersonnelFormData: PersonnelFormData = {
   lastName: '',
   gender: '' as Gender,
   dateOfBirth: '',
-  dateOfJoin: '',
+  // Defaul to Today Date In Local Timezone
+  dateOfJoin: new Date().toISOString().slice(0, 10),
   rank: '',
+  qualification: '',
   phone: '',
   email: '',
   address: '',
@@ -112,6 +115,7 @@ const schema = z
     isCreateUser: z.boolean().optional(),
     newUserUsername: z.string().optional(),
     newUserPassword: z.string().optional(),
+    qualification: z.string().min(1, 'Required'),
   })
   .superRefine((data, ctx) => {
     if (!data.isCreateUser) return
@@ -324,7 +328,11 @@ export default function PersonnelForm({
           <form.AppField
             name="code"
             children={(f) => (
-              <f.CTextField label="Civil Id" required readOnly={isReadOnly} />
+              <f.CTextField
+                label="Civil/Service Id"
+                required
+                readOnly={isReadOnly}
+              />
             )}
           />
           <form.AppField
@@ -337,6 +345,18 @@ export default function PersonnelForm({
             name="rank"
             children={(f) => (
               <f.CTextField label="Rank" required readOnly={isReadOnly} />
+            )}
+          />
+          <form.AppField
+            name="qualification"
+            children={(f) => (
+              <f.CBasicSelect
+                readOnly={isReadOnly}
+                required
+                label="Qualification"
+                placeholder="Select qualification"
+                options={[...pilotQualificationOptions]}
+              />
             )}
           />
           <form.AppField

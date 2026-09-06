@@ -98,9 +98,12 @@ export class DrizzleSessionStore extends Store {
 
   private async pruneSessions() {
     try {
-      await this.db
+      const deleted = await this.db
         .delete(sessionTable)
         .where(lt(sessionTable.expireAt, new Date()));
+      if (deleted.rowCount) {
+        console.log(`♻️ ${deleted.rowCount} expired sessions were deleted`);
+      }
     } catch (error) {
       console.error("Error pruning sessions:", error);
     }

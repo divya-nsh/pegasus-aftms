@@ -15,6 +15,7 @@ import {
 } from "./modules/media/media.service.js";
 import { serveClient } from "./middleware/serveClient.js";
 import { DrizzleSessionStore } from "./lib/drizzle-session-store.js";
+import { personnelTypeOptions } from "@repo/shared";
 
 const app = express();
 const port = 6001;

@@ -1,9 +1,11 @@
 import TextField, {
   BasicSelectField,
+  DateField,
   TextAreaField,
 } from '@/components/inputs/TextField'
 import type {
   BasicSelectFieldProps,
+  DateFieldProps,
   TextAreaFieldProps,
   TextFieldProps,
 } from '@/components/inputs/TextField'
@@ -115,5 +117,19 @@ export function CCheckbox({ label }: { label: string }) {
       />
       <FieldLabel htmlFor={id}>{label}</FieldLabel>
     </Field>
+  )
+}
+
+export function CDateField({ ...props }: DateFieldProps) {
+  const field = useFieldContext<Date | null>()
+  const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid
+
+  return (
+    <DateField
+      {...props}
+      value={field.state.value ?? null}
+      onChange={field.handleChange}
+      errors={isInvalid ? field.state.meta.errors : undefined}
+    />
   )
 }

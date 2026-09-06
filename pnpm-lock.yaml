@@ -369,6 +369,7 @@ lockfileVersion: '9.0'
 settings:
   autoInstallPeers: true
   excludeLinksFromLockfile: false
+  injectWorkspacePackages: true
 
 importers:
 
@@ -385,6 +386,9 @@ importers:
       '@phosphor-icons/react':
         specifier: ^2.1.10
         version: 2.1.10(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
+      '@repo/shared':
+        specifier: workspace:*
+        version: link:../shared
       '@tailwindcss/vite':
         specifier: ^4.1.18
         version: 4.3.3(vite@8.2.1(@types/node@22.20.1)(esbuild@0.28.1)(jiti@2.7.0)(tsx@4.23.10))
@@ -509,6 +513,9 @@ importers:
       '@libsql/client':
         specifier: ^0.17.4
         version: 0.17.4
+      '@repo/shared':
+        specifier: workspace:*
+        version: link:../shared
       '@trpc/server':
         specifier: ^11.18.0
         version: 11.18.0(typescript@7.0.2)
@@ -591,6 +598,12 @@ importers:
       tsx:
         specifier: ^4.23.10
         version: 4.23.10
+      typescript:
+        specifier: ^7.0.2
+        version: 7.0.2
+
+  shared:
+    devDependencies:
       typescript:
         specifier: ^7.0.2
         version: 7.0.2

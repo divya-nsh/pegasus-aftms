@@ -7,6 +7,8 @@ import BasicSelect from './basic-select'
 import type { BasicSelectProps } from './basic-select'
 import ComboboxWrapper from './combox'
 import type { ComboboxWrapperProps } from './combox'
+import type { DatePickerProps } from './date-picker'
+import DatePicker from './date-picker'
 
 export type TextFieldProps = {
   label: string
@@ -128,6 +130,30 @@ export function ComboboxField<T extends string | number = string>({
       </FieldLabel>
       <ComboboxWrapper {...rest} />
       {error && <FieldError>{error}</FieldError>}
+    </Field>
+  )
+}
+
+export type DateFieldProps = {
+  label: string
+  errors?: Array<{ message?: string } | undefined>
+  required?: boolean
+} & DatePickerProps
+
+export function DateField({
+  label,
+  className,
+  errors,
+  ...rest
+}: DateFieldProps) {
+  const id = useId()
+  return (
+    <Field className={cn(className)} data-invalid={!!errors}>
+      <FieldLabel htmlFor={id} required={rest.required}>
+        {label}
+      </FieldLabel>
+      <DatePicker {...rest} />
+      {errors && <FieldError errors={errors} />}
     </Field>
   )
 }

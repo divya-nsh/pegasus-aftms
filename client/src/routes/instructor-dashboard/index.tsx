@@ -89,14 +89,14 @@ function RouteComponent() {
         </div>
         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
           <StatCard
-            label="Missions today"
+            label="Events today"
             hint="Sorties you are on today"
             value={instructorStats.missionsToday}
             icon={<CalendarClockIcon className="size-4" />}
           />
           <StatCard
-            label="Missions participated"
-            hint="All missions you have been part of"
+            label="Events participated"
+            hint="All events you have been part of"
             value={instructorStats.missionsParticipated}
             icon={<ListTodoIcon className="size-4" />}
           />
@@ -108,7 +108,7 @@ function RouteComponent() {
           />
           <StatCard
             label="In progress"
-            hint="Missions currently flying"
+            hint="Events currently flying"
             value={instructorStats.inProgress}
             icon={<PlaneTakeoffIcon className="size-4" />}
           />
@@ -130,7 +130,7 @@ function RouteComponent() {
       <section className="grid gap-8 lg:grid-cols-5">
         <div className="space-y-4 lg:col-span-3">
           <div className="border-b pb-2">
-            <h2 className="text-lg font-semibold">Today&apos;s missions</h2>
+            <h2 className="text-lg font-semibold">Today&apos;s events</h2>
             <p className="text-sm text-muted-foreground">
               What you are scheduled to fly today
             </p>
@@ -182,7 +182,7 @@ function RouteComponent() {
           <div className="border-b pb-2">
             <h2 className="text-lg font-semibold">Coming up</h2>
             <p className="text-sm text-muted-foreground">
-              Next missions this week
+              Next events this week
             </p>
           </div>
           <ul className="space-y-3">
@@ -224,7 +224,7 @@ function RouteComponent() {
                 <TableHead>Trainee</TableHead>
                 <TableHead>Code</TableHead>
                 <TableHead>Progress</TableHead>
-                <TableHead>Last mission</TableHead>
+                <TableHead>Last event</TableHead>
                 <TableHead>Status</TableHead>
               </TableRow>
             </TableHeader>

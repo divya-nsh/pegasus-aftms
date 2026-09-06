@@ -1,3 +1,4 @@
+import { getMissionType, missionTypes } from "@repo/shared";
 import {
   integer,
   snakeCase,
@@ -61,6 +62,7 @@ export const personnelTable = snakeCase.table("personnel", {
   dateOfBirth: date(),
   dateOfJoin: date(),
   rank: varchar(),
+  qualification: varchar(),
   phone: varchar(),
   email: varchar(),
   address: varchar(),
@@ -96,6 +98,8 @@ export const missionTable = snakeCase.table("mission", {
   description: varchar(),
   aircraftId: integer().references(() => aircraftTable.id),
   durationMinutes: integer().notNull().default(60),
+  // Types are Hardcoded in the Codebase
+  missionType: varchar().notNull().default(missionTypes[0]!.id),
   ...timeStampts,
 });
 

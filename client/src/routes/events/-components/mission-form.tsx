@@ -11,12 +11,12 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import trpc, { trpcClient } from '@/trpc'
-import { revalidateLogic } from '@tanstack/react-form'
 import {
   useMutation,
   useQueryClient,
   useSuspenseQuery,
 } from '@tanstack/react-query'
+import { defaultMissionTypeId, missionTypeOptions } from '@repo/shared'
 import toast from 'react-hot-toast'
 import { z } from 'zod'
 
@@ -25,6 +25,7 @@ const schema = z.object({
   description: z.string(),
   aircraftId: z.number().nullable(),
   durationMinutes: z.number().nullable(),
+  missionType: z.string().min(1, 'Required'),
 })
 
 export type MissionFormData = z.infer<typeof schema>
@@ -47,8 +48,7 @@ export default function MissionForm({
 
   const form = useAppForm({
     defaultValues: initialFormData ?? defaultValues,
-    validationLogic: revalidateLogic(),
-    validators: { onDynamic: schema, onSubmit: schema },
+    validators: { onSubmit: schema },
     onSubmit: ({ value }) => mutation.mutateAsync(value),
     onSubmitInvalid: handleSubmitInvalid,
   })
@@ -60,6 +60,7 @@ export default function MissionForm({
         description: data.description,
         aircraftId: data.aircraftId ? Number(data.aircraftId) : undefined,
         durationMinutes: Number(data.durationMinutes),
+        missionType: data.missionType,
       }
       if (toEditId) {
         return trpcClient.missions.update.mutate({ ...payload, toEditId })
@@ -68,7 +69,7 @@ export default function MissionForm({
     },
     onSuccess: () => {
       queryClient.resetQueries(trpc.missions.pathFilter())
-      toast.success('Mission Saved Successfully')
+      toast.success('Event saved successfully')
       onOpenChange(false)
     },
     onError: (error) => {
@@ -92,7 +93,7 @@ export default function MissionForm({
       <DialogContent className="sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="uppercase">
-            {mode === 'create' ? 'New Mission' : 'Edit Mission'}
+            {mode === 'create' ? 'New Event' : 'Edit Event'}
           </DialogTitle>
         </DialogHeader>
         <DialogMain className="grid gap-4">
@@ -101,8 +102,19 @@ export default function MissionForm({
             children={(f) => (
               <f.CTextField
                 required
-                label="Mission Name"
+                label="Name"
                 placeholder="e.g. Chopper Fly"
+              />
+            )}
+          />
+          <form.AppField
+            name="missionType"
+            children={(f) => (
+              <f.CBasicSelect
+                required
+                label="Type"
+                placeholder="Select event type"
+                options={missionTypeOptions}
               />
             )}
           />
@@ -111,8 +123,8 @@ export default function MissionForm({
             children={(f) => (
               <f.CTextField
                 valueAsNumber
-                required
                 label="Duration (minutes)"
+                placeholder="Optional"
                 type="number"
               />
             )}
@@ -123,7 +135,7 @@ export default function MissionForm({
               <f.CBasicSelect
                 valueAsNumber
                 label="Aircraft"
-                placeholder="Select optional aircraft"
+                placeholder="Optional"
                 options={aircraftOptions}
               />
             )}
@@ -155,4 +167,5 @@ const defaultValues: MissionFormData = {
   description: '',
   aircraftId: null,
   durationMinutes: null,
+  missionType: defaultMissionTypeId,
 }

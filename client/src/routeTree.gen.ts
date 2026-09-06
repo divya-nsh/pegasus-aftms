@@ -20,9 +20,9 @@ import { Route as UploadRouteImport } from './routes/upload'
 import { Route as AircraftIndexRouteImport } from './routes/aircraft/index'
 import { Route as AircraftCreateRouteImport } from './routes/aircraft/create'
 import { Route as AreaIndexRouteImport } from './routes/area/index'
+import { Route as EventsIndexRouteImport } from './routes/events/index'
 import { Route as InstructorDashboardIndexRouteImport } from './routes/instructor-dashboard/index'
 import { Route as LocationsIndexRouteImport } from './routes/locations/index'
-import { Route as MissionsIndexRouteImport } from './routes/missions/index'
 import { Route as PersonnelIndexRouteImport } from './routes/personnel/index'
 import { Route as PersonnelCreateRouteImport } from './routes/personnel/create'
 import { Route as RolesIndexRouteImport } from './routes/roles/index'
@@ -95,6 +95,11 @@ const AreaIndexRoute = AreaIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AreaRouteRoute,
 } as any)
+const EventsIndexRoute = EventsIndexRouteImport.update({
+  id: '/events/',
+  path: '/events/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const InstructorDashboardIndexRoute =
   InstructorDashboardIndexRouteImport.update({
     id: '/instructor-dashboard/',
@@ -104,11 +109,6 @@ const InstructorDashboardIndexRoute =
 const LocationsIndexRoute = LocationsIndexRouteImport.update({
   id: '/locations/',
   path: '/locations/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const MissionsIndexRoute = MissionsIndexRouteImport.update({
-  id: '/missions/',
-  path: '/missions/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PersonnelIndexRoute = PersonnelIndexRouteImport.update({
@@ -209,9 +209,9 @@ export interface FileRoutesByFullPath {
   '/users/create': typeof UsersCreateRoute
   '/aircraft/': typeof AircraftIndexRoute
   '/area/': typeof AreaIndexRoute
+  '/events/': typeof EventsIndexRoute
   '/instructor-dashboard/': typeof InstructorDashboardIndexRoute
   '/locations/': typeof LocationsIndexRoute
-  '/missions/': typeof MissionsIndexRoute
   '/personnel/': typeof PersonnelIndexRoute
   '/roles/': typeof RolesIndexRoute
   '/schedules/': typeof SchedulesIndexRoute
@@ -239,9 +239,9 @@ export interface FileRoutesByTo {
   '/users/create': typeof UsersCreateRoute
   '/aircraft': typeof AircraftIndexRoute
   '/area': typeof AreaIndexRoute
+  '/events': typeof EventsIndexRoute
   '/instructor-dashboard': typeof InstructorDashboardIndexRoute
   '/locations': typeof LocationsIndexRoute
-  '/missions': typeof MissionsIndexRoute
   '/personnel': typeof PersonnelIndexRoute
   '/roles': typeof RolesIndexRoute
   '/schedules': typeof SchedulesIndexRoute
@@ -272,9 +272,9 @@ export interface FileRoutesById {
   '/users/create': typeof UsersCreateRoute
   '/aircraft/': typeof AircraftIndexRoute
   '/area/': typeof AreaIndexRoute
+  '/events/': typeof EventsIndexRoute
   '/instructor-dashboard/': typeof InstructorDashboardIndexRoute
   '/locations/': typeof LocationsIndexRoute
-  '/missions/': typeof MissionsIndexRoute
   '/personnel/': typeof PersonnelIndexRoute
   '/roles/': typeof RolesIndexRoute
   '/schedules/': typeof SchedulesIndexRoute
@@ -306,9 +306,9 @@ export interface FileRouteTypes {
     | '/users/create'
     | '/aircraft/'
     | '/area/'
+    | '/events/'
     | '/instructor-dashboard/'
     | '/locations/'
-    | '/missions/'
     | '/personnel/'
     | '/roles/'
     | '/schedules/'
@@ -336,9 +336,9 @@ export interface FileRouteTypes {
     | '/users/create'
     | '/aircraft'
     | '/area'
+    | '/events'
     | '/instructor-dashboard'
     | '/locations'
-    | '/missions'
     | '/personnel'
     | '/roles'
     | '/schedules'
@@ -368,9 +368,9 @@ export interface FileRouteTypes {
     | '/users/create'
     | '/aircraft/'
     | '/area/'
+    | '/events/'
     | '/instructor-dashboard/'
     | '/locations/'
-    | '/missions/'
     | '/personnel/'
     | '/roles/'
     | '/schedules/'
@@ -398,9 +398,9 @@ export interface RootRouteChildren {
   SchedulesCreateRoute: typeof SchedulesCreateRoute
   TraineeDashboardIdRoute: typeof TraineeDashboardIdRoute
   UsersCreateRoute: typeof UsersCreateRoute
+  EventsIndexRoute: typeof EventsIndexRoute
   InstructorDashboardIndexRoute: typeof InstructorDashboardIndexRoute
   LocationsIndexRoute: typeof LocationsIndexRoute
-  MissionsIndexRoute: typeof MissionsIndexRoute
   PersonnelIndexRoute: typeof PersonnelIndexRoute
   RolesIndexRoute: typeof RolesIndexRoute
   SchedulesIndexRoute: typeof SchedulesIndexRoute
@@ -492,6 +492,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AreaIndexRouteImport
       parentRoute: typeof AreaRouteRoute
     }
+    '/events/': {
+      id: '/events/'
+      path: '/events'
+      fullPath: '/events/'
+      preLoaderRoute: typeof EventsIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/instructor-dashboard/': {
       id: '/instructor-dashboard/'
       path: '/instructor-dashboard'
@@ -504,13 +511,6 @@ declare module '@tanstack/react-router' {
       path: '/locations'
       fullPath: '/locations/'
       preLoaderRoute: typeof LocationsIndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/missions/': {
-      id: '/missions/'
-      path: '/missions'
-      fullPath: '/missions/'
-      preLoaderRoute: typeof MissionsIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/personnel/': {
@@ -670,9 +670,9 @@ const rootRouteChildren: RootRouteChildren = {
   SchedulesCreateRoute: SchedulesCreateRoute,
   TraineeDashboardIdRoute: TraineeDashboardIdRoute,
   UsersCreateRoute: UsersCreateRoute,
+  EventsIndexRoute: EventsIndexRoute,
   InstructorDashboardIndexRoute: InstructorDashboardIndexRoute,
   LocationsIndexRoute: LocationsIndexRoute,
-  MissionsIndexRoute: MissionsIndexRoute,
   PersonnelIndexRoute: PersonnelIndexRoute,
   RolesIndexRoute: RolesIndexRoute,
   SchedulesIndexRoute: SchedulesIndexRoute,

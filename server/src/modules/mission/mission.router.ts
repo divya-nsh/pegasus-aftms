@@ -5,6 +5,7 @@ import {
   missionTable,
 } from "#/db/schema.js";
 import { protectedProcedure, router } from "#/trpc.js";
+import { missionTypes } from "@repo/shared";
 import { TRPCError } from "@trpc/server";
 import { desc, eq } from "drizzle-orm";
 import { z } from "zod";
@@ -17,6 +18,7 @@ const createSchema = z.object({
   description: optionalText,
   aircraftId: optionalId,
   durationMinutes: z.number().int().min(0).default(0),
+  missionType: z.enum(missionTypes.map((type) => type.id)),
 });
 
 const updateSchema = createSchema.extend({
@@ -36,6 +38,7 @@ const missionRouter = router({
         updatedAt: missionTable.updatedAt,
         aircraftName: aircraftTable.name,
         aircraftTailNumber: aircraftTable.tailNumber,
+        missionType: missionTable.missionType,
       })
       .from(missionTable)
       .leftJoin(aircraftTable, eq(missionTable.aircraftId, aircraftTable.id))
@@ -50,12 +53,7 @@ const missionRouter = router({
   create: protectedProcedure.input(createSchema).mutation(async ({ input }) => {
     const [created] = await db
       .insert(missionTable)
-      .values({
-        name: input.name,
-        description: input.description,
-        aircraftId: input.aircraftId,
-        durationMinutes: input.durationMinutes,
-      })
+      .values(input)
       .returning({ id: missionTable.id });
 
     return created;
@@ -72,7 +70,7 @@ const missionRouter = router({
     if (!updated) {
       throw new TRPCError({
         code: "NOT_FOUND",
-        message: "Mission not found",
+        message: "Event not found",
       });
     }
 
@@ -91,7 +89,7 @@ const missionRouter = router({
       if (inUse) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: "Cannot delete a mission that has schedules",
+          message: "Cannot delete an event that has schedules",
         });
       }
 
@@ -103,7 +101,7 @@ const missionRouter = router({
       if (!deleted) {
         throw new TRPCError({
           code: "NOT_FOUND",
-          message: "Mission not found",
+          message: "Event not found",
         });
       }
 

@@ -15,7 +15,8 @@ class RoleService {
   /** Return The scope of the action if has permission, otherwise return false */
   canDo(roleId: string, module: RoleModule, action: ModuleAction) {
     const role = this.getById(roleId);
-    if (!role) throw new Error("Role not found");
+    if (!role) return false;
+    if (role.isAdmin) return "all";
 
     const scope = role.permissions.find(
       (permission) =>

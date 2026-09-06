@@ -12,7 +12,7 @@ export const Route = createFileRoute('/schedules/create')({
 function RouteComponent() {
   return (
     <PageCard>
-      <PageHeader title="New Mission Schedule" backTo="/schedules" />
+      <PageHeader title="New Event Schedule" backTo="/schedules" />
       <ScheduleForm />
     </PageCard>
   )

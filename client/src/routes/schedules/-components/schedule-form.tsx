@@ -20,6 +20,7 @@ import TraineePicker, { personName } from './trainee-picker'
 import type { LineRow } from './trainee-picker'
 import { MISSION_STATUS_LABELS, MissionStatusPicker } from './mission-stage-bar'
 import type { MissionStatus } from './mission-stage-bar'
+import { getMissionType } from '@repo/shared'
 
 type ScheduleDetail = TrpcRouterOutputs['schedules']['getById']
 
@@ -141,7 +142,7 @@ export default function ScheduleForm({
       queryClient.resetQueries(trpc.schedules.pathFilter())
       toast.add({
         type: 'success',
-        title: scheduleId ? 'Schedule saved' : 'Schedule created',
+        title: scheduleId ? 'Event schedule saved' : 'Event schedule created',
       })
       if (!scheduleId) {
         navigate({
@@ -153,7 +154,7 @@ export default function ScheduleForm({
     onError: (error) => {
       toast.add({
         type: 'error',
-        title: 'Failed to save schedule',
+        title: 'Failed to save event schedule',
         description: error.message,
       })
     },
@@ -236,14 +237,18 @@ export default function ScheduleForm({
           <BasicSelectField
             required
             className="col-span-2"
-            label="Mission"
-            placeholder="Select a mission first"
+            label="Event"
+            placeholder="Select an event first"
             disabled={missionLocked}
             value={formState.missionId}
-            options={missionsQ.data.items.map((item) => ({
-              value: String(item.id),
-              label: `${item.name} (${item.durationMinutes} min)`,
-            }))}
+            options={missionsQ.data.items.map((item) => {
+              const missionTypeName =
+                getMissionType(item.missionType)?.name ?? item.missionType
+              return {
+                value: String(item.id),
+                label: `${item.name} (${missionTypeName}, ${item.durationMinutes} min)`,
+              }
+            })}
             onValueChange={(missionId) =>
               selectMission(String(missionId ?? ''))
             }
@@ -355,8 +360,8 @@ export default function ScheduleForm({
             </>
           ) : (
             <p className="col-span-2 text-sm text-muted-foreground">
-              Select a mission to continue. Aircraft, name, and duration will
-              fill in automatically. The mission cannot be changed after it is
+              Select an event to continue. Aircraft, name, and duration will
+              fill in automatically. The event cannot be changed after it is
               selected.
             </p>
           )}

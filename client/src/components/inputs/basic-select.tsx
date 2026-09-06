@@ -11,8 +11,14 @@ import { startTransition, useMemo, useState } from 'react'
 
 export type SelectValue = string | null
 
+export type BasicSelectOption = {
+  label: string
+  value: number | string
+  subLabel?: string
+}
+
 export type BasicSelectProps = {
-  options: { label: string; value: number | string }[]
+  options: BasicSelectOption[]
   value?: SelectValue
   onValueChange?: (value: SelectValue) => void
   placeholder?: string
@@ -93,8 +99,13 @@ export default function BasicSelect({
             </SelectItem>
           )}
           {options.map((item) => (
-            <SelectItem key={item.value} value={item.value}>
+            <SelectItem key={item.value} value={item.value.toString()}>
               {item.label}
+              {item.subLabel ? (
+                <span className="text-muted-foreground font-normal">
+                  {item.subLabel}
+                </span>
+              ) : null}
             </SelectItem>
           ))}
         </SelectGroup>

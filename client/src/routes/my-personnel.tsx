@@ -34,6 +34,7 @@ function RouteComponent() {
           dateOfBirth: data.dateOfBirth ?? '',
           dateOfJoin: data.dateOfJoin ?? '',
           rank: data.rank ?? '',
+          qualification: data.qualification ?? '',
           phone: data.phone ?? '',
           email: data.email ?? '',
           address: data.address ?? '',

@@ -2,6 +2,7 @@ import db from "#/db/db.js";
 import { personnelTable, userTable } from "#/db/schema.js";
 import { DEFAULT_TRAINEE_ROLE } from "#/config/roles.js";
 import { protectedProcedure, router } from "#/trpc.js";
+import { pilotQualifications } from "@repo/shared";
 import { TRPCError } from "@trpc/server";
 import { desc, eq } from "drizzle-orm";
 import { z } from "zod";
@@ -24,6 +25,13 @@ const createSchema = z.object({
   dateOfBirth: optionalText,
   dateOfJoin: optionalText,
   rank: optionalText,
+  qualification: z.preprocess(
+    (value) => (value === "" ? null : value),
+    z
+      .enum(pilotQualifications.map((qualification) => qualification.id))
+      .nullable()
+      .optional(),
+  ),
   phone: optionalText,
   email: optionalText,
   address: optionalText,
@@ -60,6 +68,7 @@ function personnelValues(input: z.infer<typeof createSchema>) {
     dateOfJoin: optionalDate(data.dateOfJoin),
     medicalExamDate: optionalDate(data.medicalExamDate),
     medicalValidUntil: optionalDate(data.medicalValidUntil),
+    qualification: data.qualification || null,
     imageId: data.imageId ?? null,
   };
 }

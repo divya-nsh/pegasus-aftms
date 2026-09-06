@@ -1,10 +1,12 @@
 packages:
   - "client"
   - "server"
+  - "shared"
+injectWorkspacePackages: true
 allowBuilds:
   bcrypt: true
   esbuild: true
   unrs-resolver: true
 minimumReleaseAgeExclude:
-  - '@tanstack/router-core@1.171.19'
-  - '@tanstack/router-generator@1.167.25'
+  - "@tanstack/router-core@1.171.19"
+  - "@tanstack/router-generator@1.167.25"
