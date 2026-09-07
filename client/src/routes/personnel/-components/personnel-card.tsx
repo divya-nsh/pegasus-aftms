@@ -25,7 +25,7 @@ function medicalBadgeClass(label: string) {
   if (label === 'Fit') {
     return 'bg-emerald-600/10 text-emerald-700 dark:text-emerald-400'
   }
-  if (label === 'Unfit' || label === 'Medical Expired') {
+  if (label === 'Unfit' || label === 'Expired') {
     return 'bg-destructive/10 text-destructive'
   }
   return 'bg-amber-500/15 text-amber-800 dark:text-amber-400'
@@ -101,7 +101,7 @@ export function PersonnelCard({
               medicalBadgeClass(medical),
             )}
           >
-            {medical}
+            Medical {medical}
           </span>
         </div>
       </button>

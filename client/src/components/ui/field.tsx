@@ -58,7 +58,7 @@ function FieldColumns({
   return (
     <div
       data-slot="field-group-column"
-      className={cn(`grid grid-cols-${cols} gap-4`, className)}
+      className={cn(`grid grid-cols-${cols} gap-6`, className)}
       {...props}
     />
   )

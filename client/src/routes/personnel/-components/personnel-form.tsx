@@ -70,7 +70,7 @@ export function getMedicalDisplayStatus(person: {
     const validUntil = toDateOnly(person.medicalValidUntil)
     const today = toDateOnly(new Date())
     if (validUntil && validUntil < today) {
-      return 'Medical Expired'
+      return 'Expired'
     }
     return (
       medicalStatusOptions.find(
@@ -115,7 +115,7 @@ const schema = z
     isCreateUser: z.boolean().optional(),
     newUserUsername: z.string().optional(),
     newUserPassword: z.string().optional(),
-    qualification: z.string().min(1, 'Required'),
+    qualification: z.string(),
   })
   .superRefine((data, ctx) => {
     if (!data.isCreateUser) return
@@ -352,7 +352,6 @@ export default function PersonnelForm({
             children={(f) => (
               <f.CBasicSelect
                 readOnly={isReadOnly}
-                required
                 label="Qualification"
                 placeholder="Select qualification"
                 options={[...pilotQualificationOptions]}

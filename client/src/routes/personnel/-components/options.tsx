@@ -11,7 +11,7 @@ const genderOptions = [
 ] as const
 
 const medicalStatusOptions = [
-  { label: 'fit', value: 'fit' },
+  { label: 'Fit', value: 'fit' },
   { label: 'Unfit', value: 'unfit' },
   { label: 'Pending', value: 'pending' },
 ] as const

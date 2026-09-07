@@ -1,4 +1,4 @@
-import { getMissionType, missionTypes } from "@repo/shared";
+import { missionTypes } from "@repo/shared";
 import {
   integer,
   snakeCase,
@@ -123,27 +123,27 @@ export const missionScheduleTable = snakeCase.table("mission_schedule", {
 });
 
 export const attendanceStatusEnum = pgEnum("attendance_status", [
-  "pending",
   "present",
   "absent",
   "excused",
 ]);
 
-export const missionResultEnum = pgEnum("mission_result", [
-  "pending",
-  "passed",
-  "failed",
-]);
+export const missionResultEnum = pgEnum("mission_result", ["passed", "failed"]);
 
 // Mission Assigned to whom and there stats
 export const missionAssignmentTable = snakeCase.table("mission_assignment", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   scheduleId: integer().references(() => missionScheduleTable.id),
-  personId: integer().references(() => personnelTable.id),
-  attendanceStatus: attendanceStatusEnum().notNull().default("pending"),
+  personnelId: integer().references(() => personnelTable.id),
+  attendanceStatus: attendanceStatusEnum(),
+  aircraftId: integer().references(() => aircraftTable.id),
+  /** Time will Be Stored with in UTC*/
+  aircraftTime: timestamp(),
+  takeoffTime: timestamp(),
+  landingTime: timestamp(),
   remarks: varchar(),
   score: integer(),
-  result: missionResultEnum().notNull().default("pending"),
+  result: missionResultEnum(),
   ...timeStampts,
 });
 

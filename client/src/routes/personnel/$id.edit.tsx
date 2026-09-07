@@ -5,6 +5,7 @@ import trpc from '@/trpc'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import PersonnelForm from './-components/personnel-form'
+import PageCard from '@/components/layout/PageCard'
 
 export const Route = createFileRoute('/personnel/$id/edit')({
   component: RouteComponent,
@@ -23,7 +24,7 @@ function RouteComponent() {
   const person = personnelQ.data
 
   return (
-    <div className="px-6 max-w-6xl mx-auto">
+    <PageCard>
       <PageHeader title="Edit Personnel" backTo="/personnel" />
       <PersonnelForm
         mode="edit"
@@ -53,6 +54,6 @@ function RouteComponent() {
             : null
         }
       />
-    </div>
+    </PageCard>
   )
 }

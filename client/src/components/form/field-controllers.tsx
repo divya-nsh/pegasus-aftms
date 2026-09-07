@@ -19,10 +19,15 @@ import { Field, FieldLabel } from '../ui/field'
 export function CTextField({
   valueAsUppercase,
   valueAsNumber,
+  onAfterCommit,
   ...props
 }: Omit<TextFieldProps, 'value' | 'onValueChange' | 'errors'> & {
   valueAsUppercase?: boolean
   valueAsNumber?: boolean
+  /**
+   * A hook that is called after the value is changed and set to form state.
+   */
+  onAfterCommit?: (value: string | number | null) => void
 }) {
   const field = useFieldContext<string | number | null>()
   const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid
@@ -32,17 +37,19 @@ export function CTextField({
       {...props}
       value={field.state.value?.toString() ?? ''}
       onValueChange={(value) => {
+        let _value: string | number | null = value.toString()
         if (valueAsNumber) {
           if (value.trim() === '') {
-            field.handleChange(null)
+            _value = null
           } else {
-            field.handleChange(Number(value))
+            _value = Number(value)
           }
         } else {
-          field.handleChange(
-            valueAsUppercase ? (value + '').toUpperCase() : value,
-          )
+          _value = valueAsUppercase ? (value + '').toUpperCase() : value
         }
+
+        field.handleChange(_value)
+        onAfterCommit?.(_value)
       }}
       errors={isInvalid ? field.state.meta.errors : undefined}
       onBlur={() => field.handleBlur()}
@@ -53,10 +60,15 @@ export function CTextField({
 export function CBasicSelect({
   emptyAsNull = false,
   valueAsNumber = false,
+  onCommited,
   ...props
-}: Omit<BasicSelectFieldProps, 'value' | 'onValueChange' | 'errors'> & {
+}: Omit<BasicSelectFieldProps, 'value' | 'errors' | 'onBlur'> & {
   emptyAsNull?: boolean
   valueAsNumber?: boolean
+  /**
+   * A hook that is called after the value is changed and set to form state.
+   */
+  onCommited?: (value: string | number | null) => void
 }) {
   const field = useFieldContext<string | number | null>()
   const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid
@@ -64,6 +76,7 @@ export function CBasicSelect({
   return (
     <BasicSelectField
       {...props}
+
       value={field.state.value?.toString() ?? ''}
       onValueChange={(value) => {
         const _value = value?.toString() ?? ''
@@ -76,6 +89,7 @@ export function CBasicSelect({
         } else {
           field.handleChange(_value)
         }
+        onCommited?.(value)
       }}
       errors={isInvalid ? field.state.meta.errors : undefined}
       onBlur={() => field.handleBlur()}

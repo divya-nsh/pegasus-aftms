@@ -52,7 +52,13 @@ const headerSchema = z.object({
 
 const createSchema = headerSchema.extend({
   missionId: z.number(),
-  traineeIds: z.array(z.number()).default([]),
+  assigments: z.array(
+    z.object({
+      personnalId: z.number(),
+      remarks: optionalText,
+      aircraftId: optionalId,
+    }),
+  ),
 });
 
 const updateSchema = headerSchema.extend({
@@ -62,10 +68,15 @@ const updateSchema = headerSchema.extend({
 const lineRowSchema = z.object({
   personId: z.number(),
   attendanceStatus: z
-    .enum(["pending", "present", "absent", "excused"])
-    .default("pending"),
+    .enum(["present", "absent", "excused"])
+    .nullable()
+    .optional(),
   score: z.number().int().min(0).max(100).optional(),
-  result: z.enum(["pending", "passed", "failed"]).default("pending"),
+  aircraftId: z.int().optional(),
+  aircraftTime: z.coerce.date().optional(),
+  takeoffTime: z.coerce.date().optional(),
+  landingTime: z.coerce.date().optional(),
+  result: z.enum(["passed", "failed"]),
   remarks: optionalText,
 });
 
@@ -129,22 +140,6 @@ async function getMissionOrThrow(id: number) {
   return row;
 }
 
-async function replaceTrainees(scheduleId: number, traineeIds: number[]) {
-  await db
-    .delete(missionAssignmentTable)
-    .where(eq(missionAssignmentTable.scheduleId, scheduleId));
-
-  const uniqueIds = [...new Set(traineeIds)];
-  if (uniqueIds.length === 0) return;
-
-  await db.insert(missionAssignmentTable).values(
-    uniqueIds.map((personId) => ({
-      scheduleId,
-      personId,
-    })),
-  );
-}
-
 const scheduleRouter = router({
   getAll: protectedProcedure
     .input(
@@ -176,7 +171,7 @@ const scheduleRouter = router({
                     missionAssignmentTable.scheduleId,
                     missionScheduleTable.id,
                   ),
-                  eq(missionAssignmentTable.personId, ctx.user.personnelId),
+                  eq(missionAssignmentTable.personnelId, ctx.user.personnelId),
                 ),
               ),
           ),
@@ -290,7 +285,7 @@ const scheduleRouter = router({
       const assignments = await db
         .select({
           id: missionAssignmentTable.id,
-          personId: missionAssignmentTable.personId,
+          personnelId: missionAssignmentTable.personnelId,
           attendanceStatus: missionAssignmentTable.attendanceStatus,
           remarks: missionAssignmentTable.remarks,
           score: missionAssignmentTable.score,
@@ -305,14 +300,14 @@ const scheduleRouter = router({
         .from(missionAssignmentTable)
         .leftJoin(
           personnelTable,
-          eq(missionAssignmentTable.personId, personnelTable.id),
+          eq(missionAssignmentTable.personnelId, personnelTable.id),
         )
         .where(eq(missionAssignmentTable.scheduleId, input.id));
 
       const { isTrainee, personnelId } = await getTraineeScope(ctx.user.id);
       if (isTrainee) {
         const isAssigned = assignments.some(
-          (assignment) => assignment.personId === personnelId,
+          (assignment) => assignment.personnelId === personnelId,
         );
         if (!isAssigned) {
           throw new TRPCError({
@@ -329,37 +324,44 @@ const scheduleRouter = router({
     }),
 
   create: protectedProcedure.input(createSchema).mutation(async ({ input }) => {
-    const { traineeIds, missionId, ...data } = input;
+    const { assigments, missionId, ...data } = input;
     const mission = await getMissionOrThrow(missionId);
 
-    const [created] = await db
-      .insert(missionScheduleTable)
-      .values({
-        missionId,
-        ...toScheduleValues(data),
-        aircraftId: data.aircraftId ?? mission.aircraftId,
-      })
-      .returning({ id: missionScheduleTable.id });
+    const res = await db.transaction(async (tx) => {
+      const [created] = await tx
+        .insert(missionScheduleTable)
+        .values({
+          missionId,
+          ...toScheduleValues(data),
+          aircraftId: data.aircraftId ?? mission.aircraftId,
+        })
+        .returning({ id: missionScheduleTable.id })!;
 
-    if (!created) {
-      throw new TRPCError({
-        code: "INTERNAL_SERVER_ERROR",
-        message: "Failed to create event schedule",
-      });
-    }
+      if (!created) throw new Error("Something wrong"); // never gonna happen written to make typescript happy
 
-    const scheduleNumber =
-      data.scheduleNumber?.trim() || `${SCHEDULE_NUMBER_PREFIX}${created.id}`;
+      const scheduleNumber =
+        data.scheduleNumber?.trim() || `${SCHEDULE_NUMBER_PREFIX}${created.id}`;
 
-    if (!data.scheduleNumber?.trim()) {
-      await db
-        .update(missionScheduleTable)
-        .set({ scheduleNumber })
-        .where(eq(missionScheduleTable.id, created.id));
-    }
+      if (!data.scheduleNumber?.trim()) {
+        await db
+          .update(missionScheduleTable)
+          .set({ scheduleNumber })
+          .where(eq(missionScheduleTable.id, created.id));
+      }
 
-    await replaceTrainees(created.id, traineeIds);
-    return { id: created.id, scheduleNumber };
+      for (const assignment of assigments) {
+        await tx.insert(missionAssignmentTable).values({
+          scheduleId: created.id,
+          personnelId: assignment.personnalId,
+          remarks: assignment.remarks,
+          aircraftId: assignment.aircraftId,
+        });
+      }
+
+      return created;
+    });
+
+    return { id: res.id };
   }),
 
   update: protectedProcedure.input(updateSchema).mutation(async ({ input }) => {
@@ -427,59 +429,6 @@ const scheduleRouter = router({
         });
 
       return updated;
-    }),
-
-  saveLine: protectedProcedure
-    .input(
-      z.object({
-        id: z.number(),
-        trainees: z.array(lineRowSchema),
-      }),
-    )
-    .mutation(async ({ input }) => {
-      await getScheduleOrThrow(input.id);
-
-      const existing = await db
-        .select()
-        .from(missionAssignmentTable)
-        .where(eq(missionAssignmentTable.scheduleId, input.id));
-
-      const incomingPersonIds = new Set(
-        input.trainees.map((row) => row.personId),
-      );
-
-      for (const row of existing) {
-        if (row.personId == null || !incomingPersonIds.has(row.personId)) {
-          await db
-            .delete(missionAssignmentTable)
-            .where(eq(missionAssignmentTable.id, row.id));
-        }
-      }
-
-      for (const row of input.trainees) {
-        const found = existing.find((item) => item.personId === row.personId);
-        const values = {
-          attendanceStatus: row.attendanceStatus,
-          score: row.score,
-          result: row.result,
-          remarks: row.remarks,
-        };
-
-        if (found) {
-          await db
-            .update(missionAssignmentTable)
-            .set(values)
-            .where(eq(missionAssignmentTable.id, found.id));
-        } else {
-          await db.insert(missionAssignmentTable).values({
-            scheduleId: input.id,
-            personId: row.personId,
-            ...values,
-          });
-        }
-      }
-
-      return { id: input.id };
     }),
 });
 

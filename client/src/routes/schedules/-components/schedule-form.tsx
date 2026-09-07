@@ -246,7 +246,7 @@ export default function ScheduleForm({
                 getMissionType(item.missionType)?.name ?? item.missionType
               return {
                 value: String(item.id),
-                label: `${item.name} (${missionTypeName}, ${item.durationMinutes} min)`,
+                label: `${item.name} (type: ${missionTypeName}, ${item.durationMinutes} min)`,
               }
             })}
             onValueChange={(missionId) =>

@@ -279,6 +279,7 @@ import {
 } from '@/components/ui/table'
 import { cn } from '@/lib/utils'
 import { TrashIcon } from 'lucide-react'
+import { Badge } from '@/components/ui/badge'
 
 export type TraineeOption = {
   id: number
@@ -416,15 +417,22 @@ export default function TraineePicker({
     <div className="space-y-3">
       <div className="flex items-end justify-between gap-4">
         <div>
-          <h2 className="text-sm font-semibold">Trainees</h2>
+          <h2 className="text-sm font-semibold">
+            Pilots{' '}
+            {available.length > 0 ? (
+              <Badge variant="secondary" className="ml-1">
+                {available.length}
+              </Badge>
+            ) : null}
+          </h2>
           <p className="text-sm text-muted-foreground">
-            Select a trainee to add them to the line.
+            Select a pilot to add them to the line.
           </p>
         </div>
         <ComboboxField
           className="w-72 shrink-0"
-          label="Add trainee"
-          placeholder="Select trainee"
+          label="Add pilot"
+          placeholder="Search and Add pilot to line"
           disabled={available.length === 0}
           value={null}
           options={available.map((person) => ({
@@ -443,15 +451,21 @@ export default function TraineePicker({
       <div className="overflow-hidden rounded-md border">
         <Table>
           <TableHeader>
-            <TableRow>
-              <TableHead className="w-14">#</TableHead>
-              <TableHead>Code</TableHead>
-              <TableHead>Name</TableHead>
-              <TableHead>Rank</TableHead>
+            <TableRow className="bg-muted/30">
+              <TableHead className="w-14">No.</TableHead>
+              <TableHead>Pilot ID</TableHead>
+              <TableHead>Pilot Name</TableHead>
+              <TableHead>PilotRank</TableHead>
+              <TableHead>PilotQualification</TableHead>
+              <TableHead>Pilot Type</TableHead>
+              <TableHead>Aircraft</TableHead>
+              <TableHead>AirCraft Takeoff Time</TableHead>
+              <TableHead>AirCraft Landing Time</TableHead>
+              <TableHead>Aircraft Time</TableHead>
               <TableHead>Attendance</TableHead>
               <TableHead>Score</TableHead>
               <TableHead>Result</TableHead>
-              <TableHead>Notes</TableHead>
+              <TableHead>Remarks</TableHead>
               <TableHead className="w-16" />
             </TableRow>
           </TableHeader>

@@ -117,8 +117,7 @@ function RouteComponent() {
         <div>
           <h2 className="text-xl font-bold">Events</h2>
           <p className="text-sm text-muted-foreground max-w-xl">
-            Events are here precreated list of mission, event or activity which
-            will be used while creating event shedule
+            Define training activities for the training program
           </p>
         </div>
         <NewButton onClick={() => setFormModel({ open: true })} />

@@ -28,7 +28,7 @@ export const navItems: NavGroup[] = [
     title: 'Operations',
     items: [
       {
-        title: 'Event Schedules',
+        title: 'Schedule Events',
         url: '/schedules',
         icon: CalendarClockIcon,
       },
@@ -48,10 +48,10 @@ export const navItems: NavGroup[] = [
     title: 'Masters',
     items: [
       { title: 'Personnel', url: '/personnel', icon: UsersIcon },
-      { title: 'Events', url: '/events', icon: TargetIcon },
+      { title: 'Event / Mission', url: '/events', icon: TargetIcon },
       { title: 'Aircraft', url: '/aircraft', icon: PlaneIcon },
       { title: 'Area', url: '/area', icon: MapPinnedIcon },
-      { title: 'Users', url: '/users', icon: UserIcon },
+      { title: 'User', url: '/users', icon: UserIcon },
       { title: 'Location', url: '/locations', icon: MapPinIcon },
     ],
   },

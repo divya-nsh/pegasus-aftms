@@ -29,6 +29,7 @@ import { Route as RolesIndexRouteImport } from './routes/roles/index'
 import { Route as RolesCreateRouteImport } from './routes/roles/create'
 import { Route as SchedulesIndexRouteImport } from './routes/schedules/index'
 import { Route as SchedulesCreateRouteImport } from './routes/schedules/create'
+import { Route as SchedulesForm2RouteImport } from './routes/schedules/form2'
 import { Route as TraineeDashboardIndexRouteImport } from './routes/trainee-dashboard/index'
 import { Route as TraineeDashboardIdRouteImport } from './routes/trainee-dashboard/$id'
 import { Route as UsersIndexRouteImport } from './routes/users/index'
@@ -141,6 +142,11 @@ const SchedulesCreateRoute = SchedulesCreateRouteImport.update({
   path: '/schedules/create',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SchedulesForm2Route = SchedulesForm2RouteImport.update({
+  id: '/schedules/form2',
+  path: '/schedules/form2',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TraineeDashboardIndexRoute = TraineeDashboardIndexRouteImport.update({
   id: '/trainee-dashboard/',
   path: '/trainee-dashboard/',
@@ -205,6 +211,7 @@ export interface FileRoutesByFullPath {
   '/personnel/create': typeof PersonnelCreateRoute
   '/roles/create': typeof RolesCreateRoute
   '/schedules/create': typeof SchedulesCreateRoute
+  '/schedules/form2': typeof SchedulesForm2Route
   '/trainee-dashboard/$id': typeof TraineeDashboardIdRoute
   '/users/create': typeof UsersCreateRoute
   '/aircraft/': typeof AircraftIndexRoute
@@ -235,6 +242,7 @@ export interface FileRoutesByTo {
   '/personnel/create': typeof PersonnelCreateRoute
   '/roles/create': typeof RolesCreateRoute
   '/schedules/create': typeof SchedulesCreateRoute
+  '/schedules/form2': typeof SchedulesForm2Route
   '/trainee-dashboard/$id': typeof TraineeDashboardIdRoute
   '/users/create': typeof UsersCreateRoute
   '/aircraft': typeof AircraftIndexRoute
@@ -268,6 +276,7 @@ export interface FileRoutesById {
   '/personnel/create': typeof PersonnelCreateRoute
   '/roles/create': typeof RolesCreateRoute
   '/schedules/create': typeof SchedulesCreateRoute
+  '/schedules/form2': typeof SchedulesForm2Route
   '/trainee-dashboard/$id': typeof TraineeDashboardIdRoute
   '/users/create': typeof UsersCreateRoute
   '/aircraft/': typeof AircraftIndexRoute
@@ -302,6 +311,7 @@ export interface FileRouteTypes {
     | '/personnel/create'
     | '/roles/create'
     | '/schedules/create'
+    | '/schedules/form2'
     | '/trainee-dashboard/$id'
     | '/users/create'
     | '/aircraft/'
@@ -332,6 +342,7 @@ export interface FileRouteTypes {
     | '/personnel/create'
     | '/roles/create'
     | '/schedules/create'
+    | '/schedules/form2'
     | '/trainee-dashboard/$id'
     | '/users/create'
     | '/aircraft'
@@ -364,6 +375,7 @@ export interface FileRouteTypes {
     | '/personnel/create'
     | '/roles/create'
     | '/schedules/create'
+    | '/schedules/form2'
     | '/trainee-dashboard/$id'
     | '/users/create'
     | '/aircraft/'
@@ -396,6 +408,7 @@ export interface RootRouteChildren {
   PersonnelCreateRoute: typeof PersonnelCreateRoute
   RolesCreateRoute: typeof RolesCreateRoute
   SchedulesCreateRoute: typeof SchedulesCreateRoute
+  SchedulesForm2Route: typeof SchedulesForm2Route
   TraineeDashboardIdRoute: typeof TraineeDashboardIdRoute
   UsersCreateRoute: typeof UsersCreateRoute
   EventsIndexRoute: typeof EventsIndexRoute
@@ -555,6 +568,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SchedulesCreateRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/schedules/form2': {
+      id: '/schedules/form2'
+      path: '/schedules/form2'
+      fullPath: '/schedules/form2'
+      preLoaderRoute: typeof SchedulesForm2RouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/trainee-dashboard/': {
       id: '/trainee-dashboard/'
       path: '/trainee-dashboard'
@@ -668,6 +688,7 @@ const rootRouteChildren: RootRouteChildren = {
   PersonnelCreateRoute: PersonnelCreateRoute,
   RolesCreateRoute: RolesCreateRoute,
   SchedulesCreateRoute: SchedulesCreateRoute,
+  SchedulesForm2Route: SchedulesForm2Route,
   TraineeDashboardIdRoute: TraineeDashboardIdRoute,
   UsersCreateRoute: UsersCreateRoute,
   EventsIndexRoute: EventsIndexRoute,

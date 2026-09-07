@@ -99,8 +99,12 @@ export default function BasicSelect({
             </SelectItem>
           )}
           {options.map((item) => (
-            <SelectItem key={item.value} value={item.value.toString()}>
-              {item.label}
+            <SelectItem
+              key={item.value}
+              value={item.value.toString()}
+              className={cn(item.subLabel ? '' : '')}
+            >
+              <span>{item.label}</span>
               {item.subLabel ? (
                 <span className="text-muted-foreground font-normal">
                   {item.subLabel}

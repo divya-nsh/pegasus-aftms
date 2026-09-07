@@ -133,6 +133,7 @@ function SelectItem({
       <SelectPrimitive.ItemText className="flex flex-1 shrink-0 gap-2 whitespace-nowrap">
         {children}
       </SelectPrimitive.ItemText>
+
       {showIndicator && (
         <SelectPrimitive.ItemIndicator
           render={
