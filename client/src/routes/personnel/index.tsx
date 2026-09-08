@@ -40,6 +40,7 @@ import { getMedicalDisplayStatus } from './-components/personnel-form'
 import { PersonnelCard } from './-components/personnel-card'
 import { getMediaUrl } from '@/lib/media'
 import PageCard from '@/components/layout/PageCard'
+import { useLocalStorage } from '@/hooks/use-local-storage'
 
 export const Route = createFileRoute('/personnel/')({
   component: RouteComponent,
@@ -169,7 +170,10 @@ function RouteComponent() {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const [columnFilters, setColumnFilters] = useState<string>('')
-  const [viewMode, setViewMode] = useState<'table' | 'cards'>('table')
+  const [viewMode, setViewMode] = useLocalStorage<'table' | 'cards'>(
+    'personnel-view-mode',
+    'table',
+  )
   const [typeFilter, setTypeFilter] = useState<
     'all' | 'trainee' | 'instructor' | 'pilot'
   >('all')

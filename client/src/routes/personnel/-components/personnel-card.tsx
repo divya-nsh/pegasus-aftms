@@ -6,6 +6,7 @@ import { PencilIcon, TrashIcon } from 'lucide-react'
 import type { TrpcRouterOutputs } from 'server/router'
 import { getMedicalDisplayStatus } from './personnel-form'
 import { getPilotQualification } from '@repo/shared'
+import { formatDate } from '@/lib/date'
 
 type PersonnelCardPerson =
   TrpcRouterOutputs['personnel']['getAll']['items'][number]
@@ -104,6 +105,10 @@ export function PersonnelCard({
             Medical {medical}
           </span>
         </div>
+
+        <span className="mt-1 text-xs text-muted-foreground">
+          Join at {formatDate(person.dateOfJoin || '')}
+        </span>
       </button>
     </div>
   )

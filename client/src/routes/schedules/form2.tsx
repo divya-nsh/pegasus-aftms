@@ -1,15 +1,17 @@
 import { createFileRoute } from '@tanstack/react-router'
 import { z } from 'zod'
-import { useAppForm } from '@/components/form/tanstack-form'
-import { revalidateLogic, useSelector, useStore } from '@tanstack/react-form'
+import {
+  handleSubmitInvalid,
+  useAppForm,
+} from '@/components/form/tanstack-form'
+import { revalidateLogic, useSelector } from '@tanstack/react-form'
 import PageCard from '@/components/layout/PageCard'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { trpc } from '@/trpc'
 import { FieldColumns, FieldError } from '@/components/ui/field'
 import TextField from '@/components/inputs/TextField'
 import { useMemo, useState } from 'react'
-import { addMinutesToDateTimeLocal, toDateTimeLocal } from '@/lib/date'
-import BasicSelect from '@/components/inputs/basic-select'
+import { addMinutesToDateTimeLocal, formatDate } from '@/lib/date'
 import {
   Dialog,
   DialogContent,
@@ -27,7 +29,9 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { PencilIcon } from 'lucide-react'
+import { PencilIcon, PlusIcon } from 'lucide-react'
+import { getPersonnelType, getPilotQualification } from '@repo/shared'
+import toast from 'react-hot-toast'
 
 export const Route = createFileRoute('/schedules/form2')({
   component: RouteComponent,
@@ -213,17 +217,28 @@ function RouteComponent() {
 }
 
 const requiredTextSchema = z.string().min(1, 'Required')
+const optionalTextSchema = z.string().optional().nullable()
 
 const assignmentSchema = z.object({
   personnelId: z.number().min(1, 'Required'),
+  // For display in the table it is not required by server
+  personnelDataForDisplay: z
+    .object({
+      firstName: optionalTextSchema,
+      lastName: optionalTextSchema,
+      personnelType: optionalTextSchema,
+      qualification: optionalTextSchema,
+      rank: optionalTextSchema,
+    })
+    .optional(),
   attendanceStatus: z.enum(['present', 'absent', 'excused']).nullable(),
   score: z.number().int().min(0).max(100).nullable(),
   result: z.enum(['passed', 'failed']).nullable(),
-  remarks: z.string().nullable(),
+  remarks: optionalTextSchema,
   aircraftId: z.number().nullable(),
-  takeoffTime: z.string().nullable(),
-  landingTime: z.string().nullable(),
-  aircraftTime: z.string().nullable(),
+  takeoffTime: optionalTextSchema,
+  landingTime: optionalTextSchema,
+  aircraftTime: optionalTextSchema,
 })
 
 const schema = z.object({
@@ -286,8 +301,14 @@ function AssignmentLine({
     }
   }
 
-  const personnelName = (personnelId: number) => {
+  const getPersonnel = (personnelId: number) => {
     const person = personnelQ.data.items.find((p) => p.id === personnelId)
+    if (!person) return null
+    return person
+  }
+
+  const personnelName = (personnelId: number) => {
+    const person = getPersonnel(personnelId)
     if (!person) return '—'
     return `${person.firstName} ${person.lastName}`
   }
@@ -301,66 +322,145 @@ function AssignmentLine({
     <div>
       <div className="border-b pb-2 text-sm font-semibold flex justify-between items-center">
         <p>Pilots List</p>
-        <Button size="sm" onClick={() => setAddFormOpen({ open: true })}>
+        <Button
+          size="sm"
+          variant="secondary"
+          className="border shadow-xs"
+          onClick={() => setAddFormOpen({ open: true })}
+        >
+          <PlusIcon className="size-4" />
           Add Pilot
         </Button>
       </div>
-      <div className="mt-3 overflow-hidden rounded-md border">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>S.No</TableHead>
-              <TableHead>Pilot</TableHead>
-              <TableHead>Aircraft</TableHead>
-              <TableHead>Remarks</TableHead>
-              <TableHead className="w-20 text-right">Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {values.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={4}
-                  className="py-8 text-center text-muted-foreground"
-                >
-                  No pilots assigned yet
-                </TableCell>
+      <div
+        className="mt-3 overflow-hidden rounded-md border"
+        style={{
+          borderStyle: values.length > 0 ? 'solid' : 'dashed',
+        }}
+      >
+        {values.length > 0 ? (
+          <Table className=" border-collapse">
+            <TableHeader>
+              <TableRow className=" bg-muted/40">
+                <TableHead className="border">S.No</TableHead>
+                <TableHead className="border">Pilot</TableHead>
+                <TableHead className="border">Aircraft</TableHead>
+                <TableHead className="border">Attendance</TableHead>
+                <TableHead className="border">Result</TableHead>
+                <TableHead className="border">Score</TableHead>
+                <TableHead className="border">Remarks</TableHead>
+                <TableHead className="w-20 text-right border">
+                  Actions
+                </TableHead>
               </TableRow>
-            ) : (
-              values.map((assignment, index) => (
-                <TableRow
-                  key={`${assignment.personnelId}-${index}`}
-                  onClick={() =>
-                    setAddFormOpen({ open: true, editIndex: index })
-                  }
-                >
-                  <TableCell>{index + 1}</TableCell>
-                  <TableCell>{personnelName(assignment.personnelId)}</TableCell>
-                  <TableCell>{aircraftName(assignment.aircraftId)}</TableCell>
-                  <TableCell className="max-w-64 truncate">
-                    {assignment.remarks || '—'}
-                  </TableCell>
-                  <TableCell
-                    className="text-right"
-                    onClick={(e) => e.stopPropagation()}
+            </TableHeader>
+            <TableBody>
+              {values.map((assignment, index) => {
+                const _personnel = getPersonnel(assignment.personnelId)
+                return (
+                  <TableRow
+                    key={`${assignment.personnelId}-${index}`}
+                    onClick={() =>
+                      setAddFormOpen({ open: true, editIndex: index })
+                    }
                   >
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      onClick={(e) => {
-                        setAddFormOpen({ open: true, editIndex: index })
-                      }}
+                    <TableCell className="align-top">{index + 1}</TableCell>
+                    <TableCell className="border align-top">
+                      <div className="max-w-[200px] grid">
+                        <span className=" truncate">
+                          {personnelName(assignment.personnelId)}
+                        </span>
+                        <span className="text-muted-foreground">
+                          Service Id: {_personnel?.code}{' '}
+                        </span>
+                        {_personnel?.personnelType && (
+                          <span className="text-muted-foreground">
+                            Type:{' '}
+                            {getPersonnelType(_personnel.personnelType)?.name ??
+                              _personnel.personnelType}
+                          </span>
+                        )}
+                        {_personnel?.rank && (
+                          <span className="text-muted-foreground">
+                            Rank: {_personnel.rank}
+                          </span>
+                        )}
+                        {_personnel?.qualification && (
+                          <span className="text-muted-foreground">
+                            Qualification:{' '}
+                            {getPilotQualification(_personnel.qualification)
+                              ?.name ?? _personnel.qualification}
+                          </span>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell className="border align-top">
+                      <div className="grid max-w-62.5">
+                        <span className=" truncate">
+                          {aircraftName(assignment.aircraftId)}
+                        </span>
+                        <span className="">
+                          Takeoff:{' '}
+                          {assignment.takeoffTime
+                            ? formatDate(assignment.takeoffTime, true)
+                            : '—'}
+                        </span>
+                        <span className="">
+                          Landing:{' '}
+                          {assignment.landingTime
+                            ? formatDate(assignment.landingTime, true)
+                            : '—'}
+                        </span>
+                        <span className="">
+                          Aircraft:{' '}
+                          {assignment.aircraftTime
+                            ? formatDate(assignment.aircraftTime, true)
+                            : '—'}
+                        </span>
+                      </div>
+                    </TableCell>
+                    <TableCell className="border align-top">
+                      {assignment.attendanceStatus || '—'}
+                    </TableCell>
+                    <TableCell className="border align-top">
+                      {assignment.result || '—'}
+                    </TableCell>
+                    <TableCell className="border align-top">
+                      {assignment.score || '—'}
+                    </TableCell>
+                    <TableCell className="max-w-64 truncate align-top text-muted-foreground">
+                      {assignment.remarks || '—'}
+                    </TableCell>
+
+                    <TableCell
+                      className="text-right border align-top"
+                      onClick={(e) => e.stopPropagation()}
                     >
-                      <PencilIcon className="size-4" />
-                      <span className="sr-only">Edit</span>
-                    </Button>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
+                      <Button
+                        type="button"
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={(e) => {
+                          setAddFormOpen({ open: true, editIndex: index })
+                        }}
+                      >
+                        <PencilIcon className="size-4" />
+                        <span className="sr-only">Edit</span>
+                      </Button>
+                    </TableCell>
+                  </TableRow>
+                )
+              })}
+            </TableBody>
+          </Table>
+        ) : (
+          <div
+            className="py-8 text-center text-muted-foreground cursor-pointer hover:bg-muted"
+            onClick={() => setAddFormOpen({ open: true })}
+          >
+            No Assignments added yet
+          </div>
+        )}
       </div>
       {addFormOpen.open && (
         <AssignmentsModal
@@ -406,6 +506,7 @@ function AssignmentsModal({
         onClose(false)
       }
     },
+    onSubmitInvalid: handleSubmitInvalid,
   })
 
   //   const formValues = useSelector(form.store, (state) => state.values)
@@ -418,13 +519,13 @@ function AssignmentsModal({
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent>
+      <DialogContent className="min-w-2xl">
         <DialogHeader>
           <DialogTitle>
             {mode === 'edit' ? 'Edit Pilot' : 'Add Pilots'}
           </DialogTitle>
         </DialogHeader>
-        <DialogMain className="space-y-4">
+        <DialogMain className="space-y-5">
           {/* No score attendance While adding pilot */}
           <form.AppField
             name="personnelId"
@@ -455,6 +556,7 @@ function AssignmentsModal({
               />
             )}
           />
+
           <form.AppField
             name="remarks"
             children={(f) => (
@@ -464,6 +566,89 @@ function AssignmentsModal({
               />
             )}
           />
+
+          <hr className="my-4" />
+
+          <FieldColumns className="gap-5" cols={2}>
+            <form.AppField
+              name="takeoffTime"
+              children={(f) => (
+                <f.CTextField
+                  type="datetime-local"
+                  label="Takeoff Time"
+                  placeholder="Enter takeoff time"
+                />
+              )}
+            />
+            <form.AppField
+              name="landingTime"
+              children={(f) => (
+                <f.CTextField
+                  type="datetime-local"
+                  label="Landing Time"
+                  placeholder="Enter landing time"
+                />
+              )}
+            />
+            <form.AppField
+              name="aircraftTime"
+              children={(f) => (
+                <f.CTextField
+                  type="datetime-local"
+                  label="Aircraft Time"
+                  placeholder="Enter aircraft time"
+                />
+              )}
+            />
+          </FieldColumns>
+
+          <div className="pb-2 mt-4 mb-4">
+            <p className="text-sm text-muted-foreground font-bold border-b pb-2 mb-4">
+              Evaluation
+            </p>
+            <FieldColumns className="gap-4" cols={3}>
+              <form.AppField
+                name="attendanceStatus"
+                children={(f) => (
+                  <f.CBasicSelect
+                    label="Attendance Status"
+                    placeholder="Select attendance status"
+                    options={[
+                      { label: 'Present', value: 'present' },
+                      { label: 'Absent', value: 'absent' },
+                      { label: 'Excused', value: 'excused' },
+                    ]}
+                  />
+                )}
+              />
+              <form.AppField
+                name="result"
+                children={(f) => (
+                  <f.CBasicSelect
+                    label="Result"
+                    placeholder="Select result"
+                    options={[
+                      { label: 'Passed', value: 'passed' },
+                      { label: 'Failed', value: 'failed' },
+                    ]}
+                  />
+                )}
+              />
+              <form.AppField
+                name="score"
+                children={(f) => (
+                  <f.CTextField
+                    label="Score"
+                    placeholder="From 0 to 100"
+                    valueAsNumber
+                    type="number"
+                    min={0}
+                    max={100}
+                  />
+                )}
+              />
+            </FieldColumns>
+          </div>
         </DialogMain>
         <DialogFooter className="py-2">
           {mode === 'add' && (

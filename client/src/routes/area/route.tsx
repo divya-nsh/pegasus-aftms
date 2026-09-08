@@ -1,4 +1,4 @@
-import { createFileRoute } from '@tanstack/react-router'
+import { createFileRoute, Outlet } from '@tanstack/react-router'
 import { protectRouteBeforeLoad } from '@/lib/utils'
 
 export const Route = createFileRoute('/area')({
@@ -7,5 +7,5 @@ export const Route = createFileRoute('/area')({
 })
 
 function RouteComponent() {
-  return <div>Hello "/area"!</div>
+  return <Outlet />
 }

@@ -10,6 +10,7 @@ import { mediaService } from "../media/media.service.js";
 import userService from "../user/user.service.js";
 
 const optionalText = z.string().optional();
+const AUTO_CODE_PREFIX = "PRS-";
 
 function optionalDate(value?: string) {
   return value && value.trim() !== "" ? value : null;
@@ -227,6 +228,14 @@ const personnelRouter = router({
       if (input.imageId) {
         // Activate Media to prevent automatic deletion
         await mediaService.activateMedia(input.imageId, tx);
+      }
+
+      if (!input.code || !input.code.trim()) {
+        const code = AUTO_CODE_PREFIX + person.id;
+        await tx
+          .update(personnelTable)
+          .set({ code })
+          .where(eq(personnelTable.id, person.id));
       }
 
       return person;

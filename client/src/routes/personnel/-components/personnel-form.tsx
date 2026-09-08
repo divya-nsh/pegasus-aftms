@@ -92,17 +92,17 @@ const schema = z
       'Required',
     ),
     batchNo: z.string(),
-    code: z.string().min(1, 'Required'),
+    code: z.string().optional(),
     firstName: z.string().min(1, 'Required'),
-    lastName: z.string().min(1, 'Required'),
+    lastName: z.string().optional(),
     gender: z.enum(
       genderOptions.map((option) => option.value),
       'Required',
     ),
     dateOfBirth: z.string().min(1, 'Required'),
     dateOfJoin: z.string().min(1, 'Required'),
-    rank: z.string().min(1, 'Required'),
-    phone: z.string().min(1, 'Required'),
+    rank: z.string().optional(),
+    phone: z.string().optional(),
     email: z.union([z.literal(''), z.email('Invalid email')]),
     address: z.string().min(1, 'Required'),
     medicalStatus: z.enum(
@@ -330,7 +330,7 @@ export default function PersonnelForm({
             children={(f) => (
               <f.CTextField
                 label="Civil/Service Id"
-                required
+                placeholder="Auto Generate if empty {PRS-<id>}"
                 readOnly={isReadOnly}
               />
             )}
@@ -344,7 +344,7 @@ export default function PersonnelForm({
           <form.AppField
             name="rank"
             children={(f) => (
-              <f.CTextField label="Rank" required readOnly={isReadOnly} />
+              <f.CTextField label="Rank" readOnly={isReadOnly} />
             )}
           />
           <form.AppField
