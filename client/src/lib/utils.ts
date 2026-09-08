@@ -29,3 +29,15 @@ export function protectRouteBeforeLoad(
     }
   }
 }
+
+export function calcDurationMinutes(
+  startDateTime: string,
+  endDateTime: string,
+) {
+  if (!startDateTime || !endDateTime) return null
+  return Math.floor(
+    (new Date(endDateTime).getTime() - new Date(startDateTime).getTime()) /
+      1000 /
+      60,
+  )
+}

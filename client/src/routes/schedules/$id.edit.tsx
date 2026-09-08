@@ -1,12 +1,10 @@
 import ErrorAlert from '@/components/errors/ErrorAlert'
 import PageCard from '@/components/layout/PageCard'
-import PageHeader from '@/components/layout/PageHeader'
 import FullPageSpinner from '@/components/loaders/page-loader'
 import trpc from '@/trpc'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
-import ScheduleForm from './-components/schedule-form'
-import MissionStatusBadge from './-components/mission-stage-bar'
+import ScheduleForm from './-components/shedule-form3'
 
 export const Route = createFileRoute('/schedules/$id/edit')({
   component: RouteComponent,
@@ -25,12 +23,32 @@ function RouteComponent() {
 
   return (
     <PageCard className="space-y-6">
-      <PageHeader
-        title="Edit Event Schedule"
-        backTo="/schedules"
-        extra={<MissionStatusBadge status={schedule.status} size="md" />}
+      <ScheduleForm
+        mode="edit"
+        defaultValues={{
+          id: schedule.id,
+          name: schedule.name,
+          description: schedule.description || '',
+          startDateTime: schedule.startDateTime || '',
+          endDateTime: schedule.endDateTime || '',
+          areaId: schedule.areaId as number,
+          missionId: schedule.missionId,
+          status: schedule.status,
+          scheduleNumber: schedule.scheduleNumber,
+          remarks: schedule.remarks || '',
+          assigments: schedule.assignments.map((assignment) => ({
+            personnelId: assignment.personnelId,
+            aircraftId: assignment.aircraftId,
+            remarks: assignment.remarks || '',
+            attendanceStatus: assignment.attendanceStatus,
+            score: assignment.score,
+            result: assignment.result,
+            takeoffTime: assignment.takeoffTime,
+            landingTime: assignment.landingTime,
+            aircraftTime: assignment.aircraftTime,
+          })),
+        }}
       />
-      <ScheduleForm schedule={schedule} />
     </PageCard>
   )
 }

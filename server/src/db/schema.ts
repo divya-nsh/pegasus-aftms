@@ -108,9 +108,9 @@ export const missionScheduleTable = snakeCase.table("mission_schedule", {
   missionId: integer()
     .references(() => missionTable.id)
     .notNull(),
-  scheduleNumber: varchar().unique(),
-  name: varchar(),
-  description: varchar(),
+  scheduleNumber: varchar().unique().notNull(),
+  name: varchar().notNull(),
+  description: varchar().notNull().default(""),
   startDateTime: timestamp(),
   endDateTime: timestamp(),
   aircraftId: integer().references(() => aircraftTable.id),
@@ -132,9 +132,15 @@ export const missionResultEnum = pgEnum("mission_result", ["passed", "failed"]);
 
 // Mission Assigned to whom and there stats
 export const missionAssignmentTable = snakeCase.table("mission_assignment", {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  scheduleId: integer().references(() => missionScheduleTable.id),
-  personnelId: integer().references(() => personnelTable.id),
+  id: integer().primaryKey().generatedAlwaysAsIdentity().notNull(),
+  scheduleId: integer()
+    .references(() => missionScheduleTable.id, {
+      onDelete: "cascade",
+    })
+    .notNull(),
+  personnelId: integer()
+    .references(() => personnelTable.id)
+    .notNull(),
   attendanceStatus: attendanceStatusEnum(),
   aircraftId: integer().references(() => aircraftTable.id),
   /** Time will Be Stored with in UTC*/

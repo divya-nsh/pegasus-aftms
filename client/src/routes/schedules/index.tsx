@@ -20,7 +20,7 @@ import {
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { createColumnHelper, useTable } from '@tanstack/react-table'
 import type { ColumnDef } from '@tanstack/react-table'
-import { PencilIcon, TrashIcon } from 'lucide-react'
+import { EyeIcon, PencilIcon, TrashIcon } from 'lucide-react'
 import { useMemo, useState } from 'react'
 import { ActionMenu } from '@/components/table/action-menu'
 import trpc, { trpcClient } from '@/trpc'
@@ -75,7 +75,7 @@ const columns: ColumnDef<TTableFeatures, TScheduleListItem>[] = ch.columns([
         <ActionMenu>
           <AccessControl module="schedule" action="view">
             <DropdownMenuItem onClick={handleClick('view')}>
-              <PencilIcon className="h-4 w-4" />
+              <EyeIcon className="h-4 w-4" />
               View
             </DropdownMenuItem>
           </AccessControl>
@@ -85,8 +85,12 @@ const columns: ColumnDef<TTableFeatures, TScheduleListItem>[] = ch.columns([
               Edit
             </DropdownMenuItem>
           </AccessControl>
+
           <AccessControl module="schedule" action="delete">
-            <DropdownMenuItem onClick={handleClick('delete')}>
+            <DropdownMenuItem
+              variant="destructive"
+              onClick={handleClick('delete')}
+            >
               <TrashIcon className="h-4 w-4" />
               Delete
             </DropdownMenuItem>
@@ -102,7 +106,7 @@ const columns: ColumnDef<TTableFeatures, TScheduleListItem>[] = ch.columns([
     minSize: 70,
   }),
   ch.accessor('scheduleNumber', {
-    header: 'Schedule No',
+    header: 'Number',
     size: 140,
     cell: (info) => info.getValue() || '-',
   }),
@@ -129,35 +133,16 @@ const columns: ColumnDef<TTableFeatures, TScheduleListItem>[] = ch.columns([
     },
   }),
 
-  // ch.accessor('missionName', {
-  //   header: 'Mission',
-  //   cell: (info) => info.getValue() || '-',
-  // }),
-  // ch.accessor(
-  //   (row) =>
-  //     [row.instructorFirstName, row.instructorLastName]
-  //       .filter(Boolean)
-  //       .join(' '),
-  //   {
-  //     id: 'instructor',
-  //     header: 'Instructor',
-  //     cell: (info) => info.getValue() || '-',
-  //   },
-  // ),
-  // ch.accessor('aircraftName', {
-  //   header: 'Aircraft',
-  //   cell: (info) => {
-  //     const row = info.row.original
-  //     if (!row.aircraftName) return '-'
-  //     return row.aircraftTailNumber
-  //       ? `${row.aircraftName} (${row.aircraftTailNumber})`
-  //       : row.aircraftName
-  //   },
-  // }),
-  ch.accessor('areaName', {
+  ch.accessor('assignmentsCount', {
+    header: 'Total Pilots',
+    cell: (info) => info.getValue() || 0,
+  }),
+
+  ch.accessor('area.name', {
     header: 'Area',
     cell: (info) => info.getValue() || '-',
   }),
+
   ch.accessor('createdAt', {
     header: 'Created At',
     size: 130,

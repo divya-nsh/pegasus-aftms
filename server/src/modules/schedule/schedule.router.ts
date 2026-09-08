@@ -15,89 +15,12 @@ import { and, desc, eq, exists, gte, lte, ne, type SQL } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { z } from "zod";
 import roleService from "../role/role.service.js";
-
-const optionalText = z.string().optional();
-const optionalId = z.number().optional().nullable();
-
-const missionStatusSchema = z.enum([
-  "draft",
-  "published",
-  "in_progress",
-  "completed",
-  "cancelled",
-]);
-
-type MissionStatus = z.infer<typeof missionStatusSchema>;
-
-const ALLOWED_STATUS_TRANSITIONS: Record<MissionStatus, MissionStatus[]> = {
-  draft: ["published", "cancelled"],
-  published: ["in_progress", "cancelled"],
-  in_progress: ["completed", "cancelled"],
-  completed: ["cancelled"],
-  cancelled: [],
-};
-
-const headerSchema = z.object({
-  scheduleNumber: optionalText,
-  name: z.string().min(1),
-  description: optionalText,
-  startDateTime: optionalText,
-  endDateTime: optionalText,
-  aircraftId: optionalId,
-  areaId: optionalId,
-  instructorId: optionalId,
-  pilotId: optionalId,
-  remarks: optionalText,
-});
-
-const createSchema = headerSchema.extend({
-  missionId: z.number(),
-  assigments: z.array(
-    z.object({
-      personnalId: z.number(),
-      remarks: optionalText,
-      aircraftId: optionalId,
-    }),
-  ),
-});
-
-const updateSchema = headerSchema.extend({
-  toEditId: z.number(),
-});
-
-const lineRowSchema = z.object({
-  personId: z.number(),
-  attendanceStatus: z
-    .enum(["present", "absent", "excused"])
-    .nullable()
-    .optional(),
-  score: z.number().int().min(0).max(100).optional(),
-  aircraftId: z.int().optional(),
-  aircraftTime: z.coerce.date().optional(),
-  takeoffTime: z.coerce.date().optional(),
-  landingTime: z.coerce.date().optional(),
-  result: z.enum(["passed", "failed"]),
-  remarks: optionalText,
-});
-
-const toDate = (value?: string) => {
-  if (!value) return null;
-  const parsed = new Date(value);
-  return Number.isNaN(parsed.getTime()) ? null : parsed;
-};
-
-const toScheduleValues = (input: z.infer<typeof headerSchema>) => ({
-  scheduleNumber: input.scheduleNumber?.trim() || undefined,
-  name: input.name,
-  description: input.description,
-  startDateTime: toDate(input.startDateTime),
-  endDateTime: toDate(input.endDateTime),
-  aircraftId: input.aircraftId,
-  areaId: input.areaId,
-  instructorId: input.instructorId,
-  pilotId: input.pilotId,
-  remarks: input.remarks,
-});
+import {
+  createSchema,
+  missionStatusSchema,
+  updateSchema,
+} from "./schedule.schema.js";
+import type { TMissionStatus } from "./schedule.schema.js";
 
 const instructorTable = alias(personnelTable, "schedule_instructor");
 const pilotTable = alias(personnelTable, "schedule_pilot");
@@ -149,78 +72,41 @@ const scheduleRouter = router({
     )
     .query(async ({ ctx, input }) => {
       const scope = roleService.canDo(ctx.user.role || "", "schedule", "view");
-      // if (!scope) {
-      //   throw new TRPCError({
-      //     code: "UNAUTHORIZED",
-      //     message: "You are not authorized to view schedules",
-      //   });
-      // }
 
-      const conditions: SQL[] = [];
+      let personnelId: number | undefined;
 
       if (scope === "assigned" && ctx.user.personnelId != null) {
-        conditions.push(ne(missionScheduleTable.status, "draft"));
-        conditions.push(
-          exists(
-            db
-              .select({ id: missionAssignmentTable.id })
-              .from(missionAssignmentTable)
-              .where(
-                and(
-                  eq(
-                    missionAssignmentTable.scheduleId,
-                    missionScheduleTable.id,
-                  ),
-                  eq(missionAssignmentTable.personnelId, ctx.user.personnelId),
-                ),
-              ),
-          ),
-        );
+        personnelId = ctx.user.personnelId;
       }
 
-      if (input.status) {
-        conditions.push(eq(missionScheduleTable.status, input.status));
-      }
-
-      const items = await db
-        .select({
-          id: missionScheduleTable.id,
-          scheduleNumber: missionScheduleTable.scheduleNumber,
-          name: missionScheduleTable.name,
-          status: missionScheduleTable.status,
-          startDateTime: missionScheduleTable.startDateTime,
-          endDateTime: missionScheduleTable.endDateTime,
-          remarks: missionScheduleTable.remarks,
-          createdAt: missionScheduleTable.createdAt,
-          updatedAt: missionScheduleTable.updatedAt,
-          missionId: missionScheduleTable.missionId,
-          missionName: missionTable.name,
-          durationMinutes: missionTable.durationMinutes,
-          aircraftName: aircraftTable.name,
-          aircraftTailNumber: aircraftTable.tailNumber,
-          areaName: areaTable.name,
-          instructorFirstName: instructorTable.firstName,
-          instructorLastName: instructorTable.lastName,
-          pilotFirstName: pilotTable.firstName,
-          pilotLastName: pilotTable.lastName,
-        })
-        .from(missionScheduleTable)
-        .leftJoin(
-          missionTable,
-          eq(missionScheduleTable.missionId, missionTable.id),
-        )
-        .leftJoin(
-          aircraftTable,
-          eq(missionScheduleTable.aircraftId, aircraftTable.id),
-        )
-        .leftJoin(areaTable, eq(missionScheduleTable.areaId, areaTable.id))
-        .leftJoin(
-          instructorTable,
-          eq(missionScheduleTable.instructorId, instructorTable.id),
-        )
-        .leftJoin(pilotTable, eq(missionScheduleTable.pilotId, pilotTable.id))
-        .where(and(...conditions))
-        .orderBy(desc(missionScheduleTable.id));
+      const items = await db.query.missionScheduleTable.findMany({
+        with: {
+          mission: true,
+          area: true,
+        },
+        orderBy: {
+          id: "desc",
+        },
+        where: {
+          NOT:
+            scope === "assigned"
+              ? {
+                  status: "draft",
+                }
+              : undefined,
+          status: input.status,
+          assignments: {
+            personnelId: personnelId,
+          },
+        },
+        extras: {
+          assignmentsCount: (schedule) =>
+            db.$count(
+              missionAssignmentTable,
+              eq(missionAssignmentTable.scheduleId, schedule.id),
+            ),
+        },
+      });
 
       return {
         items: items,
@@ -230,111 +116,54 @@ const scheduleRouter = router({
 
   getById: protectedProcedure
     .input(z.object({ id: z.number() }))
-    .query(async ({ ctx, input }) => {
-      const [row] = await db
-        .select({
-          id: missionScheduleTable.id,
-          missionId: missionScheduleTable.missionId,
-          scheduleNumber: missionScheduleTable.scheduleNumber,
-          name: missionScheduleTable.name,
-          description: missionScheduleTable.description,
-          status: missionScheduleTable.status,
-          startDateTime: missionScheduleTable.startDateTime,
-          endDateTime: missionScheduleTable.endDateTime,
-          remarks: missionScheduleTable.remarks,
-          aircraftId: missionScheduleTable.aircraftId,
-          areaId: missionScheduleTable.areaId,
-          instructorId: missionScheduleTable.instructorId,
-          pilotId: missionScheduleTable.pilotId,
-          createdAt: missionScheduleTable.createdAt,
-          updatedAt: missionScheduleTable.updatedAt,
-          missionName: missionTable.name,
-          durationMinutes: missionTable.durationMinutes,
-          aircraftName: aircraftTable.name,
-          aircraftTailNumber: aircraftTable.tailNumber,
-          areaName: areaTable.name,
-          instructorFirstName: instructorTable.firstName,
-          instructorLastName: instructorTable.lastName,
-          pilotFirstName: pilotTable.firstName,
-          pilotLastName: pilotTable.lastName,
-        })
-        .from(missionScheduleTable)
-        .leftJoin(
-          missionTable,
-          eq(missionScheduleTable.missionId, missionTable.id),
-        )
-        .leftJoin(
-          aircraftTable,
-          eq(missionScheduleTable.aircraftId, aircraftTable.id),
-        )
-        .leftJoin(areaTable, eq(missionScheduleTable.areaId, areaTable.id))
-        .leftJoin(
-          instructorTable,
-          eq(missionScheduleTable.instructorId, instructorTable.id),
-        )
-        .leftJoin(pilotTable, eq(missionScheduleTable.pilotId, pilotTable.id))
-        .where(eq(missionScheduleTable.id, input.id));
+    .query(async ({ input }) => {
+      const data = await db.query.missionScheduleTable.findFirst({
+        with: {
+          mission: true,
+          area: true,
+          assignments: {
+            with: {
+              personnel: true,
+            },
+          },
+        },
+        where: {
+          id: input.id,
+        },
+      });
 
-      if (!row) {
+      if (!data) {
         throw new TRPCError({
           code: "NOT_FOUND",
-          message: "Event schedule not found",
+          message: "Invalid Id, Schedule not found or deleted",
         });
       }
 
-      const assignments = await db
-        .select({
-          id: missionAssignmentTable.id,
-          personnelId: missionAssignmentTable.personnelId,
-          attendanceStatus: missionAssignmentTable.attendanceStatus,
-          remarks: missionAssignmentTable.remarks,
-          score: missionAssignmentTable.score,
-          result: missionAssignmentTable.result,
-          firstName: personnelTable.firstName,
-          lastName: personnelTable.lastName,
-          code: personnelTable.code,
-          rank: personnelTable.rank,
-          personnelType: personnelTable.personnelType,
-          batchNo: personnelTable.batchNo,
-        })
-        .from(missionAssignmentTable)
-        .leftJoin(
-          personnelTable,
-          eq(missionAssignmentTable.personnelId, personnelTable.id),
-        )
-        .where(eq(missionAssignmentTable.scheduleId, input.id));
-
-      const { isTrainee, personnelId } = await getTraineeScope(ctx.user.id);
-      if (isTrainee) {
-        const isAssigned = assignments.some(
-          (assignment) => assignment.personnelId === personnelId,
-        );
-        if (!isAssigned) {
-          throw new TRPCError({
-            code: "NOT_FOUND",
-            message: "Mission schedule not found",
-          });
-        }
-      }
-
-      return {
-        ...row,
-        assignments,
-      };
+      return data;
     }),
 
   create: protectedProcedure.input(createSchema).mutation(async ({ input }) => {
     const { assigments, missionId, ...data } = input;
-    const mission = await getMissionOrThrow(missionId);
 
     const res = await db.transaction(async (tx) => {
+      const values: typeof missionScheduleTable.$inferInsert = {
+        scheduleNumber: data.scheduleNumber || crypto.randomUUID().slice(0, 8),
+        missionId: missionId,
+        name: data.name,
+        description: data.description,
+        startDateTime: data.startDateTime,
+        endDateTime: data.endDateTime,
+        aircraftId: data.aircraftId,
+        instructorId: data.instructorId,
+        pilotId: data.pilotId,
+        status: "draft",
+        remarks: data.remarks,
+        areaId: data.areaId,
+      };
+
       const [created] = await tx
         .insert(missionScheduleTable)
-        .values({
-          missionId,
-          ...toScheduleValues(data),
-          aircraftId: data.aircraftId ?? mission.aircraftId,
-        })
+        .values(values)
         .returning({ id: missionScheduleTable.id })!;
 
       if (!created) throw new Error("Something wrong"); // never gonna happen written to make typescript happy
@@ -343,7 +172,7 @@ const scheduleRouter = router({
         data.scheduleNumber?.trim() || `${SCHEDULE_NUMBER_PREFIX}${created.id}`;
 
       if (!data.scheduleNumber?.trim()) {
-        await db
+        await tx
           .update(missionScheduleTable)
           .set({ scheduleNumber })
           .where(eq(missionScheduleTable.id, created.id));
@@ -352,9 +181,7 @@ const scheduleRouter = router({
       for (const assignment of assigments) {
         await tx.insert(missionAssignmentTable).values({
           scheduleId: created.id,
-          personnelId: assignment.personnalId,
-          remarks: assignment.remarks,
-          aircraftId: assignment.aircraftId,
+          ...assignment,
         });
       }
 
@@ -365,13 +192,23 @@ const scheduleRouter = router({
   }),
 
   update: protectedProcedure.input(updateSchema).mutation(async ({ input }) => {
-    const { toEditId, ...data } = input;
-    await getScheduleOrThrow(toEditId);
+    const { id, ...data } = input;
+    await getScheduleOrThrow(id);
 
     const [updated] = await db
       .update(missionScheduleTable)
-      .set(toScheduleValues(data))
-      .where(eq(missionScheduleTable.id, toEditId))
+      .set({
+        name: data.name,
+        description: data.description,
+        startDateTime: data.startDateTime,
+        endDateTime: data.endDateTime,
+        aircraftId: data.aircraftId,
+        instructorId: data.instructorId,
+        pilotId: data.pilotId,
+        remarks: data.remarks,
+        areaId: data.areaId,
+      })
+      .where(eq(missionScheduleTable.id, id))
       .returning({ id: missionScheduleTable.id });
 
     if (!updated) {
@@ -409,13 +246,31 @@ const scheduleRouter = router({
       }),
     )
     .mutation(async ({ input }) => {
-      const schedule = await getScheduleOrThrow(input.id);
-      const allowed = ALLOWED_STATUS_TRANSITIONS[schedule.status];
+      const [schedule] = await db
+        .select({
+          status: missionScheduleTable.status,
+        })
+        .from(missionScheduleTable)
+        .where(eq(missionScheduleTable.id, input.id))
+        .limit(1);
 
-      if (!allowed.includes(input.status)) {
+      if (!schedule) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Invalid Id, Schedule not found or deleted",
+        });
+      }
+
+      if (schedule.status === input.status) {
         throw new TRPCError({
           code: "BAD_REQUEST",
-          message: `Cannot change status from ${schedule.status} to ${input.status}`,
+          message: "Status is already set to the same value",
+        });
+      }
+      if (!isStatusChangeAllowed(schedule.status, input.status)) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: `Status change from ${schedule.status} to ${input.status} is not allowed`,
         });
       }
 
@@ -433,3 +288,15 @@ const scheduleRouter = router({
 });
 
 export default scheduleRouter;
+
+const ALLOWED_STATUS_TRANSITIONS: Record<TMissionStatus, string[]> = {
+  draft: ["published", "cancelled"],
+  published: ["completed", "cancelled"],
+  completed: ["cancelled"],
+  cancelled: [],
+  in_progress: [],
+};
+
+function isStatusChangeAllowed(from: TMissionStatus, to: TMissionStatus) {
+  return ALLOWED_STATUS_TRANSITIONS[from].includes(to);
+}

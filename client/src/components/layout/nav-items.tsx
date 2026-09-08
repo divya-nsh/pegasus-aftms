@@ -28,7 +28,7 @@ export const navItems: NavGroup[] = [
     title: 'Operations',
     items: [
       {
-        title: 'Schedule Events',
+        title: 'Event Schedule',
         url: '/schedules',
         icon: CalendarClockIcon,
       },

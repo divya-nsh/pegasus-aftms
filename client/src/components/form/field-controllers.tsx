@@ -134,15 +134,21 @@ export function CCheckbox({ label }: { label: string }) {
   )
 }
 
-export function CDateField({ ...props }: DateFieldProps) {
-  const field = useFieldContext<Date | null>()
+export function CDateField({
+  onAfterCommit,
+  ...props
+}: DateFieldProps & { onAfterCommit?: (value: string | null) => void }) {
+  const field = useFieldContext<string | null>()
   const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid
 
   return (
     <DateField
       {...props}
-      value={field.state.value ?? null}
-      onChange={field.handleChange}
+      value={field.state.value}
+      onChange={(value) => {
+        field.handleChange(value)
+        onAfterCommit?.(value)
+      }}
       errors={isInvalid ? field.state.meta.errors : undefined}
     />
   )

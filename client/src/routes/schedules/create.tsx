@@ -1,7 +1,6 @@
-import PageHeader from '@/components/layout/PageHeader'
 import FullPageSpinner from '@/components/loaders/page-loader'
 import { createFileRoute } from '@tanstack/react-router'
-import ScheduleForm from './-components/schedule-form'
+import ScheduleForm from './-components/shedule-form3'
 import PageCard from '@/components/layout/PageCard'
 
 export const Route = createFileRoute('/schedules/create')({
@@ -12,8 +11,7 @@ export const Route = createFileRoute('/schedules/create')({
 function RouteComponent() {
   return (
     <PageCard>
-      <PageHeader title="New Event Schedule" backTo="/schedules" />
-      <ScheduleForm />
+      <ScheduleForm mode="create" />
     </PageCard>
   )
 }
