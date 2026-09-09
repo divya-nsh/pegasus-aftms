@@ -1,76 +1,160 @@
 import db from "#/db/db.js";
 
 export class ScheduleService {
-  constructor() {}
-
-  async getScheduleSummaryForPersonnel(personnelId: number) {
+  async getPilotDashboardStats(personnelId: number, todayDateIso: string) {
     const profile = await db.query.personnelTable.findFirst({
-      where: {
-        id: personnelId,
-      },
+      where: { id: personnelId },
     });
+
     if (!profile) {
       throw new Error("Personnel not found");
     }
+
     const schedules = await db.query.missionScheduleTable.findMany({
       where: {
         status: {
           notIn: ["draft", "cancelled"],
         },
         assignments: {
-          personnelId: personnelId,
+          personnelId,
         },
       },
       with: {
+        mission: true,
         assignments: {
-          where: {
-            personnelId: personnelId,
-          },
+          where: { personnelId },
         },
       },
+      orderBy: (table, { desc }) => [desc(table.startDateTime)],
     });
 
-    const completedMissions = schedules.filter(
-      (schedule) => schedule.status === "completed",
-    );
+    const today = todayDateIso.slice(0, 10);
 
-    const totalAssignmentsCompleted = schedules.filter(
-      (schedule) => schedule.status === "completed",
-    ).length;
+    let completedCount = 0;
+    let upcomingCount = 0;
 
-    const pendingAssignments = schedules.filter(
-      (schedule) => schedule.status === "published",
-    );
+    let passedCount = 0;
+    let failedCount = 0;
+    let pendingResultCount = 0;
 
-    const averageScore =
-      completedMissions.reduce(
-        (acc, schedule) => acc + (schedule.assignments?.[0]?.score ?? 0),
-        0,
-      ) / totalAssignmentsCompleted;
+    let presentCount = 0;
+    let absentCount = 0;
+    let excusedCount = 0;
 
-    const passedAssignments = completedMissions.filter(
-      (schedule) => schedule.assignments?.[0]?.result === "passed",
-    );
+    let scoreTotal = 0;
+    let scoredAssignments = 0;
 
-    const failedAssignments = completedMissions.filter(
-      (schedule) => schedule.assignments?.[0]?.result === "failed",
-    );
+    let flyingMilliseconds = 0;
+    let flyingAssignments = 0;
+
+    const todayAssignments = [];
+
+    const missionTypeCount: Record<string, number> = {};
+
+    for (const schedule of schedules) {
+      const assignment = schedule.assignments?.[0];
+      if (!assignment) continue;
+
+      // Mission type distribution
+      const type = schedule.mission?.missionType ?? "unknown";
+      missionTypeCount[type] = (missionTypeCount[type] ?? 0) + 1;
+
+      // Upcoming missions
+      if (schedule.status === "published") {
+        upcomingCount++;
+
+        if (schedule.startDateTime?.toISOString().slice(0, 10) === today) {
+          todayAssignments.push(schedule);
+        }
+      }
+
+      // Completed missions
+      if (schedule.status !== "completed") continue;
+
+      completedCount++;
+
+      // Attendance
+      switch (assignment.attendanceStatus) {
+        case "present":
+          presentCount++;
+          break;
+        case "absent":
+          absentCount++;
+          break;
+        case "excused":
+          excusedCount++;
+          break;
+      }
+
+      // Results
+      switch (assignment.result) {
+        case "passed":
+          passedCount++;
+          break;
+        case "failed":
+          failedCount++;
+          break;
+        default:
+          pendingResultCount++;
+      }
+
+      // Average score (ignore null scores)
+      if (assignment.score !== null && assignment.score !== undefined) {
+        scoreTotal += assignment.score;
+        scoredAssignments++;
+      }
+
+      // Flying hours
+      if (
+        assignment.aircraftId &&
+        assignment.takeoffTime &&
+        assignment.landingTime
+      ) {
+        flyingAssignments++;
+        flyingMilliseconds +=
+          assignment.landingTime.getTime() - assignment.takeoffTime.getTime();
+      }
+    }
+
+    const evaluatedAssignments = passedCount + failedCount;
 
     return {
+      // Overview
       totalAssignments: schedules.length,
-      totalAssignmentsCompleted,
-      totalAssignmentsPending: pendingAssignments.length,
-      averageScore,
-      totalPassedAssignments: passedAssignments.length,
-      totalFailedAssignments: failedAssignments.length,
-      passedPercentage:
-        (passedAssignments.length / totalAssignmentsCompleted) * 100,
-      failedPercentage:
-        (failedAssignments.length / totalAssignmentsCompleted) * 100,
+      completedAssignments: completedCount,
+      pendingAssignments: upcomingCount,
+
+      // Results
+      passedAssignments: passedCount,
+      failedAssignments: failedCount,
+      pendingResults: pendingResultCount,
+      passRate:
+        evaluatedAssignments === 0
+          ? 0
+          : Number(((passedCount / evaluatedAssignments) * 100).toFixed(1)),
+
+      // Performance
+      averageScore:
+        scoredAssignments === 0
+          ? null
+          : Number((scoreTotal / scoredAssignments).toFixed(1)),
+
+      // Attendance
+      attendance: {
+        present: presentCount,
+        absent: absentCount,
+        excused: excusedCount,
+      },
+
+      // Flying
+      flyingHours: Number((flyingMilliseconds / 3_600_000).toFixed(1)),
+      flyingAssignments,
+
+      // Charts / Lists
+      missionTypeDistribution: missionTypeCount,
+      todayAssignments,
     };
   }
 }
 
-const scheduleService = new ScheduleService();
-
-export default scheduleService;
+export default new ScheduleService();

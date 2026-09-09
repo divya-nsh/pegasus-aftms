@@ -9,6 +9,7 @@ import {
   index,
   boolean,
   jsonb,
+  uniqueIndex,
 } from "drizzle-orm/pg-core";
 
 export const genderEnum = pgEnum("gender", ["male", "female", "other"]);
@@ -113,10 +114,10 @@ export const missionScheduleTable = snakeCase.table("mission_schedule", {
   description: varchar().notNull().default(""),
   startDateTime: timestamp(),
   endDateTime: timestamp(),
-  aircraftId: integer().references(() => aircraftTable.id),
+  // aircraftId: integer().references(() => aircraftTable.id),
   areaId: integer().references(() => areaTable.id),
-  instructorId: integer().references(() => personnelTable.id),
-  pilotId: integer().references(() => personnelTable.id),
+  // instructorId: integer().references(() => personnelTable.id),
+  // pilotId: integer().references(() => personnelTable.id),
   status: missionStatusEnum().notNull().default("draft"),
   remarks: varchar(),
   ...timeStampts,
@@ -131,27 +132,36 @@ export const attendanceStatusEnum = pgEnum("attendance_status", [
 export const missionResultEnum = pgEnum("mission_result", ["passed", "failed"]);
 
 // Mission Assigned to whom and there stats
-export const missionAssignmentTable = snakeCase.table("mission_assignment", {
-  id: integer().primaryKey().generatedAlwaysAsIdentity().notNull(),
-  scheduleId: integer()
-    .references(() => missionScheduleTable.id, {
-      onDelete: "cascade",
-    })
-    .notNull(),
-  personnelId: integer()
-    .references(() => personnelTable.id)
-    .notNull(),
-  attendanceStatus: attendanceStatusEnum(),
-  aircraftId: integer().references(() => aircraftTable.id),
-  /** Time will Be Stored with in UTC*/
-  aircraftTime: timestamp(),
-  takeoffTime: timestamp(),
-  landingTime: timestamp(),
-  remarks: varchar(),
-  score: integer(),
-  result: missionResultEnum(),
-  ...timeStampts,
-});
+export const missionAssignmentTable = snakeCase.table(
+  "mission_assignment",
+  {
+    id: integer().primaryKey().generatedAlwaysAsIdentity().notNull(),
+    scheduleId: integer()
+      .references(() => missionScheduleTable.id, {
+        onDelete: "cascade",
+      })
+      .notNull(),
+    personnelId: integer()
+      .references(() => personnelTable.id)
+      .notNull(),
+    attendanceStatus: attendanceStatusEnum(),
+    aircraftId: integer().references(() => aircraftTable.id),
+    /** Time will Be Stored with in UTC*/
+    aircraftTime: timestamp(),
+    takeoffTime: timestamp(),
+    landingTime: timestamp(),
+    remarks: varchar(),
+    score: integer(),
+    result: missionResultEnum(),
+    ...timeStampts,
+  },
+  (table) => [
+    uniqueIndex("unique_schedule_id_personnel_id_idx").on(
+      table.scheduleId,
+      table.personnelId,
+    ),
+  ],
+);
 
 export const aircraftTable = snakeCase.table("aircraft", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
