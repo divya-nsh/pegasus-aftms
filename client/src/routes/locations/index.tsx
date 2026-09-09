@@ -30,6 +30,8 @@ import { toast } from '@/components/ui/toast'
 import { BlockingLoaderOverlay } from '@/components/loaders/BlockingLoader'
 import PageCard from '@/components/layout/PageCard'
 import { protectRouteBeforeLoad } from '@/lib/utils'
+import NewButton from '@/components/buttons/new-button'
+import RefreshButton from '@/components/table/refresh-button'
 
 export const Route = createFileRoute('/locations/')({
   component: RouteComponent,
@@ -197,14 +199,12 @@ function RouteComponent() {
 
   return (
     <PageCard className="space-y-4">
-      <div className="items-center gap-1 mt-1 border-b mb-4 pb-2 flex justify-between">
+      <div className="items-center gap-4 mt-1 border-b mb-4 pb-2 flex justify-between">
         {/* <SidebarTrigger /> */}
         {/* <Separator orientation="vertical" className="mx-2" /> */}
-        <h1 className="text-xl font-bold">Locations</h1>
-        <Button onClick={() => setFormModel({ open: true })}>
-          <PlusIcon />
-          New
-        </Button>
+        <h1 className="text-xl font-bold mr-auto">Locations</h1>
+        <RefreshButton query={locationsQ} />
+        <NewButton onClick={() => setFormModel({ open: true })} />
       </div>
       <ErrorAlert error={locationsQ.error} />
       <div className=" mb-3 flex items-center justify-between">

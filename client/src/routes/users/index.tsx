@@ -27,6 +27,7 @@ import FullPageSpinner from '@/components/loaders/page-loader'
 import { toast } from '@/components/ui/toast'
 import { BlockingLoaderOverlay } from '@/components/loaders/BlockingLoader'
 import RefreshButton from '@/components/table/refresh-button'
+import PageCard from '@/components/layout/PageCard'
 
 export const Route = createFileRoute('/users/')({
   component: RouteComponent,
@@ -79,7 +80,6 @@ const columns: ColumnDef<TTableFeatures, TUserListItem>[] = ch.columns([
   ch.accessor('name', {
     header: 'Name',
     cell: (info) => info.getValue() ?? '-',
-    size: 100,
   }),
   ch.accessor('role', {
     header: 'Role',
@@ -163,18 +163,14 @@ function RouteComponent() {
   })
 
   return (
-    <div className="px-6 max-w-6xl mx-auto space-y-4">
+    <PageCard className="space-y-4">
       <div className="items-center gap-1 border-b mb-4 pb-1 flex justify-between">
         <h1 className="text-xl font-bold">Users</h1>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
+          <RefreshButton query={usersQ} />
           <LinkButton to="/users/create" newButton />
-          <RefreshButton
-            isPending={usersQ.isRefetching}
-            onClick={() => queryClient.refetchQueries(trpc.users.pathFilter())}
-          />
         </div>
       </div>
-      <ErrorAlert error={usersQ.error} />
       <div className=" mb-3 flex items-center justify-between">
         <SearchInput
           value={searchText}
@@ -189,6 +185,6 @@ function RouteComponent() {
       <AppTable table={table} />
       <TablePagination table={table} />
       <BlockingLoaderOverlay show={deleteMutation.isPending} />
-    </div>
+    </PageCard>
   )
 }

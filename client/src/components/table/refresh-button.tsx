@@ -8,22 +8,30 @@ export default function RefreshButton({
   className,
   disabled,
   isPending,
+  query,
 }: {
-  onClick: () => void
+  onClick?: () => void
   className?: string
   isPending?: boolean
   disabled?: boolean
+  query?: {
+    refetch: () => void
+    isPending: boolean
+  }
 }) {
+  const _isPending = isPending || query?.isPending
+  const _onClick = onClick || query?.refetch
+
   return (
     <Button
       variant="outline"
       size="icon"
-      onClick={onClick}
+      onClick={_onClick}
       title="Refresh Table"
       className={cn(' shadow-none', className)}
-      disabled={disabled || isPending}
+      disabled={disabled || _isPending}
     >
-      <RefreshCwIcon className={cn('h-4 w-4', isPending && 'animate-spin')} />
+      <RefreshCwIcon className={cn('h-4 w-4', _isPending && 'animate-spin')} />
     </Button>
   )
 }

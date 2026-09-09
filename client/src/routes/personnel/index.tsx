@@ -41,6 +41,7 @@ import { PersonnelCard } from './-components/personnel-card'
 import { getMediaUrl } from '@/lib/media'
 import PageCard from '@/components/layout/PageCard'
 import { useLocalStorage } from '@/hooks/use-local-storage'
+import RefreshButton from '@/components/table/refresh-button'
 
 export const Route = createFileRoute('/personnel/')({
   component: RouteComponent,
@@ -246,8 +247,9 @@ function RouteComponent() {
 
   return (
     <PageCard className="space-y-4">
-      <div className="items-center gap-1 border-b mb-4 pb-1 flex justify-between">
-        <h1 className="text-xl font-bold">Personnel</h1>
+      <div className="items-center gap-4 border-b mb-4 pb-1 flex justify-between">
+        <h1 className="text-xl font-bold mr-auto">Personnel</h1>
+        <RefreshButton query={personnelQ} />
         <LinkButton to="/personnel/create" newButton />
       </div>
       <ErrorAlert error={personnelQ.error} />
