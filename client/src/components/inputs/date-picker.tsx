@@ -19,19 +19,23 @@ export type DatePickerProps = {
   time?: boolean
   use24Hour?: boolean
   className?: string
+  disabled?: boolean
+  placeholder?: string
 }
 
 export default function DatePicker({
   showWeekDay = false,
   enableClear = true,
   time = false,
+  disabled = false,
+  placeholder = 'Pick a date',
   ...rest
   //  use24Hour = false,
 }: DatePickerProps) {
   const value = rest.value ? new Date(rest.value) : null
   const [open, setOpen] = useState(false)
-  const hour = value?.getHours() ?? 0
-  const minute = value?.getMinutes() ?? 0
+  const hour = time ? (value?.getHours() ?? 0) : 0
+  const minute = time ? (value?.getMinutes() ?? 0) : 0
   // refs to every li so we can scroll to the selected one on open
   const hourRefs = useRef<Map<number, HTMLButtonElement>>(new Map())
   const minuteRefs = useRef<Map<number, HTMLButtonElement>>(new Map())
@@ -97,13 +101,14 @@ export default function DatePicker({
             variant="outline"
             data-empty={!value}
             className="justify-between hover:bg-transparent gap-4 text-left font-normal data-[empty=true]:text-muted-foreground"
+            disabled={disabled}
           />
         }
       >
         {value ? (
           formatDate(value, true, showWeekDay)
         ) : (
-          <span>Pick a date</span>
+          <span>{placeholder}</span>
         )}
         <CalendarIcon className=" text-muted-foreground" />
       </PopoverTrigger>
@@ -115,7 +120,17 @@ export default function DatePicker({
             required
             captionLayout="dropdown"
             selected={value ?? undefined}
-            onSelect={onChange}
+            onSelect={(v) => {
+              onChange(
+                new Date(
+                  v.getFullYear(),
+                  v.getMonth(),
+                  v.getDate(),
+                  hour,
+                  minute,
+                ),
+              )
+            }}
             startMonth={new Date(1900, 0)}
             endMonth={new Date(new Date().getFullYear() + 60, 11)}
           />
@@ -130,7 +145,10 @@ export default function DatePicker({
             <Button
               variant="ghost"
               size="xs"
-              onClick={() => onChange(getTodayDateWithoutTime())}
+              onClick={() => {
+                onChange(getTodayDateWithoutTime())
+                setOpen(false)
+              }}
             >
               Today
             </Button>
@@ -190,7 +208,13 @@ export default function DatePicker({
 
 function getTodayDateWithoutTime() {
   const now = new Date()
-  return new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  return new Date(
+    now.getFullYear(),
+    now.getMonth(),
+    now.getDate(),
+    now.getHours(),
+    now.getMinutes(),
+  )
 }
 
 const hours = Array.from({ length: 24 }, (_, i) => i)

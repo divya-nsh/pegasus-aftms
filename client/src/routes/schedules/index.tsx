@@ -17,7 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { createColumnHelper, useTable } from '@tanstack/react-table'
 import type { ColumnDef } from '@tanstack/react-table'
 import { EyeIcon, PencilIcon, TrashIcon } from 'lucide-react'
@@ -108,7 +108,21 @@ const columns: ColumnDef<TTableFeatures, TScheduleListItem>[] = ch.columns([
   ch.accessor('scheduleNumber', {
     header: 'Number',
     size: 140,
-    cell: (info) => info.getValue() || '-',
+    cell: (info) => {
+      const original = info.row.original
+      const value = info.getValue()
+      return value ? (
+        <Link
+          to={`/schedules/$id/edit`}
+          params={{ id: original.id.toString() }}
+          className="text-sm hover:text-primary hover:underline"
+        >
+          {value}
+        </Link>
+      ) : (
+        '-'
+      )
+    },
   }),
   ch.accessor('name', {
     header: 'Schedule Name',
@@ -118,6 +132,7 @@ const columns: ColumnDef<TTableFeatures, TScheduleListItem>[] = ch.columns([
     size: 130,
     cell: (info) => <MissionStatusBadge status={info.getValue()} size="sm" />,
   }),
+
   ch.accessor('startDateTime', {
     header: 'Start Date',
     cell: (info) => {
@@ -131,6 +146,19 @@ const columns: ColumnDef<TTableFeatures, TScheduleListItem>[] = ch.columns([
       const value = info.getValue()
       return value ? formatDate(value, true) : '-'
     },
+  }),
+
+  ch.accessor('mission.name', {
+    header: 'Event',
+    cell: (info) => (
+      <Link
+        to={`/events`}
+        // params={{ id: info.row.original.missionId.toString() }}
+        className="text-sm hover:text-primary hover:underline"
+      >
+        {info.getValue() || '-'}
+      </Link>
+    ),
   }),
 
   ch.accessor('assignmentsCount', {

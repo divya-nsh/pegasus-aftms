@@ -136,10 +136,10 @@ function MissionCard({
   mission: AssignedSchedule
   compact?: boolean
 }) {
-  const instructor = personName(
-    mission.instructorFirstName,
-    mission.instructorLastName,
-  )
+  // const instructor = personName(
+  //   mission.instructorFirstName,
+  //   mission.instructorLastName,
+  // )
 
   return (
     <Link
@@ -153,9 +153,9 @@ function MissionCard({
             {mission.scheduleNumber}
           </p>
           <p className="font-medium">{mission.name}</p>
-          {mission.missionName ? (
+          {mission.mission?.name ? (
             <p className="text-sm text-muted-foreground">
-              {mission.missionName}
+              {mission.mission.name}
             </p>
           ) : null}
         </div>
@@ -165,7 +165,7 @@ function MissionCard({
       {compact ? (
         <p className="mt-3 text-sm text-muted-foreground">
           {formatDate(mission.startDateTime ?? '', true)}
-          {mission.aircraftTailNumber ? ` · ${mission.aircraftTailNumber}` : ''}
+          {/* {mission.aircraftTailNumber ? ` · ${mission.aircraftTailNumber}` : ''} */}
         </p>
       ) : (
         <div className="mt-4 grid gap-2 text-sm sm:grid-cols-2">

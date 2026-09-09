@@ -22,10 +22,6 @@ import {
 } from "./schedule.schema.js";
 import type { TMissionStatus } from "./schedule.schema.js";
 
-const instructorTable = alias(personnelTable, "schedule_instructor");
-const pilotTable = alias(personnelTable, "schedule_pilot");
-const traineeTable = alias(personnelTable, "schedule_trainee");
-
 async function getScheduleOrThrow(id: number) {
   const [row] = await db
     .select()
@@ -116,7 +112,15 @@ const scheduleRouter = router({
 
   getById: protectedProcedure
     .input(z.object({ id: z.number() }))
-    .query(async ({ input }) => {
+    .query(async ({ ctx, input }) => {
+      const scope = roleService.canDo(ctx.user.role || "", "schedule", "view");
+
+      let personnelId: number | undefined;
+
+      if (scope === "assigned" && ctx.user.personnelId != null) {
+        personnelId = ctx.user.personnelId;
+      }
+
       const data = await db.query.missionScheduleTable.findFirst({
         with: {
           mission: true,
@@ -124,6 +128,9 @@ const scheduleRouter = router({
           assignments: {
             with: {
               personnel: true,
+            },
+            where: {
+              personnelId: personnelId,
             },
           },
         },
@@ -236,6 +243,34 @@ const scheduleRouter = router({
         .returning({ id: missionScheduleTable.id });
 
       return deleted;
+    }),
+
+  checkAssignmentAvailability: protectedProcedure
+    .input(
+      z.object({
+        personnelId: z.number(),
+        startDateTime: z.coerce.date(),
+        endDateTime: z.coerce.date(),
+      }),
+    )
+    .query(async ({ input }) => {
+      const { personnelId, startDateTime, endDateTime } = input;
+
+      const schedule = await db.query.missionScheduleTable.findFirst({
+        where: {
+          assignments: {
+            personnelId: personnelId,
+          },
+          startDateTime: {
+            gte: startDateTime,
+          },
+          endDateTime: {
+            lte: endDateTime,
+          },
+        },
+      });
+
+      return !schedule;
     }),
 
   setStatus: protectedProcedure

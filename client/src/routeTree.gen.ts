@@ -13,6 +13,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as AircraftRouteRouteImport } from './routes/aircraft/route'
 import { Route as AreaRouteRouteImport } from './routes/area/route'
 import { Route as DateRouteImport } from './routes/date'
+import { Route as FormGeneratorRouteImport } from './routes/form-generator'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MyPersonnelRouteImport } from './routes/my-personnel'
 import { Route as TestRouteImport } from './routes/test'
@@ -29,7 +30,6 @@ import { Route as RolesIndexRouteImport } from './routes/roles/index'
 import { Route as RolesCreateRouteImport } from './routes/roles/create'
 import { Route as SchedulesIndexRouteImport } from './routes/schedules/index'
 import { Route as SchedulesCreateRouteImport } from './routes/schedules/create'
-import { Route as SchedulesForm2RouteImport } from './routes/schedules/form2'
 import { Route as TraineeDashboardIndexRouteImport } from './routes/trainee-dashboard/index'
 import { Route as TraineeDashboardIdRouteImport } from './routes/trainee-dashboard/$id'
 import { Route as UsersIndexRouteImport } from './routes/users/index'
@@ -59,6 +59,11 @@ const AreaRouteRoute = AreaRouteRouteImport.update({
 const DateRoute = DateRouteImport.update({
   id: '/date',
   path: '/date',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const FormGeneratorRoute = FormGeneratorRouteImport.update({
+  id: '/form-generator',
+  path: '/form-generator',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -142,11 +147,6 @@ const SchedulesCreateRoute = SchedulesCreateRouteImport.update({
   path: '/schedules/create',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SchedulesForm2Route = SchedulesForm2RouteImport.update({
-  id: '/schedules/form2',
-  path: '/schedules/form2',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const TraineeDashboardIndexRoute = TraineeDashboardIndexRouteImport.update({
   id: '/trainee-dashboard/',
   path: '/trainee-dashboard/',
@@ -203,6 +203,7 @@ export interface FileRoutesByFullPath {
   '/aircraft': typeof AircraftRouteRouteWithChildren
   '/area': typeof AreaRouteRouteWithChildren
   '/date': typeof DateRoute
+  '/form-generator': typeof FormGeneratorRoute
   '/login': typeof LoginRoute
   '/my-personnel': typeof MyPersonnelRoute
   '/test': typeof TestRoute
@@ -211,7 +212,6 @@ export interface FileRoutesByFullPath {
   '/personnel/create': typeof PersonnelCreateRoute
   '/roles/create': typeof RolesCreateRoute
   '/schedules/create': typeof SchedulesCreateRoute
-  '/schedules/form2': typeof SchedulesForm2Route
   '/trainee-dashboard/$id': typeof TraineeDashboardIdRoute
   '/users/create': typeof UsersCreateRoute
   '/aircraft/': typeof AircraftIndexRoute
@@ -234,6 +234,7 @@ export interface FileRoutesByFullPath {
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/date': typeof DateRoute
+  '/form-generator': typeof FormGeneratorRoute
   '/login': typeof LoginRoute
   '/my-personnel': typeof MyPersonnelRoute
   '/test': typeof TestRoute
@@ -242,7 +243,6 @@ export interface FileRoutesByTo {
   '/personnel/create': typeof PersonnelCreateRoute
   '/roles/create': typeof RolesCreateRoute
   '/schedules/create': typeof SchedulesCreateRoute
-  '/schedules/form2': typeof SchedulesForm2Route
   '/trainee-dashboard/$id': typeof TraineeDashboardIdRoute
   '/users/create': typeof UsersCreateRoute
   '/aircraft': typeof AircraftIndexRoute
@@ -268,6 +268,7 @@ export interface FileRoutesById {
   '/aircraft': typeof AircraftRouteRouteWithChildren
   '/area': typeof AreaRouteRouteWithChildren
   '/date': typeof DateRoute
+  '/form-generator': typeof FormGeneratorRoute
   '/login': typeof LoginRoute
   '/my-personnel': typeof MyPersonnelRoute
   '/test': typeof TestRoute
@@ -276,7 +277,6 @@ export interface FileRoutesById {
   '/personnel/create': typeof PersonnelCreateRoute
   '/roles/create': typeof RolesCreateRoute
   '/schedules/create': typeof SchedulesCreateRoute
-  '/schedules/form2': typeof SchedulesForm2Route
   '/trainee-dashboard/$id': typeof TraineeDashboardIdRoute
   '/users/create': typeof UsersCreateRoute
   '/aircraft/': typeof AircraftIndexRoute
@@ -303,6 +303,7 @@ export interface FileRouteTypes {
     | '/aircraft'
     | '/area'
     | '/date'
+    | '/form-generator'
     | '/login'
     | '/my-personnel'
     | '/test'
@@ -311,7 +312,6 @@ export interface FileRouteTypes {
     | '/personnel/create'
     | '/roles/create'
     | '/schedules/create'
-    | '/schedules/form2'
     | '/trainee-dashboard/$id'
     | '/users/create'
     | '/aircraft/'
@@ -334,6 +334,7 @@ export interface FileRouteTypes {
   to:
     | '/'
     | '/date'
+    | '/form-generator'
     | '/login'
     | '/my-personnel'
     | '/test'
@@ -342,7 +343,6 @@ export interface FileRouteTypes {
     | '/personnel/create'
     | '/roles/create'
     | '/schedules/create'
-    | '/schedules/form2'
     | '/trainee-dashboard/$id'
     | '/users/create'
     | '/aircraft'
@@ -367,6 +367,7 @@ export interface FileRouteTypes {
     | '/aircraft'
     | '/area'
     | '/date'
+    | '/form-generator'
     | '/login'
     | '/my-personnel'
     | '/test'
@@ -375,7 +376,6 @@ export interface FileRouteTypes {
     | '/personnel/create'
     | '/roles/create'
     | '/schedules/create'
-    | '/schedules/form2'
     | '/trainee-dashboard/$id'
     | '/users/create'
     | '/aircraft/'
@@ -401,6 +401,7 @@ export interface RootRouteChildren {
   AircraftRouteRoute: typeof AircraftRouteRouteWithChildren
   AreaRouteRoute: typeof AreaRouteRouteWithChildren
   DateRoute: typeof DateRoute
+  FormGeneratorRoute: typeof FormGeneratorRoute
   LoginRoute: typeof LoginRoute
   MyPersonnelRoute: typeof MyPersonnelRoute
   TestRoute: typeof TestRoute
@@ -408,7 +409,6 @@ export interface RootRouteChildren {
   PersonnelCreateRoute: typeof PersonnelCreateRoute
   RolesCreateRoute: typeof RolesCreateRoute
   SchedulesCreateRoute: typeof SchedulesCreateRoute
-  SchedulesForm2Route: typeof SchedulesForm2Route
   TraineeDashboardIdRoute: typeof TraineeDashboardIdRoute
   UsersCreateRoute: typeof UsersCreateRoute
   EventsIndexRoute: typeof EventsIndexRoute
@@ -454,6 +454,13 @@ declare module '@tanstack/react-router' {
       path: '/date'
       fullPath: '/date'
       preLoaderRoute: typeof DateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/form-generator': {
+      id: '/form-generator'
+      path: '/form-generator'
+      fullPath: '/form-generator'
+      preLoaderRoute: typeof FormGeneratorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -568,13 +575,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SchedulesCreateRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/schedules/form2': {
-      id: '/schedules/form2'
-      path: '/schedules/form2'
-      fullPath: '/schedules/form2'
-      preLoaderRoute: typeof SchedulesForm2RouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/trainee-dashboard/': {
       id: '/trainee-dashboard/'
       path: '/trainee-dashboard'
@@ -681,6 +681,7 @@ const rootRouteChildren: RootRouteChildren = {
   AircraftRouteRoute: AircraftRouteRouteWithChildren,
   AreaRouteRoute: AreaRouteRouteWithChildren,
   DateRoute: DateRoute,
+  FormGeneratorRoute: FormGeneratorRoute,
   LoginRoute: LoginRoute,
   MyPersonnelRoute: MyPersonnelRoute,
   TestRoute: TestRoute,
@@ -688,7 +689,6 @@ const rootRouteChildren: RootRouteChildren = {
   PersonnelCreateRoute: PersonnelCreateRoute,
   RolesCreateRoute: RolesCreateRoute,
   SchedulesCreateRoute: SchedulesCreateRoute,
-  SchedulesForm2Route: SchedulesForm2Route,
   TraineeDashboardIdRoute: TraineeDashboardIdRoute,
   UsersCreateRoute: UsersCreateRoute,
   EventsIndexRoute: EventsIndexRoute,

@@ -1,11 +1,11 @@
 import type { TTableFeatures } from '@/components/table/table.tsx'
 import { createColumnHelper } from '@tanstack/react-table'
 import type { ColumnDef } from '@tanstack/react-table'
-import { PencilIcon, TrashIcon } from 'lucide-react'
+import { CalendarIcon, PencilIcon, TrashIcon } from 'lucide-react'
 import type { TrpcRouterOutputs } from 'server/router'
-import { formatDate } from '@/lib/date'
 import { getMissionType } from '@repo/shared'
 import { ActionMenu } from '@/components/table/action-menu'
+import { linkOptions } from '@tanstack/react-router'
 
 type TMissionListItem = TrpcRouterOutputs['missions']['getAll']['items'][number]
 
@@ -15,9 +15,20 @@ const columns: ColumnDef<TTableFeatures, TMissionListItem>[] = ch.columns([
   ch.display({
     header: '-',
     cell: (info) => {
+      // const router = useRouter()
       return (
         <ActionMenu
           actions={[
+            {
+              label: 'Shedule it',
+              icon: <CalendarIcon className="h-4 w-4" />,
+              redirectTo: linkOptions({
+                to: '/schedules/create',
+                search: {
+                  missionId: info.row.original.id,
+                },
+              }),
+            },
             {
               label: 'Edit',
               icon: <PencilIcon className="h-4 w-4" />,
@@ -34,7 +45,7 @@ const columns: ColumnDef<TTableFeatures, TMissionListItem>[] = ch.columns([
               },
             },
           ]}
-        />
+        ></ActionMenu>
       )
     },
     size: 70,

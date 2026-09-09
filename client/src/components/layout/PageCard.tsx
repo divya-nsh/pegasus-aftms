@@ -10,7 +10,7 @@ export default function PageCard({
   return (
     <div
       className={cn(
-        'shadow-none px-4 py-4 pt-5 lg:px-8 rounded-sm min-h-full max-w-6xl mx-auto0',
+        'shadow-none px-4 py-4 pt-5 md:px-8 rounded-sm min-h-full max-w-6xl mx-auto pb-8',
         className,
       )}
     >

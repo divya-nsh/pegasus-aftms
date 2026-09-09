@@ -1,6 +1,6 @@
-// eslint-disable-next-line import/consistent-type-specifier-style
 import type { RouterContext } from '@/routes/__root'
 import { redirect } from '@tanstack/react-router'
+import type { LinkProps } from '@tanstack/react-router'
 import { clsx } from 'clsx'
 import type { ClassValue } from 'clsx'
 import type { ModuleAction, RoleModule } from 'server/types/role'
@@ -21,11 +21,12 @@ export function getErrorMessage(error: unknown) {
 export function protectRouteBeforeLoad(
   module: RoleModule,
   action: ModuleAction,
+  redirectOptions: Parameters<typeof redirect>[0] = { to: '/' },
 ) {
   return ({ context }: { context: RouterContext }) => {
     const { isUserCan } = context.auth!
     if (!isUserCan(module, action)) {
-      throw redirect({ to: '/' })
+      throw redirect(redirectOptions)
     }
   }
 }

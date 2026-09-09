@@ -4,27 +4,51 @@ import FullPageSpinner from '@/components/loaders/page-loader'
 import trpc from '@/trpc'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
-import ScheduleForm from './-components/shedule-form3'
+import ScheduleForm from './-components/shedule-form'
+import { useAuth } from '@/context/auth-context'
+import { protectRouteBeforeLoad } from '@/lib/utils'
 
 export const Route = createFileRoute('/schedules/$id/edit')({
   component: RouteComponent,
   pendingComponent: FullPageSpinner,
+  // beforeLoad: ({ context, params }) => {
+  //   const { isUserCan } = context.auth!
+  //   if (!isUserCan('schedule', 'edit')) {
+  //     throw redirect({
+  //       to: '/schedules/$id/view',
+  //       params: {
+  //         id: params.id,
+  //       },
+  //     })
+  //   }
+  // },
   errorComponent: ({ error }) => (
     <ErrorAlert error={error} title="Failed to Load Event Schedule" />
   ),
 })
 
-function RouteComponent() {
+export function RouteComponent() {
   const { id } = Route.useParams()
+
+  return <EditScheduleRouteComponent id={Number(id)} />
+}
+
+export function EditScheduleRouteComponent({
+  id,
+  viewOnly = false,
+}: {
+  id: number
+  viewOnly?: boolean
+}) {
   const scheduleQ = useSuspenseQuery(
-    trpc.schedules.getById.queryOptions({ id: Number(id) }),
+    trpc.schedules.getById.queryOptions({ id }),
   )
   const schedule = scheduleQ.data
 
   return (
     <PageCard className="space-y-6">
       <ScheduleForm
-        mode="edit"
+        mode={viewOnly ? 'view' : 'edit'}
         defaultValues={{
           id: schedule.id,
           name: schedule.name,

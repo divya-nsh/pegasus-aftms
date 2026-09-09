@@ -1,4 +1,8 @@
-import { createFormHook } from '@tanstack/react-form'
+import {
+  createFormHook,
+  formOptions,
+  revalidateLogic,
+} from '@tanstack/react-form'
 import { fieldContext, formContext } from './form-context'
 import * as fields from './field-controllers'
 import { SubscribeButton } from './form-components'
@@ -31,3 +35,8 @@ export const handleSubmitInvalid = () => {
 
   toast.error('Invalid form values')
 }
+
+export const baseFormOptions = formOptions({
+  validationLogic: revalidateLogic(),
+  onSubmitInvalid: handleSubmitInvalid,
+})

@@ -199,7 +199,7 @@ function RouteComponent() {
 
   return (
     <PageCard className="space-y-4">
-      <div className="items-center gap-4 mt-1 border-b mb-4 pb-2 flex justify-between">
+      <div className="items-center gap-4 border-b mb-4 pb-2 flex justify-between">
         {/* <SidebarTrigger /> */}
         {/* <Separator orientation="vertical" className="mx-2" /> */}
         <h1 className="text-xl font-bold mr-auto">Locations</h1>
