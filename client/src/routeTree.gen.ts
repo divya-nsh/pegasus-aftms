@@ -32,6 +32,7 @@ import { Route as SchedulesIndexRouteImport } from './routes/schedules/index'
 import { Route as SchedulesCreateRouteImport } from './routes/schedules/create'
 import { Route as TraineeDashboardIndexRouteImport } from './routes/trainee-dashboard/index'
 import { Route as TraineeDashboardIdRouteImport } from './routes/trainee-dashboard/$id'
+import { Route as TraineeDashboardCopyRouteImport } from './routes/trainee-dashboard/copy'
 import { Route as UsersIndexRouteImport } from './routes/users/index'
 import { Route as UsersCreateRouteImport } from './routes/users/create'
 import { Route as AircraftIdEditRouteImport } from './routes/aircraft/$id.edit'
@@ -157,6 +158,11 @@ const TraineeDashboardIdRoute = TraineeDashboardIdRouteImport.update({
   path: '/trainee-dashboard/$id',
   getParentRoute: () => rootRouteImport,
 } as any)
+const TraineeDashboardCopyRoute = TraineeDashboardCopyRouteImport.update({
+  id: '/trainee-dashboard/copy',
+  path: '/trainee-dashboard/copy',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const UsersIndexRoute = UsersIndexRouteImport.update({
   id: '/users/',
   path: '/users/',
@@ -213,6 +219,7 @@ export interface FileRoutesByFullPath {
   '/roles/create': typeof RolesCreateRoute
   '/schedules/create': typeof SchedulesCreateRoute
   '/trainee-dashboard/$id': typeof TraineeDashboardIdRoute
+  '/trainee-dashboard/copy': typeof TraineeDashboardCopyRoute
   '/users/create': typeof UsersCreateRoute
   '/aircraft/': typeof AircraftIndexRoute
   '/area/': typeof AreaIndexRoute
@@ -244,6 +251,7 @@ export interface FileRoutesByTo {
   '/roles/create': typeof RolesCreateRoute
   '/schedules/create': typeof SchedulesCreateRoute
   '/trainee-dashboard/$id': typeof TraineeDashboardIdRoute
+  '/trainee-dashboard/copy': typeof TraineeDashboardCopyRoute
   '/users/create': typeof UsersCreateRoute
   '/aircraft': typeof AircraftIndexRoute
   '/area': typeof AreaIndexRoute
@@ -278,6 +286,7 @@ export interface FileRoutesById {
   '/roles/create': typeof RolesCreateRoute
   '/schedules/create': typeof SchedulesCreateRoute
   '/trainee-dashboard/$id': typeof TraineeDashboardIdRoute
+  '/trainee-dashboard/copy': typeof TraineeDashboardCopyRoute
   '/users/create': typeof UsersCreateRoute
   '/aircraft/': typeof AircraftIndexRoute
   '/area/': typeof AreaIndexRoute
@@ -313,6 +322,7 @@ export interface FileRouteTypes {
     | '/roles/create'
     | '/schedules/create'
     | '/trainee-dashboard/$id'
+    | '/trainee-dashboard/copy'
     | '/users/create'
     | '/aircraft/'
     | '/area/'
@@ -344,6 +354,7 @@ export interface FileRouteTypes {
     | '/roles/create'
     | '/schedules/create'
     | '/trainee-dashboard/$id'
+    | '/trainee-dashboard/copy'
     | '/users/create'
     | '/aircraft'
     | '/area'
@@ -377,6 +388,7 @@ export interface FileRouteTypes {
     | '/roles/create'
     | '/schedules/create'
     | '/trainee-dashboard/$id'
+    | '/trainee-dashboard/copy'
     | '/users/create'
     | '/aircraft/'
     | '/area/'
@@ -410,6 +422,7 @@ export interface RootRouteChildren {
   RolesCreateRoute: typeof RolesCreateRoute
   SchedulesCreateRoute: typeof SchedulesCreateRoute
   TraineeDashboardIdRoute: typeof TraineeDashboardIdRoute
+  TraineeDashboardCopyRoute: typeof TraineeDashboardCopyRoute
   UsersCreateRoute: typeof UsersCreateRoute
   EventsIndexRoute: typeof EventsIndexRoute
   InstructorDashboardIndexRoute: typeof InstructorDashboardIndexRoute
@@ -589,6 +602,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TraineeDashboardIdRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/trainee-dashboard/copy': {
+      id: '/trainee-dashboard/copy'
+      path: '/trainee-dashboard/copy'
+      fullPath: '/trainee-dashboard/copy'
+      preLoaderRoute: typeof TraineeDashboardCopyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/users/': {
       id: '/users/'
       path: '/users'
@@ -690,6 +710,7 @@ const rootRouteChildren: RootRouteChildren = {
   RolesCreateRoute: RolesCreateRoute,
   SchedulesCreateRoute: SchedulesCreateRoute,
   TraineeDashboardIdRoute: TraineeDashboardIdRoute,
+  TraineeDashboardCopyRoute: TraineeDashboardCopyRoute,
   UsersCreateRoute: UsersCreateRoute,
   EventsIndexRoute: EventsIndexRoute,
   InstructorDashboardIndexRoute: InstructorDashboardIndexRoute,

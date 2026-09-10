@@ -11,7 +11,7 @@ import {
 import { protectedProcedure, router } from "#/trpc.js";
 import userService from "../user/user.service.js";
 import { TRPCError } from "@trpc/server";
-import { and, desc, eq, exists, gte, lte, ne, type SQL } from "drizzle-orm";
+import { eq, type SQL } from "drizzle-orm";
 import { alias } from "drizzle-orm/pg-core";
 import { z } from "zod";
 import roleService from "../role/role.service.js";
@@ -21,6 +21,7 @@ import {
   updateSchema,
 } from "./schedule.schema.js";
 import type { TMissionStatus } from "./schedule.schema.js";
+import scheduleService from "./schedule.service.js";
 
 async function getScheduleOrThrow(id: number) {
   const [row] = await db
@@ -132,6 +133,9 @@ const scheduleRouter = router({
             where: {
               personnelId: personnelId,
             },
+            orderBy: {
+              lineNumber: "asc",
+            },
           },
         },
         where: {
@@ -150,7 +154,7 @@ const scheduleRouter = router({
     }),
 
   create: protectedProcedure.input(createSchema).mutation(async ({ input }) => {
-    const { assigments, missionId, ...data } = input;
+    const { assignments, missionId, ...data } = input;
 
     const res = await db.transaction(async (tx) => {
       const values: typeof missionScheduleTable.$inferInsert = {
@@ -184,10 +188,11 @@ const scheduleRouter = router({
           .set({ scheduleNumber })
           .where(eq(missionScheduleTable.id, created.id));
       }
-
-      for (const assignment of assigments) {
+      let i = 0;
+      for (const assignment of assignments) {
         await tx.insert(missionAssignmentTable).values({
           scheduleId: created.id,
+          lineNumber: i++,
           ...assignment,
         });
       }
@@ -199,33 +204,57 @@ const scheduleRouter = router({
   }),
 
   update: protectedProcedure.input(updateSchema).mutation(async ({ input }) => {
-    const { id, ...data } = input;
+    const { id, assignments, ...data } = input;
     await getScheduleOrThrow(id);
 
-    const [updated] = await db
-      .update(missionScheduleTable)
-      .set({
-        name: data.name,
-        description: data.description,
-        startDateTime: data.startDateTime,
-        endDateTime: data.endDateTime,
-        // aircraftId: data.aircraftId,
-        // instructorId: data.instructorId,
-        // pilotId: data.pilotId,
-        remarks: data.remarks,
-        areaId: data.areaId,
-      })
-      .where(eq(missionScheduleTable.id, id))
-      .returning({ id: missionScheduleTable.id });
+    await db.transaction(async (tx) => {
+      const [updated] = await db
+        .update(missionScheduleTable)
+        .set({
+          name: data.name,
+          description: data.description,
+          startDateTime: data.startDateTime,
+          endDateTime: data.endDateTime,
+          // aircraftId: data.aircraftId,
+          // instructorId: data.instructorId,
+          // pilotId: data.pilotId,
+          remarks: data.remarks,
+          areaId: data.areaId,
+        })
+        .where(eq(missionScheduleTable.id, id))
+        .returning({ id: missionScheduleTable.id });
 
-    if (!updated) {
-      throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "Event schedule not found",
-      });
-    }
+      if (!updated) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Event schedule not found",
+        });
+      }
+      await db
+        .delete(missionAssignmentTable)
+        .where(eq(missionAssignmentTable.scheduleId, id));
 
-    return updated;
+      const personnelSet = new Set<number>();
+
+      let i = 0;
+
+      for (const assignment of assignments) {
+        if (personnelSet.has(assignment.personnelId)) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Duplicate personnel in assignments list",
+          });
+        }
+
+        personnelSet.add(assignment.personnelId);
+
+        await db.insert(missionAssignmentTable).values({
+          ...assignment,
+          lineNumber: i++,
+          scheduleId: id,
+        });
+      }
+    });
   }),
 
   delete: protectedProcedure
@@ -245,7 +274,7 @@ const scheduleRouter = router({
       return deleted;
     }),
 
-  checkAssignmentAvailability: protectedProcedure
+  checkConflictingSchedule: protectedProcedure
     .input(
       z.object({
         personnelId: z.number(),
@@ -256,21 +285,11 @@ const scheduleRouter = router({
     .query(async ({ input }) => {
       const { personnelId, startDateTime, endDateTime } = input;
 
-      const schedule = await db.query.missionScheduleTable.findFirst({
-        where: {
-          assignments: {
-            personnelId: personnelId,
-          },
-          startDateTime: {
-            gte: startDateTime,
-          },
-          endDateTime: {
-            lte: endDateTime,
-          },
-        },
-      });
-
-      return !schedule;
+      return scheduleService.chechConflictingSchedule(
+        personnelId,
+        startDateTime,
+        endDateTime,
+      );
     }),
 
   setStatus: protectedProcedure
@@ -319,6 +338,20 @@ const scheduleRouter = router({
         });
 
       return updated;
+    }),
+
+  getDasbhoardStats: protectedProcedure
+    .input(
+      z.object({
+        personnelId: z.number().optional(),
+        today: z.coerce.date(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      return scheduleService.getPilotDashboardStats(
+        input.personnelId || ctx.user.personnelId || 0,
+        input.today.toISOString(),
+      );
     }),
 });
 

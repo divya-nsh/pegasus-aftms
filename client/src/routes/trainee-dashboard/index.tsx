@@ -4,45 +4,20 @@ import FullPageSpinner from '@/components/loaders/page-loader'
 import { useAuth } from '@/context/auth-context'
 import { formatDate } from '@/lib/date'
 import { cn } from '@/lib/utils'
-import MissionStatusBadge from '@/routes/schedules/-components/mission-stage-bar'
-import trpc from '@/trpc'
+import { trpc } from '@/trpc'
+
 import { useSuspenseQuery } from '@tanstack/react-query'
-import { createFileRoute, Link } from '@tanstack/react-router'
-import { format, isToday, startOfDay } from 'date-fns'
-import {
-  CalendarClockIcon,
-  CalendarOffIcon,
-  CheckCircle2Icon,
-  Clock3Icon,
-  ListTodoIcon,
-  MapPinIcon,
-  PlaneIcon,
-  TrendingUp,
-  TrophyIcon,
-  UserIcon,
-  UserXIcon,
-  XCircleIcon,
-} from 'lucide-react'
-import { useMemo } from 'react'
+import { createFileRoute } from '@tanstack/react-router'
+
 import type { ReactNode } from 'react'
-import type { TrpcRouterOutputs } from 'server/router'
-import { Bar, BarChart, CartesianGrid, XAxis } from 'recharts'
+
 import {
-  ChartContainer,
-  ChartLegend,
-  ChartLegendContent,
-  ChartTooltip,
-  ChartTooltipContent,
-} from '@/components/ui/chart'
-import type { ChartConfig } from '@/components/ui/chart'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+  CalendarClock,
+  CheckCircle2,
+  Clock3,
+  Plane,
+  Target,
+} from 'lucide-react'
 
 export const Route = createFileRoute('/trainee-dashboard/')({
   component: RouteComponent,
@@ -52,30 +27,198 @@ export const Route = createFileRoute('/trainee-dashboard/')({
   ),
 })
 
-type AssignedSchedule =
-  TrpcRouterOutputs['schedules']['getAll']['items'][number]
+const today = new Date()
+
+function RouteComponent() {
+  const { user } = useAuth()
+  const displayName = traineeDisplayName(user)
+
+  const { data } = useSuspenseQuery(
+    trpc.schedules.getDasbhoardStats.queryOptions({
+      today,
+    }),
+  )
+
+  return (
+    <PageCard>
+      {/* Header */}
+      <div className="space-y-1">
+        <p className="text-sm font-medium text-muted-foreground">
+          Trainee Dashboard
+        </p>
+
+        <h1 className="text-2xl font-semibold tracking-tight">
+          Hey, {displayName}
+        </h1>
+
+        <p className="text-sm text-muted-foreground">
+          {formatDate(today)} · Your flight activity and schedules
+        </p>
+      </div>
+
+      {/* Stats */}
+      <div className="mt-6 grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+        <StatCard
+          label="Upcoming"
+          value={data.pendingAssignments}
+          hint="Scheduled missions"
+          icon={<CalendarClock className="size-4" />}
+          tone="warning"
+        />
+
+        <StatCard
+          label="Completed"
+          value={data.completedAssignments}
+          hint="Completed missions"
+          icon={<CheckCircle2 className="size-4" />}
+          tone="success"
+        />
+
+        <StatCard
+          label="Avg. Score"
+          value={data.averageScore ?? '—'}
+          hint="Across scored missions"
+          icon={<Target className="size-4" />}
+          tone="info"
+        />
+
+        <StatCard
+          label="Flying Hours"
+          value={`${data.flyingHours}h`}
+          hint="Recorded flight time"
+          icon={<Plane className="size-4" />}
+          tone="info"
+        />
+      </div>
+
+      {/* Today's schedule */}
+      <section className="mt-8 ">
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-base font-semibold">Today's Schedule</h2>
+
+            <p className="text-xs text-muted-foreground">
+              Your missions for today
+            </p>
+          </div>
+
+          <button
+            type="button"
+            className="text-sm font-medium text-primary hover:underline"
+          >
+            View schedule
+          </button>
+        </div>
+
+        <div className="mt-3 overflow-hidden rounded-lg border shadow-sm">
+          {data.todayAssignments.length > 0 ? (
+            <div className="divide-y">
+              {data.todayAssignments.slice(0, 5).map((schedule) => (
+                <ScheduleRow key={schedule.id} schedule={schedule} />
+              ))}
+            </div>
+          ) : (
+            <EmptySchedule />
+          )}
+        </div>
+      </section>
+
+      <section className="mt-8 max-w-82">
+        <PerformanceSection
+          passRate={data.passRate}
+          averageScore={data.averageScore}
+          passed={data.passedAssignments}
+          failed={data.failedAssignments}
+          pending={data.pendingResults}
+        />
+      </section>
+    </PageCard>
+  )
+}
+
+function ScheduleRow({ schedule }: { schedule: (typeof dataExample)[number] }) {
+  const startTime = schedule.startDateTime
+    ? new Date(schedule.startDateTime)
+    : null
+
+  const endTime = schedule.endDateTime ? new Date(schedule.endDateTime) : null
+
+  return (
+    <div className="flex items-center gap-4 px-4 py-3">
+      {/* Time */}
+      <div className="w-14 shrink-0 text-sm font-medium tabular-nums">
+        {startTime ? formatTime(startTime) : '--:--'}
+      </div>
+
+      {/* Mission */}
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-sm font-medium">{schedule.name}</p>
+
+        <div className="mt-0.5 flex items-center gap-1.5 text-xs text-muted-foreground">
+          <Clock3 className="size-3" />
+
+          <span>
+            {startTime && endTime
+              ? `${formatTime(startTime)} – ${formatTime(endTime)}`
+              : 'Time not set'}
+          </span>
+        </div>
+      </div>
+
+      {/* Status */}
+      <ScheduleStatus status={schedule.status} />
+    </div>
+  )
+}
+
+function ScheduleStatus({ status }: { status: string }) {
+  if (status === 'completed') {
+    return (
+      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-600">
+        <CheckCircle2 className="size-3.5" />
+        Completed
+      </span>
+    )
+  }
+
+  if (status === 'in_progress') {
+    return (
+      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-sky-600">
+        <span className="size-2 rounded-full bg-sky-500" />
+        In progress
+      </span>
+    )
+  }
+
+  return (
+    <span className="text-xs font-medium text-muted-foreground">Upcoming</span>
+  )
+}
+
+function EmptySchedule() {
+  return (
+    <div className="flex flex-col items-center justify-center px-6 py-10 text-center">
+      <div className="rounded-full bg-muted p-3 text-muted-foreground">
+        <CalendarClock className="size-5" />
+      </div>
+
+      <p className="mt-3 text-sm font-medium">No missions scheduled today</p>
+
+      <p className="mt-1 text-xs text-muted-foreground">
+        You don't have any missions scheduled for today.
+      </p>
+    </div>
+  )
+}
 
 function traineeDisplayName(user: ReturnType<typeof useAuth>['user']) {
   const person = user?.personnel[0]
+
   const personnelName = [person?.firstName, person?.lastName]
     .filter(Boolean)
     .join(' ')
+
   return user?.name || personnelName || user?.username || 'there'
-}
-
-function personName(first?: string | null, last?: string | null) {
-  return [first, last].filter(Boolean).join(' ')
-}
-
-function missionTimeRange(
-  start?: string | Date | null,
-  end?: string | Date | null,
-) {
-  const startTime = start ? formatDate(start, true).split(', ')[1] : null
-  const endTime = end ? formatDate(end, true).split(', ')[1] : null
-  if (!startTime && !endTime) return 'Time not set'
-  if (!endTime) return startTime
-  return `${startTime} – ${endTime}`
 }
 
 function StatCard({
@@ -100,346 +243,89 @@ function StatCard({
   }[tone]
 
   return (
-    <div className="flex items-start justify-between gap-3 rounded-md border bg-background p-4">
-      <div className="min-w-0 space-y-1">
+    <div className="flex items-start justify-between gap-4 rounded-lg border bg-background p-4 shadow-sm">
+      <div className="min-w-0">
         <p className="text-sm font-medium text-muted-foreground">{label}</p>
-        <p className="text-3xl font-semibold tracking-tight">{value}</p>
-        <p className="text-xs text-muted-foreground">{hint}</p>
+
+        <p className="mt-1 text-2xl font-semibold tracking-tight">{value}</p>
+
+        <p className="mt-1 text-xs text-muted-foreground">{hint}</p>
       </div>
-      <span className={cn('rounded-md p-2', iconTone)}>{icon}</span>
+
+      <span className={cn('shrink-0 rounded-md p-2', iconTone)}>{icon}</span>
     </div>
   )
 }
 
-function EmptyMissions({
-  title,
-  description,
+function formatTime(date: Date) {
+  return date.toLocaleTimeString([], {
+    hour: '2-digit',
+    minute: '2-digit',
+  })
+}
+
+// Used only to infer the schedule type without importing
+// your database type into this component.
+const dataExample = [] as Array<{
+  id: number
+  name: string
+  status: string
+  startDateTime: Date | string | null
+  endDateTime: Date | string | null
+}>
+
+function PerformanceSection({
+  passRate,
+  averageScore,
+  passed,
+  failed,
+  pending,
 }: {
-  title: string
-  description: string
+  passRate: number
+  averageScore: number | null
+  passed: number
+  failed: number
+  pending: number
 }) {
   return (
-    <div className="flex flex-col items-center justify-center rounded-md border border-dashed bg-muted/20 px-4 py-10 text-center">
-      <CalendarOffIcon className="mb-3 size-8 text-muted-foreground" />
-      <p className="font-medium">{title}</p>
-      <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-        {description}
+    <div className="rounded-lg border bg-background p-5 shadow-sm">
+      <div>
+        <h2 className="text-base font-semibold">Performance</h2>
+
+        <p className="mt-1 text-xs text-muted-foreground">
+          Your mission results
+        </p>
+      </div>
+
+      <div className="mt-5 flex items-end gap-10">
+        <div>
+          <p className="text-2xl font-semibold tracking-tight">
+            {passRate.toFixed(1)}%
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">Pass Rate</p>
+        </div>
+
+        <div>
+          <p className="text-2xl font-semibold tracking-tight">
+            {averageScore ?? '—'}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">Avg. Score</p>
+        </div>
+      </div>
+
+      <p className="mt-5 text-xs text-muted-foreground">
+        <span className="text-emerald-600 dark:text-emerald-400">
+          {passed} Passed
+        </span>
+
+        {' · '}
+
+        <span className="text-destructive">{failed} Failed</span>
+
+        {' · '}
+
+        <span>{pending} Pending</span>
       </p>
     </div>
-  )
-}
-
-function MissionCard({
-  mission,
-  compact = false,
-}: {
-  mission: AssignedSchedule
-  compact?: boolean
-}) {
-  // const instructor = personName(
-  //   mission.instructorFirstName,
-  //   mission.instructorLastName,
-  // )
-
-  return (
-    <Link
-      to="/trainee-dashboard/$id"
-      params={{ id: String(mission.id) }}
-      className="block rounded-md border bg-background p-4 transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-    >
-      <div className="flex flex-wrap items-start justify-between gap-3">
-        <div className="min-w-0 space-y-1">
-          <p className="text-xs text-muted-foreground">
-            {mission.scheduleNumber}
-          </p>
-          <p className="font-medium">{mission.name}</p>
-          {mission.mission?.name ? (
-            <p className="text-sm text-muted-foreground">
-              {mission.mission.name}
-            </p>
-          ) : null}
-        </div>
-        <MissionStatusBadge status={mission.status} />
-      </div>
-
-      {compact ? (
-        <p className="mt-3 text-sm text-muted-foreground">
-          {formatDate(mission.startDateTime ?? '', true)}
-          {/* {mission.aircraftTailNumber ? ` · ${mission.aircraftTailNumber}` : ''} */}
-        </p>
-      ) : (
-        <div className="mt-4 grid gap-2 text-sm sm:grid-cols-2">
-          <p className="flex items-center gap-2">
-            <Clock3Icon className="size-3.5 shrink-0 text-muted-foreground" />
-            <span>
-              {missionTimeRange(mission.startDateTime, mission.endDateTime)}
-            </span>
-          </p>
-          <p className="flex items-center gap-2">
-            <PlaneIcon className="size-3.5 shrink-0 text-muted-foreground" />
-            <span>
-              {mission.aircraftName || 'Aircraft TBA'}
-              {mission.aircraftTailNumber
-                ? ` (${mission.aircraftTailNumber})`
-                : ''}
-            </span>
-          </p>
-          <p className="flex items-center gap-2">
-            <MapPinIcon className="size-3.5 shrink-0 text-muted-foreground" />
-            <span>{mission.areaName || 'Area TBA'}</span>
-          </p>
-          <p className="flex items-center gap-2">
-            <UserIcon className="size-3.5 shrink-0 text-muted-foreground" />
-            <span>{instructor || 'Instructor TBA'}</span>
-          </p>
-        </div>
-      )}
-    </Link>
-  )
-}
-
-function RouteComponent() {
-  const { user } = useAuth()
-  const displayName = traineeDisplayName(user)
-  const assignedQ = useSuspenseQuery(trpc.schedules.getAll.queryOptions({}))
-
-  const { stats, todayMissions, upcomingMissions } = useMemo(() => {
-    const items = assignedQ.data.items
-    const uniqueMissions = new Set(
-      items.map((item) => item.missionId).filter(Boolean),
-    ).size
-    const notStarted = items.filter(
-      (item) => item.status === 'published',
-    ).length
-    const completed = items.filter((item) => item.status === 'completed').length
-
-    const today = items
-      .filter(
-        (item) => item.startDateTime && isToday(new Date(item.startDateTime)),
-      )
-      .sort(
-        (a, b) =>
-          new Date(a.startDateTime ?? 0).getTime() -
-          new Date(b.startDateTime ?? 0).getTime(),
-      )
-
-    const upcoming = items
-      .filter((item) => {
-        if (!item.startDateTime) return false
-        return startOfDay(new Date(item.startDateTime)) > startOfDay(new Date())
-      })
-      .sort(
-        (a, b) =>
-          new Date(a.startDateTime ?? 0).getTime() -
-          new Date(b.startDateTime ?? 0).getTime(),
-      )
-      .slice(0, 5)
-
-    return {
-      stats: {
-        total: items.length,
-        uniqueMissions,
-        notStarted,
-        completed,
-        passed: 0,
-        failed: 0,
-        notAttended: 0,
-        excused: 0,
-        averageScore: 0,
-        scoredCount: 0,
-        graded: 0,
-      },
-      todayMissions: today,
-      upcomingMissions: upcoming,
-    }
-  }, [assignedQ.data.items])
-
-  return (
-    <PageCard className="space-y-8 bg-neutral-50">
-      <section className="space-y-4">
-        <div className=" pb-1">
-          <p className="text-sm text-muted-foreground">Trainee Dashboard</p>
-          <h1 className="text-xl font-bold tracking-tight">
-            Hey, {displayName}
-          </h1>
-          <p className="mt-1 text-sm text-muted-foreground">
-            {format(new Date(), 'EEEE, dd MMM yyyy')} · your assigned schedules
-            and results
-          </p>
-        </div>
-
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <StatCard
-            label="Assigned"
-            hint={
-              stats.uniqueMissions
-                ? `${stats.uniqueMissions} event type${stats.uniqueMissions === 1 ? '' : 's'}`
-                : 'Schedules you are part of'
-            }
-            value={stats.total}
-            icon={<ListTodoIcon className="size-4" />}
-          />
-          <StatCard
-            label="Passed"
-            hint={
-              stats.graded
-                ? `${stats.passed} of ${stats.graded} graded`
-                : 'No graded results yet'
-            }
-            value={stats.passed}
-            icon={<CheckCircle2Icon className="size-4" />}
-            tone="success"
-          />
-          <StatCard
-            label="Failed"
-            hint={
-              stats.graded
-                ? `${stats.failed} of ${stats.graded} graded`
-                : 'No graded results yet'
-            }
-            value={stats.failed}
-            icon={<XCircleIcon className="size-4" />}
-            tone="danger"
-          />
-          <StatCard
-            label="Not attended"
-            hint={stats.excused ? `${stats.excused} excused` : 'Marked absent'}
-            value={stats.notAttended}
-            icon={<UserXIcon className="size-4" />}
-            tone="warning"
-          />
-          <StatCard
-            label="Average score"
-            hint={
-              stats.scoredCount
-                ? `From ${stats.scoredCount} scored ${stats.scoredCount === 1 ? 'schedule' : 'schedules'}`
-                : 'No scores recorded yet'
-            }
-            value={stats.averageScore}
-            icon={<TrophyIcon className="size-4" />}
-            tone="info"
-          />
-          <StatCard
-            label="Completed"
-            hint={`${stats.notStarted} still pending`}
-            value={stats.completed}
-            icon={<CalendarClockIcon className="size-4" />}
-            tone="success"
-          />
-        </div>
-      </section>
-
-      <div className="flex gap-8">
-        <Card className="min-w-[300px] space-y-4 flex-1">
-          <CardHeader>
-            <CardTitle>Today&apos;s missions</CardTitle>
-            <CardDescription>
-              {todayMissions.length
-                ? `${todayMissions.length} scheduled for today`
-                : 'Nothing on the board for today'}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {todayMissions.length ? (
-              <ul className="space-y-3">
-                {todayMissions.map((mission) => (
-                  <li key={mission.id}>
-                    <MissionCard mission={mission} />
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <EmptyMissions
-                title="No missions today"
-                description="You do not have any assigned sorties scheduled for today."
-              />
-            )}
-          </CardContent>
-        </Card>
-        <DummyChartCard />
-      </div>
-
-      <div className="flex gap-8 items-start flex-wrap">
-        <Card className="basis-[600px] space-y-4">
-          <CardHeader>
-            <CardTitle>Coming up</CardTitle>
-            <CardDescription>Next assigned missions</CardDescription>
-          </CardHeader>
-          <CardContent>
-            {upcomingMissions.length ? (
-              <ul className="space-y-3">
-                {upcomingMissions.map((mission) => (
-                  <li key={mission.id}>
-                    <MissionCard mission={mission} compact />
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <EmptyMissions
-                title="Nothing coming up"
-                description="No later missions are assigned yet."
-              />
-            )}
-          </CardContent>
-        </Card>
-      </div>
-    </PageCard>
-  )
-}
-
-const chartData = [
-  { month: 'January', desktop: 186, mobile: 80 },
-  { month: 'February', desktop: 305, mobile: 200 },
-  { month: 'March', desktop: 237, mobile: 120 },
-  { month: 'April', desktop: 73, mobile: 190 },
-  { month: 'May', desktop: 209, mobile: 130 },
-  { month: 'June', desktop: 214, mobile: 140 },
-]
-
-const chartConfig = {
-  desktop: {
-    label: 'Desktop',
-    color: '#2563eb',
-  },
-  mobile: {
-    label: 'Mobile',
-    color: '#60a5fa',
-  },
-} satisfies ChartConfig
-
-function DummyChartCard() {
-  return (
-    <Card className="min-w-[600px] flex-1">
-      <CardHeader>
-        <CardTitle>Bar Chart</CardTitle>
-        <CardDescription>January - June 2024</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <ChartContainer config={chartConfig} className="h-70 w-full">
-          <BarChart accessibilityLayer data={chartData}>
-            <CartesianGrid vertical={false} />
-            <XAxis
-              dataKey="month"
-              tickLine={false}
-              tickMargin={10}
-              axisLine={false}
-              tickFormatter={(value) => value.slice(0, 3)}
-            />
-            <ChartTooltip content={<ChartTooltipContent />} />
-            <ChartLegend content={<ChartLegendContent />} />
-            <Bar dataKey="desktop" fill="var(--color-desktop)" radius={4} />
-            <Bar dataKey="mobile" fill="var(--color-mobile)" radius={4} />
-          </BarChart>
-        </ChartContainer>
-        <CardFooter className="flex-col items-start gap-2 text-sm">
-          <div className="flex gap-2 leading-none font-medium">
-            Trending up by 5.2% this month <TrendingUp className="h-4 w-4" />
-          </div>
-          <div className="leading-none text-muted-foreground">
-            Showing total visitors for the last 6 months
-          </div>
-        </CardFooter>
-      </CardContent>
-    </Card>
   )
 }

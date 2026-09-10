@@ -39,7 +39,7 @@ const schema = z.object({
   endDateTime: requiredTextSchema,
   areaId: z.number().min(1, 'Required'),
   remarks: z.string(),
-  assigments: z
+  assignments: z
     .array(assignmentSchema)
     .min(1, 'At least one pilot is required'),
 })
@@ -69,8 +69,7 @@ export default function ScheduleForm3({
       if (mode === 'create') {
         await trpcClient.schedules.create.mutate(data)
       } else {
-        alert('Editing is not supported yet')
-        // await trpcClient.schedules.update.mutate(data)
+        await trpcClient.schedules.update.mutate({ ...data, id: data.id! })
       }
     },
     onSuccess: () => {
@@ -115,6 +114,10 @@ export default function ScheduleForm3({
     form.store,
     (state) => state.values.missionId,
   )
+  const [startDateTime, endDateTime] = useSelector(form.store, (state) => [
+    state.values.startDateTime,
+    state.values.endDateTime,
+  ])
 
   const selectedMission = useMemo(() => {
     return missionsQ.data.items.find(
@@ -247,74 +250,63 @@ export default function ScheduleForm3({
             )}
           />
 
-          <form.Subscribe
-            selector={(state) => [
-              state.values.startDateTime,
-              state.values.endDateTime,
-            ]}
-          >
-            {([startDateTime, endDateTime]) => (
-              <>
-                <form.AppField
-                  name="startDateTime"
-                  children={(f) => (
-                    <f.CDateField
-                      time={true}
-                      required
-                      label="Start DateTime"
-                      onAfterCommit={(value) => {
-                        if (!value || typeof value !== 'string') return
-                        form.setFieldValue(
-                          'endDateTime',
-                          addMinutesToDateTimeLocal(
-                            value,
-                            selectedMission?.durationMinutes || 0,
-                          ),
-                        )
-                      }}
-                    />
-                  )}
-                />
-
-                <form.AppField
-                  name="endDateTime"
-                  validators={{
-                    onChangeListenTo: ['startDateTime'],
-                    onChange: ({ value }) => {
-                      if (!value) return undefined
-                      if (
-                        startDateTime &&
-                        new Date(value) < new Date(startDateTime)
-                      ) {
-                        return 'End datetime must be after start datetime'
-                      }
-                    },
-                  }}
-                  children={(f) => (
-                    <f.CDateField
-                      time
-                      required
-                      placeholder={
-                        !startDateTime
-                          ? 'Pick start datetime first'
-                          : 'Pick a date'
-                      }
-                      label="End DateTime"
-                      disabled={!startDateTime}
-                    />
-                  )}
-                />
-                <TextField
-                  readOnly
-                  value={(
-                    formatDateDifference(startDateTime, endDateTime) ??
-                    (selectedMission?.durationMinutes || 0)
-                  ).toString()}
-                  label="Duration"
-                />
-              </>
+          <form.AppField
+            name="startDateTime"
+            children={(f) => (
+              <f.CDateField
+                time={true}
+                required
+                label="Start DateTime"
+                onAfterCommit={(value) => {
+                  if (!value || typeof value !== 'string') return
+                  form.setFieldValue(
+                    'endDateTime',
+                    addMinutesToDateTimeLocal(
+                      value,
+                      selectedMission?.durationMinutes || 0,
+                    ),
+                  )
+                }}
+              />
             )}
-          </form.Subscribe>
+          />
+
+          <form.AppField
+            name="endDateTime"
+            validators={{
+              onChangeListenTo: ['startDateTime'],
+              onChange: ({ value }) => {
+                if (!value) return undefined
+                if (
+                  startDateTime &&
+                  new Date(value) < new Date(startDateTime)
+                ) {
+                  return 'End datetime must be after start datetime'
+                }
+              },
+            }}
+            children={(f) => (
+              <f.CDateField
+                time
+                required
+                placeholder={
+                  !startDateTime ? 'Pick start datetime first' : 'Pick a date'
+                }
+                label="End DateTime"
+                disabled={!startDateTime}
+              />
+            )}
+          />
+
+          <TextField
+            readOnly
+            value={(
+              formatDateDifference(startDateTime, endDateTime) ??
+              (selectedMission?.durationMinutes || 0)
+            ).toString()}
+            label="Duration"
+          />
+
           <form.AppField
             name="areaId"
             children={(f) => (
@@ -350,13 +342,15 @@ export default function ScheduleForm3({
 
         <div>
           <form.Field
-            name="assigments"
+            name="assignments"
             children={(f) => (
               <>
                 {f.state.meta.errors.length > 0 && (
                   <FieldError errors={f.state.meta.errors} />
                 )}
                 <AssignmentLine
+                  startDateTime={startDateTime}
+                  endDateTime={endDateTime}
                   mode={mode}
                   values={f.state.value}
                   onChange={f.handleChange}

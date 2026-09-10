@@ -2,10 +2,11 @@ import { DATE_FORMAT, TIME_FORMAT, WEEKDAY_FORMAT } from '@/config/constants'
 import { format } from 'date-fns'
 
 export const formatDate = (
-  date: Date | string,
+  date: Date | string | null,
   includeTime = false,
   addWeekDay = false,
 ): string => {
+  if (!date) return ''
   const dateObj = new Date(date)
   if (isNaN(dateObj.getTime())) {
     return 'Invalid date'

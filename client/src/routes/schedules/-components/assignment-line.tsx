@@ -3,7 +3,8 @@ import { baseFormOptions, useAppForm } from '@/components/form/tanstack-form'
 import { useSelector } from '@tanstack/react-form'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { FieldColumns } from '@/components/ui/field'
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
+import type { ReactNode } from 'react'
 import { formatDate } from '@/lib/date'
 import {
   Dialog,
@@ -22,13 +23,19 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { PencilIcon, PlusIcon, TrashIcon } from 'lucide-react'
+import {
+  PencilIcon,
+  PlusIcon,
+  TrashIcon,
+  AlertTriangleIcon,
+} from 'lucide-react'
 import { getPersonnelType, getPilotQualification } from '@repo/shared'
 import toast from 'react-hot-toast'
-import { trpc } from '@/trpc'
+import { trpc, trpcClient } from '@/trpc'
 import AttendanceBadge, { ResultBadge } from './attendance-badge'
 import { cn } from 'cn'
 import type { FormMode } from '@/types/general'
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 
 const optionalTextSchema = z.string().optional().nullable()
 
@@ -72,10 +79,14 @@ export default function AssignmentLine({
   values,
   onChange,
   mode,
+  startDateTime,
+  endDateTime,
 }: {
   values: Assignment[]
   onChange: (values: Assignment[]) => void
   mode: 'create' | 'edit' | 'view'
+  startDateTime?: string | null
+  endDateTime?: string | null
 }) {
   const [addFormOpen, setAddFormOpen] = useState<{
     open: boolean
@@ -118,6 +129,8 @@ export default function AssignmentLine({
     return aircraftsQ.data.items.find((a) => a.id === aircraftId)?.name ?? '—'
   }
 
+  const timeNotAvailable = !startDateTime || !endDateTime
+
   return (
     <div>
       <div className="border-b pb-2 text-sm font-semibold flex justify-between items-center">
@@ -127,7 +140,13 @@ export default function AssignmentLine({
             size="sm"
             variant="secondary"
             className="border shadow-xs border-neutral-200"
-            onClick={() => setAddFormOpen({ open: true })}
+            onClick={() => {
+              if (timeNotAvailable) {
+                toast.error('Please set the schedule time first')
+                return
+              }
+              setAddFormOpen({ open: true })
+            }}
           >
             <PlusIcon className="size-4" />
             Add Pilot
@@ -307,10 +326,13 @@ export default function AssignmentLine({
       </div>
       {addFormOpen.open && (
         <AssignmentsModal
+          startDateTime={startDateTime}
+          endDateTime={endDateTime}
           formMode={mode}
           key={addFormOpen.editIndex ?? 'add'}
           onClose={(open) => setAddFormOpen({ open })}
           mode={addFormOpen.editIndex != null ? 'edit' : 'add'}
+          items={values}
           defaultValues={
             addFormOpen.editIndex != null
               ? values[addFormOpen.editIndex]
@@ -333,13 +355,20 @@ function AssignmentsModal({
   mode,
   defaultValues,
   formMode,
+  startDateTime,
+  endDateTime,
+  items,
 }: {
   onClose: (open: boolean) => void
   onSave: (assignment: Assignment) => void
   mode: 'add' | 'edit'
   defaultValues?: Assignment
   formMode: FormMode
+  startDateTime?: string | null
+  endDateTime?: string | null
+  items: Assignment[]
 }) {
+  const [warning, setWarning] = useState<ReactNode>('')
   const aircraftsQ = useSuspenseQuery(trpc.aircraft.getAll.queryOptions())
   const personnelQ = useSuspenseQuery(trpc.personnel.getAll.queryOptions())
 
@@ -358,7 +387,30 @@ function AssignmentsModal({
     ...baseFormOptions,
   })
 
+  const selectedPersonnelId = useSelector(
+    form.store,
+    (s) => s.values.personnelId,
+  )
+
+  const personnelOptions = useMemo(() => {
+    const set = new Set(items.map((item) => item.personnelId))
+    return personnelQ.data.items
+      .filter(
+        (person) => !set.has(person.id) || person.id === selectedPersonnelId,
+      )
+      .map((person) => ({
+        label: `${person.firstName} ${person.lastName} (${[person.personnelType, person.qualification].filter(Boolean).join(', ')})`,
+        value: person.id,
+      }))
+  }, [personnelQ.data.items, items, selectedPersonnelId])
+
   const takeoffTime = useSelector(form.store, (s) => s.values.takeoffTime)
+
+  const selectedPersonnel = useMemo(() => {
+    return personnelQ.data.items.find(
+      (person) => person.id === selectedPersonnelId,
+    )
+  }, [personnelQ.data.items, selectedPersonnelId])
 
   return (
     <Dialog open onOpenChange={onClose}>
@@ -378,11 +430,48 @@ function AssignmentsModal({
                 <f.CBasicSelect
                   label="Pilot"
                   placeholder="Select Pilot"
-                  options={personnelQ.data.items.map((person) => ({
-                    label: `${person.firstName} ${person.lastName} (${[person.personnelType, person.qualification].filter(Boolean).join(', ')})`,
-                    value: person.id,
-                  }))}
+                  options={personnelOptions}
                   valueAsNumber
+                  onCommited={async (value) => {
+                    if (!value) return
+                    const id = 'jfsdafklsdjalkfjd'
+                    toast.loading('Checking for Pilot Availability....', { id })
+                    try {
+                      const conflictingShedules =
+                        await trpcClient.schedules.checkConflictingSchedule.query(
+                          {
+                            personnelId: Number(value),
+                            startDateTime,
+                            endDateTime,
+                          },
+                        )
+                      if (conflictingShedules.length) {
+                        setWarning(
+                          <>
+                            <ol className=" list-decimal">
+                              {conflictingShedules.map((v, i) => (
+                                <li className="flex justify-between">
+                                  {i + 1}. {formatDate(v.startDateTime, true)}{' '}
+                                  --- {formatDate(v.endDateTime, true)}
+                                  <span className="ml-4 font-bold">
+                                    {v.scheduleNumber}
+                                  </span>
+                                </li>
+                              ))}
+                            </ol>
+                          </>,
+                        )
+                        toast('⚠ Warnning Shedule Conflict', { id })
+                      } else {
+                        toast.success('No Conflicting Shedules', { id })
+                      }
+                    } catch (error) {
+                      toast.error(
+                        `Error Checking Pilot Availability: ${(error as any).message}`,
+                        { id },
+                      )
+                    }
+                  }}
                 />
               )}
             />
@@ -402,6 +491,32 @@ function AssignmentsModal({
               )}
             />
           </FieldColumns>
+
+          {selectedPersonnel && (
+            <div className="text-sm bg-muted/50 p-2 rounded-md grid grid-cols-[120px_1fr] gap-4 gap-y-2 text-muted-foreground">
+              <span> Qualification: </span>
+              <span>
+                {getPilotQualification(selectedPersonnel.qualification ?? '')
+                  ?.name ||
+                  selectedPersonnel.qualification ||
+                  'None'}
+              </span>
+              <span> Medical Status: </span>
+              <span>
+                {selectedPersonnel.medicalStatus}{' '}
+                {/* {selectedPersonnel.medicalValidUntil &&
+                  `Expired at ${selectedPersonnel.medicalValidUntil}`} */}
+              </span>
+            </div>
+          )}
+
+          {warning && (
+            <Alert variant="warning">
+              <AlertTriangleIcon />
+              <AlertTitle>Shedule Conflict</AlertTitle>
+              <AlertDescription>{warning}</AlertDescription>
+            </Alert>
+          )}
 
           <form.AppField
             name="remarks"

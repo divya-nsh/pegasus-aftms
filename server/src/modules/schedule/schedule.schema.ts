@@ -31,7 +31,7 @@ export const createSchema = z.object({
   instructorId: optionalId,
   pilotId: optionalId,
   remarks: optionalText,
-  assigments: z.array(
+  assignments: z.array(
     z.object({
       personnelId: z.number(),
       remarks: optionalText,
@@ -42,18 +42,20 @@ export const createSchema = z.object({
 
 export const updateSchema = createSchema.extend({
   id: z.number(),
-  assingments: z.object({
-    personnelId: z.number(),
-    attendanceStatus: z
-      .enum(["present", "absent", "excused"])
-      .nullable()
-      .optional(),
-    score: z.number().int().min(0).max(100).optional(),
-    aircraftId: z.int().optional(),
-    aircraftTime: z.coerce.date().optional(),
-    takeoffTime: z.coerce.date().optional(),
-    landingTime: z.coerce.date().optional(),
-    result: z.enum(["passed", "failed"]).nullable(),
-    remarks: optionalText,
-  }),
+  assignments: z.array(
+    z.object({
+      personnelId: z.number(),
+      attendanceStatus: z
+        .enum(["present", "absent", "excused"])
+        .nullable()
+        .optional(),
+      score: z.number().int().min(0).max(100).nullable().optional(),
+      aircraftId: z.int().nullable(),
+      aircraftTime: z.coerce.date().optional().nullable(),
+      takeoffTime: z.coerce.date().optional().nullable(),
+      landingTime: z.coerce.date().optional().nullable(),
+      result: z.enum(["passed", "failed"]).nullable(),
+      remarks: optionalText,
+    }),
+  ),
 });

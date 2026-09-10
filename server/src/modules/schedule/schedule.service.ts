@@ -1,4 +1,5 @@
 import db from "#/db/db.js";
+import { TRPCError } from "@trpc/server";
 
 export class ScheduleService {
   async getPilotDashboardStats(personnelId: number, todayDateIso: string) {
@@ -7,7 +8,10 @@ export class ScheduleService {
     });
 
     if (!profile) {
-      throw new Error("Personnel not found");
+      throw new TRPCError({
+        message: "Personnel not found",
+        code: "BAD_REQUEST",
+      });
     }
 
     const schedules = await db.query.missionScheduleTable.findMany({
@@ -154,6 +158,38 @@ export class ScheduleService {
       missionTypeDistribution: missionTypeCount,
       todayAssignments,
     };
+  }
+
+  async chechConflictingSchedule(
+    personnelId: number,
+    startDateTime: Date,
+    endDateTime: Date,
+  ) {
+    const schedule = await db.query.missionScheduleTable.findMany({
+      columns: {
+        id: true,
+        scheduleNumber: true,
+        startDateTime: true,
+        endDateTime: true,
+        status: true,
+      },
+      where: {
+        status: {
+          notIn: ["cancelled"],
+        },
+        assignments: {
+          personnelId,
+        },
+        startDateTime: {
+          lte: endDateTime, // existing schedule starts before (or exactly when) new one ends
+        },
+        endDateTime: {
+          gte: startDateTime, // existing schedule ends after (or exactly when) new one starts
+        },
+      },
+    });
+
+    return schedule;
   }
 }
 

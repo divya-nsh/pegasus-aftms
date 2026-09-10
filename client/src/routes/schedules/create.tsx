@@ -39,7 +39,7 @@ function RouteComponent() {
           startDateTime: '',
           endDateTime: '',
           remarks: '',
-          assigments: [],
+          assignments: [],
           areaId: null as unknown as number,
           status: 'draft',
         }}

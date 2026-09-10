@@ -153,6 +153,7 @@ export const missionAssignmentTable = snakeCase.table(
     remarks: varchar(),
     score: integer(),
     result: missionResultEnum(),
+    lineNumber: integer(),
     ...timeStampts,
   },
   (table) => [
