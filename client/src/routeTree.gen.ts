@@ -15,6 +15,7 @@ import { Route as AreaRouteRouteImport } from './routes/area/route'
 import { Route as DateRouteImport } from './routes/date'
 import { Route as FormGeneratorRouteImport } from './routes/form-generator'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as MulticheckRouteImport } from './routes/multicheck'
 import { Route as MyPersonnelRouteImport } from './routes/my-personnel'
 import { Route as TestRouteImport } from './routes/test'
 import { Route as UploadRouteImport } from './routes/upload'
@@ -26,6 +27,7 @@ import { Route as InstructorDashboardIndexRouteImport } from './routes/instructo
 import { Route as LocationsIndexRouteImport } from './routes/locations/index'
 import { Route as PersonnelIndexRouteImport } from './routes/personnel/index'
 import { Route as PersonnelCreateRouteImport } from './routes/personnel/create'
+import { Route as ReportsPrintScheduleRouteImport } from './routes/reports/print-schedule'
 import { Route as RolesIndexRouteImport } from './routes/roles/index'
 import { Route as RolesCreateRouteImport } from './routes/roles/create'
 import { Route as SchedulesIndexRouteImport } from './routes/schedules/index'
@@ -71,6 +73,11 @@ const FormGeneratorRoute = FormGeneratorRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MulticheckRoute = MulticheckRouteImport.update({
+  id: '/multicheck',
+  path: '/multicheck',
   getParentRoute: () => rootRouteImport,
 } as any)
 const MyPersonnelRoute = MyPersonnelRouteImport.update({
@@ -127,6 +134,11 @@ const PersonnelIndexRoute = PersonnelIndexRouteImport.update({
 const PersonnelCreateRoute = PersonnelCreateRouteImport.update({
   id: '/personnel/create',
   path: '/personnel/create',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ReportsPrintScheduleRoute = ReportsPrintScheduleRouteImport.update({
+  id: '/reports/print-schedule',
+  path: '/reports/print-schedule',
   getParentRoute: () => rootRouteImport,
 } as any)
 const RolesIndexRoute = RolesIndexRouteImport.update({
@@ -217,11 +229,13 @@ export interface FileRoutesByFullPath {
   '/date': typeof DateRoute
   '/form-generator': typeof FormGeneratorRoute
   '/login': typeof LoginRoute
+  '/multicheck': typeof MulticheckRoute
   '/my-personnel': typeof MyPersonnelRoute
   '/test': typeof TestRoute
   '/upload': typeof UploadRoute
   '/aircraft/create': typeof AircraftCreateRoute
   '/personnel/create': typeof PersonnelCreateRoute
+  '/reports/print-schedule': typeof ReportsPrintScheduleRoute
   '/roles/create': typeof RolesCreateRoute
   '/schedules/create': typeof SchedulesCreateRoute
   '/schedules/timeline-view': typeof SchedulesTimelineViewRoute
@@ -250,11 +264,13 @@ export interface FileRoutesByTo {
   '/date': typeof DateRoute
   '/form-generator': typeof FormGeneratorRoute
   '/login': typeof LoginRoute
+  '/multicheck': typeof MulticheckRoute
   '/my-personnel': typeof MyPersonnelRoute
   '/test': typeof TestRoute
   '/upload': typeof UploadRoute
   '/aircraft/create': typeof AircraftCreateRoute
   '/personnel/create': typeof PersonnelCreateRoute
+  '/reports/print-schedule': typeof ReportsPrintScheduleRoute
   '/roles/create': typeof RolesCreateRoute
   '/schedules/create': typeof SchedulesCreateRoute
   '/schedules/timeline-view': typeof SchedulesTimelineViewRoute
@@ -286,11 +302,13 @@ export interface FileRoutesById {
   '/date': typeof DateRoute
   '/form-generator': typeof FormGeneratorRoute
   '/login': typeof LoginRoute
+  '/multicheck': typeof MulticheckRoute
   '/my-personnel': typeof MyPersonnelRoute
   '/test': typeof TestRoute
   '/upload': typeof UploadRoute
   '/aircraft/create': typeof AircraftCreateRoute
   '/personnel/create': typeof PersonnelCreateRoute
+  '/reports/print-schedule': typeof ReportsPrintScheduleRoute
   '/roles/create': typeof RolesCreateRoute
   '/schedules/create': typeof SchedulesCreateRoute
   '/schedules/timeline-view': typeof SchedulesTimelineViewRoute
@@ -323,11 +341,13 @@ export interface FileRouteTypes {
     | '/date'
     | '/form-generator'
     | '/login'
+    | '/multicheck'
     | '/my-personnel'
     | '/test'
     | '/upload'
     | '/aircraft/create'
     | '/personnel/create'
+    | '/reports/print-schedule'
     | '/roles/create'
     | '/schedules/create'
     | '/schedules/timeline-view'
@@ -356,11 +376,13 @@ export interface FileRouteTypes {
     | '/date'
     | '/form-generator'
     | '/login'
+    | '/multicheck'
     | '/my-personnel'
     | '/test'
     | '/upload'
     | '/aircraft/create'
     | '/personnel/create'
+    | '/reports/print-schedule'
     | '/roles/create'
     | '/schedules/create'
     | '/schedules/timeline-view'
@@ -391,11 +413,13 @@ export interface FileRouteTypes {
     | '/date'
     | '/form-generator'
     | '/login'
+    | '/multicheck'
     | '/my-personnel'
     | '/test'
     | '/upload'
     | '/aircraft/create'
     | '/personnel/create'
+    | '/reports/print-schedule'
     | '/roles/create'
     | '/schedules/create'
     | '/schedules/timeline-view'
@@ -427,10 +451,12 @@ export interface RootRouteChildren {
   DateRoute: typeof DateRoute
   FormGeneratorRoute: typeof FormGeneratorRoute
   LoginRoute: typeof LoginRoute
+  MulticheckRoute: typeof MulticheckRoute
   MyPersonnelRoute: typeof MyPersonnelRoute
   TestRoute: typeof TestRoute
   UploadRoute: typeof UploadRoute
   PersonnelCreateRoute: typeof PersonnelCreateRoute
+  ReportsPrintScheduleRoute: typeof ReportsPrintScheduleRoute
   RolesCreateRoute: typeof RolesCreateRoute
   SchedulesCreateRoute: typeof SchedulesCreateRoute
   SchedulesTimelineViewRoute: typeof SchedulesTimelineViewRoute
@@ -494,6 +520,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/multicheck': {
+      id: '/multicheck'
+      path: '/multicheck'
+      fullPath: '/multicheck'
+      preLoaderRoute: typeof MulticheckRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/my-personnel': {
@@ -571,6 +604,13 @@ declare module '@tanstack/react-router' {
       path: '/personnel/create'
       fullPath: '/personnel/create'
       preLoaderRoute: typeof PersonnelCreateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reports/print-schedule': {
+      id: '/reports/print-schedule'
+      path: '/reports/print-schedule'
+      fullPath: '/reports/print-schedule'
+      preLoaderRoute: typeof ReportsPrintScheduleRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/roles/': {
@@ -723,10 +763,12 @@ const rootRouteChildren: RootRouteChildren = {
   DateRoute: DateRoute,
   FormGeneratorRoute: FormGeneratorRoute,
   LoginRoute: LoginRoute,
+  MulticheckRoute: MulticheckRoute,
   MyPersonnelRoute: MyPersonnelRoute,
   TestRoute: TestRoute,
   UploadRoute: UploadRoute,
   PersonnelCreateRoute: PersonnelCreateRoute,
+  ReportsPrintScheduleRoute: ReportsPrintScheduleRoute,
   RolesCreateRoute: RolesCreateRoute,
   SchedulesCreateRoute: SchedulesCreateRoute,
   SchedulesTimelineViewRoute: SchedulesTimelineViewRoute,

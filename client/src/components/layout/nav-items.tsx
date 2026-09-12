@@ -11,6 +11,7 @@ import {
   MapPinIcon,
   UserIcon,
   FileTextIcon,
+  PrinterIcon,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
@@ -60,6 +61,11 @@ export const navItems: NavGroup[] = [
   {
     title: 'Reports',
     items: [
+      {
+        title: 'Print Schedule',
+        url: '/reports/print-schedule',
+        icon: PrinterIcon,
+      },
       {
         title: 'Flight Log',
         url: '/',

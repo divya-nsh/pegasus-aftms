@@ -1,4 +1,5 @@
 import ErrorAlert from '@/components/errors/ErrorAlert'
+import DatePicker from '@/components/inputs/date-picker'
 import { SearchInput } from '@/components/inputs/searchInput'
 import { ColumnVisibility } from '@/components/table/column-visibility'
 import { TablePagination } from '@/components/table/table-pagination'
@@ -27,6 +28,7 @@ import {
   PrinterIcon,
   TrashIcon,
 } from 'lucide-react'
+import { endOfDay, parseISO, startOfDay } from 'date-fns'
 import { useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { useReactToPrint } from 'react-to-print'
@@ -211,6 +213,8 @@ function RouteComponent() {
   const navigate = useNavigate()
   const [columnFilters, setColumnFilters] = useState<string>('')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [startDateFilter, setStartDateFilter] = useState<string | null>(null)
+  const [endDateFilter, setEndDateFilter] = useState<string | null>(null)
   const [isPrinting, setIsPrinting] = useState(false)
   const [printSchedule, setPrintSchedule] = useState<PrintableSchedule | null>(
     null,
@@ -230,9 +234,44 @@ function RouteComponent() {
   })
 
   const filteredItems = useMemo(() => {
-    if (statusFilter === 'all') return schedulesQ.data.items
-    return schedulesQ.data.items.filter((item) => item.status === statusFilter)
-  }, [schedulesQ.data.items, statusFilter])
+    const startBound = startDateFilter
+      ? startOfDay(parseISO(startDateFilter)).getTime()
+      : null
+    const endBound = endDateFilter
+      ? endOfDay(parseISO(endDateFilter)).getTime()
+      : null
+
+    return schedulesQ.data.items.filter((item) => {
+      if (statusFilter !== 'all' && item.status !== statusFilter) {
+        return false
+      }
+
+      if (startBound == null && endBound == null) {
+        return true
+      }
+
+      const itemStart = item.startDateTime
+        ? new Date(item.startDateTime).getTime()
+        : Number.NaN
+      const itemEnd = item.endDateTime
+        ? new Date(item.endDateTime).getTime()
+        : Number.NaN
+
+      if (Number.isNaN(itemStart) || Number.isNaN(itemEnd)) {
+        return false
+      }
+
+      if (startBound != null && itemEnd < startBound) {
+        return false
+      }
+
+      if (endBound != null && itemStart > endBound) {
+        return false
+      }
+
+      return true
+    })
+  }, [endDateFilter, schedulesQ.data.items, startDateFilter, statusFilter])
 
   const deleteMutation = useMutation({
     mutationFn: ({ toDeleteId }: { toDeleteId: number }) => {
@@ -337,12 +376,12 @@ function RouteComponent() {
       </div>
       <ErrorAlert error={schedulesQ.error} />
       <div className=" mb-3 flex items-center justify-between gap-3">
-        <div className="flex items-center gap-3 min-w-0">
+        <div className="flex items-center gap-3">
           <SearchInput
             value={table.state.globalFilter ?? ''}
             onValueChange={(value) => table.setGlobalFilter(value)}
             placeholder="Search..."
-            className="shadow-none max-w-75"
+            className="shadow-none max-w-60"
           />
           <Select
             value={statusFilter}
@@ -362,6 +401,26 @@ function RouteComponent() {
               </SelectGroup>
             </SelectContent>
           </Select>
+          <DatePicker
+            value={startDateFilter}
+            onChange={(value) => {
+              setStartDateFilter(value)
+              if (value && endDateFilter && value > endDateFilter) {
+                setEndDateFilter(value)
+              }
+            }}
+            placeholder="Start date"
+          />
+          {/* <DatePicker
+            value={endDateFilter}
+            onChange={(value) => {
+              setEndDateFilter(value)
+              if (value && startDateFilter && value < startDateFilter) {
+                setStartDateFilter(value)
+              }
+            }}
+            placeholder="End date"
+          /> */}
         </div>
         <div className="flex items-center gap-2">
           <ColumnVisibility table={table} />

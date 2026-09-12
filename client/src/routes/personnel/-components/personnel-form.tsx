@@ -104,7 +104,7 @@ const schema = z
     rank: z.string().optional(),
     phone: z.string().optional(),
     email: z.union([z.literal(''), z.email('Invalid email')]),
-    address: z.string().min(1, 'Required'),
+    address: z.string(),
     medicalStatus: z.enum(
       medicalStatusOptions.map((option) => option.value),
       'Required',
@@ -375,11 +375,7 @@ export default function PersonnelForm({
           <form.AppField
             name="phone"
             children={(f) => (
-              <f.CTextField
-                label="Phone Number"
-                required
-                readOnly={isReadOnly}
-              />
+              <f.CTextField label="Phone Number" readOnly={isReadOnly} />
             )}
           />
           <form.Subscribe selector={(state) => state.values.isCreateUser}>
@@ -403,7 +399,6 @@ export default function PersonnelForm({
               <f.CTextAreaField
                 className="col-span-3"
                 label="Address"
-                required
                 readOnly={isReadOnly}
               />
             )}

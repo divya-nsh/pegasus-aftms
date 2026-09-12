@@ -102,12 +102,16 @@ const scheduleRouter = router({
           assignments: {
             personnelId,
           },
-          startDateTime: {
-            gte: input.startDateTime,
-          },
-          endDateTime: {
-            lte: input.endDateTime,
-          },
+          startDateTime: input.startDateTime
+            ? {
+                gte: input.startDateTime,
+              }
+            : undefined,
+          endDateTime: input.endDateTime
+            ? {
+                lte: input.endDateTime,
+              }
+            : undefined,
         },
         extras: {
           assignmentsCount: (schedule) =>

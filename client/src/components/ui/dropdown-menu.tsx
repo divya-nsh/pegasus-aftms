@@ -3,6 +3,7 @@ import { Menu as MenuPrimitive } from '@base-ui/react/menu'
 
 import { cn } from '@/lib/utils'
 import { ChevronRightIcon, CheckIcon } from 'lucide-react'
+import { Checkbox } from './checkbox'
 
 function DropdownMenu({ ...props }: MenuPrimitive.Root.Props) {
   return <MenuPrimitive.Root data-slot="dropdown-menu" {...props} />
@@ -163,20 +164,21 @@ function DropdownMenuCheckboxItem({
       data-slot="dropdown-menu-checkbox-item"
       data-inset={inset}
       className={cn(
-        "relative flex cursor-default items-center gap-2 rounded-sm py-1.5 pr-9 pl-2 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground focus:**:text-accent-foreground data-inset:pl-8 data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
+        "relative flex cursor-default items-center gap-4 rounded-sm py-1.5 pr-9 pl-2 text-sm outline-hidden select-none focus:bg-accent focus:text-accent-foreground focus:**:text-accent-foreground data-inset:pl-8 data-disabled:pointer-events-none data-disabled:opacity-50 [&_svg]:pointer-events-none [&_svg]:shrink-0 [&_svg:not([class*='size-'])]:size-4",
         className,
       )}
       checked={checked}
       {...props}
     >
-      <span
+      {/* <span
         className="pointer-events-none absolute right-2 flex items-center justify-center text-muted-foreground"
         data-slot="dropdown-menu-checkbox-item-indicator"
       >
         <MenuPrimitive.CheckboxItemIndicator>
           <CheckIcon />
         </MenuPrimitive.CheckboxItemIndicator>
-      </span>
+      </span> */}
+      <Checkbox checked={checked} className=" shadow-none" />
       {children}
     </MenuPrimitive.CheckboxItem>
   )
