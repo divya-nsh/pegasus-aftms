@@ -5,8 +5,6 @@ import trpc from '@/trpc'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import ScheduleForm from './-components/shedule-form'
-import { useAuth } from '@/context/auth-context'
-import { protectRouteBeforeLoad } from '@/lib/utils'
 
 export const Route = createFileRoute('/schedules/$id/edit')({
   component: RouteComponent,
@@ -60,7 +58,7 @@ export function EditScheduleRouteComponent({
           status: schedule.status,
           scheduleNumber: schedule.scheduleNumber,
           remarks: schedule.remarks || '',
-          assigments: schedule.assignments.map((assignment) => ({
+          assignments: schedule.assignments.map((assignment) => ({
             personnelId: assignment.personnelId,
             aircraftId: assignment.aircraftId,
             remarks: assignment.remarks || '',

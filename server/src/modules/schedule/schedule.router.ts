@@ -1,18 +1,14 @@
 import db from "#/db/db.js";
 import { SCHEDULE_NUMBER_PREFIX } from "#/config/constants.js";
 import {
-  aircraftTable,
-  areaTable,
   missionAssignmentTable,
   missionScheduleTable,
   missionTable,
-  personnelTable,
 } from "#/db/schema.js";
 import { protectedProcedure, router } from "#/trpc.js";
 import userService from "../user/user.service.js";
 import { TRPCError } from "@trpc/server";
 import { eq, type SQL } from "drizzle-orm";
-import { alias } from "drizzle-orm/pg-core";
 import { z } from "zod";
 import roleService from "../role/role.service.js";
 import {
@@ -64,17 +60,24 @@ const scheduleRouter = router({
   getAll: protectedProcedure
     .input(
       z.object({
-        status: missionStatusSchema.optional(),
+        status: z.array(missionStatusSchema).optional(),
+        // In UTC
+        startDateTime: z.coerce.date().optional(),
+        // In UTC
+        endDateTime: z.coerce.date().optional(),
+        personnelId: z.number().optional(),
       }),
     )
     .query(async ({ ctx, input }) => {
       const scope = roleService.canDo(ctx.user.role || "", "schedule", "view");
 
-      let personnelId: number | undefined;
+      let loggedInPersonnelId: number | undefined;
 
       if (scope === "assigned" && ctx.user.personnelId != null) {
-        personnelId = ctx.user.personnelId;
+        loggedInPersonnelId = ctx.user.personnelId;
       }
+
+      const personnelId = loggedInPersonnelId ?? input.personnelId;
 
       const items = await db.query.missionScheduleTable.findMany({
         with: {
@@ -91,9 +94,19 @@ const scheduleRouter = router({
                   status: "draft",
                 }
               : undefined,
-          status: input.status,
+          status: input.status
+            ? {
+                in: input.status,
+              }
+            : undefined,
           assignments: {
-            personnelId: personnelId,
+            personnelId,
+          },
+          startDateTime: {
+            gte: input.startDateTime,
+          },
+          endDateTime: {
+            lte: input.endDateTime,
           },
         },
         extras: {
@@ -129,6 +142,7 @@ const scheduleRouter = router({
           assignments: {
             with: {
               personnel: true,
+              aircraft: true,
             },
             where: {
               personnelId: personnelId,

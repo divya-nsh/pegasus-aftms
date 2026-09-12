@@ -1,6 +1,22 @@
 import ErrorAlert from '@/components/errors/ErrorAlert'
 import PageCard from '@/components/layout/PageCard'
 import FullPageSpinner from '@/components/loaders/page-loader'
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import {
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+} from '@/components/ui/chart'
+import type { ChartConfig } from '@/components/ui/chart'
 import { useAuth } from '@/context/auth-context'
 import { formatDate } from '@/lib/date'
 import { cn } from '@/lib/utils'
@@ -17,7 +33,9 @@ import {
   Clock3,
   Plane,
   Target,
+  TrendingUp,
 } from 'lucide-react'
+import { Bar, BarChart, CartesianGrid, XAxis } from 'recharts'
 
 export const Route = createFileRoute('/trainee-dashboard/')({
   component: RouteComponent,
@@ -91,37 +109,40 @@ function RouteComponent() {
         />
       </div>
 
-      {/* Today's schedule */}
-      <section className="mt-8 ">
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-base font-semibold">Today's Schedule</h2>
+      <div className="mt-8 flex flex-wrap items-start gap-8">
+        <section className="min-w-70 flex-1">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-base font-semibold">Today's Schedule</h2>
 
-            <p className="text-xs text-muted-foreground">
-              Your missions for today
-            </p>
+              <p className="text-xs text-muted-foreground">
+                Your missions for today
+              </p>
+            </div>
+
+            <button
+              type="button"
+              className="text-sm font-medium text-primary hover:underline"
+            >
+              View schedule
+            </button>
           </div>
 
-          <button
-            type="button"
-            className="text-sm font-medium text-primary hover:underline"
-          >
-            View schedule
-          </button>
-        </div>
+          <div className="mt-3 overflow-hidden rounded-lg border shadow-sm">
+            {data.todayAssignments.length > 0 ? (
+              <div className="divide-y">
+                {data.todayAssignments.slice(0, 5).map((schedule) => (
+                  <ScheduleRow key={schedule.id} schedule={schedule} />
+                ))}
+              </div>
+            ) : (
+              <EmptySchedule />
+            )}
+          </div>
+        </section>
 
-        <div className="mt-3 overflow-hidden rounded-lg border shadow-sm">
-          {data.todayAssignments.length > 0 ? (
-            <div className="divide-y">
-              {data.todayAssignments.slice(0, 5).map((schedule) => (
-                <ScheduleRow key={schedule.id} schedule={schedule} />
-              ))}
-            </div>
-          ) : (
-            <EmptySchedule />
-          )}
-        </div>
-      </section>
+        <FlyingHoursChartCard />
+      </div>
 
       <section className="mt-8 max-w-82">
         <PerformanceSection
@@ -327,5 +348,64 @@ function PerformanceSection({
         <span>{pending} Pending</span>
       </p>
     </div>
+  )
+}
+
+const flyingHoursChartData = [
+  { month: 'January', dual: 14, solo: 4 },
+  { month: 'February', dual: 18, solo: 7 },
+  { month: 'March', dual: 16, solo: 9 },
+  { month: 'April', dual: 11, solo: 6 },
+  { month: 'May', dual: 19, solo: 10 },
+  { month: 'June', dual: 17, solo: 8 },
+]
+
+const flyingHoursChartConfig = {
+  dual: {
+    label: 'Dual',
+    color: '#2563eb',
+  },
+  solo: {
+    label: 'Solo',
+    color: '#60a5fa',
+  },
+} satisfies ChartConfig
+
+function FlyingHoursChartCard() {
+  return (
+    <Card className="min-w-[320px] flex-1">
+      <CardHeader>
+        <CardTitle>Flying hours</CardTitle>
+        <CardDescription>
+          Placeholder data · January – June 2026
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <ChartContainer config={flyingHoursChartConfig} className="h-70 w-full">
+          <BarChart accessibilityLayer data={flyingHoursChartData}>
+            <CartesianGrid vertical={false} />
+            <XAxis
+              dataKey="month"
+              tickLine={false}
+              tickMargin={10}
+              axisLine={false}
+              tickFormatter={(value) => value.slice(0, 3)}
+            />
+            <ChartTooltip content={<ChartTooltipContent />} />
+            <ChartLegend content={<ChartLegendContent />} />
+            <Bar dataKey="dual" fill="var(--color-dual)" radius={4} />
+            <Bar dataKey="solo" fill="var(--color-solo)" radius={4} />
+          </BarChart>
+        </ChartContainer>
+        <CardFooter className="flex-col items-start gap-2 text-sm">
+          <div className="flex gap-2 leading-none font-medium">
+            Up 5.2% this month <TrendingUp className="h-4 w-4" />
+          </div>
+          <div className="leading-none text-muted-foreground">
+            Sample dual vs solo flying hours for the last 6 months
+          </div>
+        </CardFooter>
+      </CardContent>
+    </Card>
   )
 }

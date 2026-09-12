@@ -106,7 +106,7 @@ export default function DatePicker({
         }
       >
         {value ? (
-          formatDate(value, true, showWeekDay)
+          formatDate(value, time ? true : false, showWeekDay)
         ) : (
           <span>{placeholder}</span>
         )}

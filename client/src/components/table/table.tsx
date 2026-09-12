@@ -33,7 +33,10 @@ type MyColumnMeta = {
 }
 
 type MyTableMeta = {
-  onRowAction?: (actionType: 'edit' | 'delete' | 'view', rowId: string) => void
+  onRowAction?: (
+    actionType: 'edit' | 'delete' | 'view' | 'print',
+    rowId: string,
+  ) => void
 }
 
 const features = tableFeatures({

@@ -19,9 +19,7 @@ export const Route = createFileRoute('/schedules/create')({
 function RouteComponent() {
   const { missionId } = Route.useSearch()
   const missionsQ = useSuspenseQuery(trpc.missions.getAll.queryOptions())
-  const mission = missionsQ.data.items.find(
-    (item) => item.id === missionId || 0,
-  )
+  const mission = missionsQ.data.items.find((item) => item.id === missionId)
 
   if (missionId && !mission) {
     throw new Error('Invalid Event Id in URL: unable to find mission')
@@ -34,7 +32,7 @@ function RouteComponent() {
         defaultValues={{
           missionId: (missionId || null) as unknown as number,
           scheduleNumber: '',
-          name: '',
+          name: mission?.name || '',
           description: mission?.description || '',
           startDateTime: '',
           endDateTime: '',

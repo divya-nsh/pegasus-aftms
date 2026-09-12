@@ -1,6 +1,22 @@
 import PageCard from '@/components/layout/PageCard'
 import { Avatar, AvatarFallback } from '@/components/ui/avatar'
 import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from '@/components/ui/card'
+import {
+  ChartContainer,
+  ChartLegend,
+  ChartLegendContent,
+  ChartTooltip,
+  ChartTooltipContent,
+} from '@/components/ui/chart'
+import type { ChartConfig } from '@/components/ui/chart'
+import {
   Table,
   TableBody,
   TableCell,
@@ -20,9 +36,11 @@ import {
   GraduationCapIcon,
   ListTodoIcon,
   PlaneTakeoffIcon,
+  TrendingUp,
   UsersIcon,
 } from 'lucide-react'
 import type { ReactNode } from 'react'
+import { Bar, BarChart, CartesianGrid, XAxis } from 'recharts'
 import {
   assignedTrainees,
   instructorStats,
@@ -126,6 +144,8 @@ function RouteComponent() {
           />
         </div>
       </section>
+
+      <FlyingHoursChartCard />
 
       <section className="grid gap-8 lg:grid-cols-5">
         <div className="space-y-4 lg:col-span-3">
@@ -268,5 +288,68 @@ function RouteComponent() {
         </div>
       </section>
     </PageCard>
+  )
+}
+
+const flyingHoursChartData = [
+  { month: 'January', instruction: 22, other: 8 },
+  { month: 'February', instruction: 28, other: 11 },
+  { month: 'March', instruction: 19, other: 7 },
+  { month: 'April', instruction: 31, other: 9 },
+  { month: 'May', instruction: 26, other: 12 },
+  { month: 'June', instruction: 24, other: 10 },
+]
+
+const flyingHoursChartConfig = {
+  instruction: {
+    label: 'Instruction',
+    color: '#2563eb',
+  },
+  other: {
+    label: 'Other flying',
+    color: '#60a5fa',
+  },
+} satisfies ChartConfig
+
+function FlyingHoursChartCard() {
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle>Flying hours</CardTitle>
+        <CardDescription>
+          Placeholder data · January – June 2026
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <ChartContainer config={flyingHoursChartConfig} className="h-70 w-full">
+          <BarChart accessibilityLayer data={flyingHoursChartData}>
+            <CartesianGrid vertical={false} />
+            <XAxis
+              dataKey="month"
+              tickLine={false}
+              tickMargin={10}
+              axisLine={false}
+              tickFormatter={(value) => value.slice(0, 3)}
+            />
+            <ChartTooltip content={<ChartTooltipContent />} />
+            <ChartLegend content={<ChartLegendContent />} />
+            <Bar
+              dataKey="instruction"
+              fill="var(--color-instruction)"
+              radius={4}
+            />
+            <Bar dataKey="other" fill="var(--color-other)" radius={4} />
+          </BarChart>
+        </ChartContainer>
+        <CardFooter className="flex-col items-start gap-2 text-sm">
+          <div className="flex gap-2 leading-none font-medium">
+            Up 4.1% from last month <TrendingUp className="h-4 w-4" />
+          </div>
+          <div className="leading-none text-muted-foreground">
+            Sample instruction vs other flying hours for the last 6 months
+          </div>
+        </CardFooter>
+      </CardContent>
+    </Card>
   )
 }

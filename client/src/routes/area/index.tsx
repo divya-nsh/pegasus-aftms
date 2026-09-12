@@ -29,6 +29,7 @@ import { ActionMenu } from '@/components/table/action-menu'
 import { toast } from '@/components/ui/toast'
 import { BlockingLoaderOverlay } from '@/components/loaders/BlockingLoader'
 import PageCard from '@/components/layout/PageCard'
+import RefreshButton from '@/components/table/refresh-button'
 
 export const Route = createFileRoute('/area/')({
   component: RouteComponent,
@@ -190,10 +191,13 @@ function RouteComponent() {
     <PageCard className="space-y-4">
       <div className="items-center gap-1 border-b mb-4 pb-1 flex justify-between">
         <h1 className="text-xl font-bold">Areas</h1>
-        <Button onClick={() => setFormModel({ open: true })}>
-          <PlusIcon />
-          New
-        </Button>
+        <div className="flex items-center gap-4">
+          <RefreshButton query={areasQ} />
+          <Button onClick={() => setFormModel({ open: true })}>
+            <PlusIcon />
+            New
+          </Button>
+        </div>
       </div>
       <ErrorAlert error={areasQ.error} />
       <div className=" mb-3 flex items-center justify-between">

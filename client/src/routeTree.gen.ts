@@ -30,6 +30,7 @@ import { Route as RolesIndexRouteImport } from './routes/roles/index'
 import { Route as RolesCreateRouteImport } from './routes/roles/create'
 import { Route as SchedulesIndexRouteImport } from './routes/schedules/index'
 import { Route as SchedulesCreateRouteImport } from './routes/schedules/create'
+import { Route as SchedulesTimelineViewRouteImport } from './routes/schedules/timeline-view'
 import { Route as TraineeDashboardIndexRouteImport } from './routes/trainee-dashboard/index'
 import { Route as TraineeDashboardIdRouteImport } from './routes/trainee-dashboard/$id'
 import { Route as TraineeDashboardCopyRouteImport } from './routes/trainee-dashboard/copy'
@@ -148,6 +149,11 @@ const SchedulesCreateRoute = SchedulesCreateRouteImport.update({
   path: '/schedules/create',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SchedulesTimelineViewRoute = SchedulesTimelineViewRouteImport.update({
+  id: '/schedules/timeline-view',
+  path: '/schedules/timeline-view',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TraineeDashboardIndexRoute = TraineeDashboardIndexRouteImport.update({
   id: '/trainee-dashboard/',
   path: '/trainee-dashboard/',
@@ -218,6 +224,7 @@ export interface FileRoutesByFullPath {
   '/personnel/create': typeof PersonnelCreateRoute
   '/roles/create': typeof RolesCreateRoute
   '/schedules/create': typeof SchedulesCreateRoute
+  '/schedules/timeline-view': typeof SchedulesTimelineViewRoute
   '/trainee-dashboard/$id': typeof TraineeDashboardIdRoute
   '/trainee-dashboard/copy': typeof TraineeDashboardCopyRoute
   '/users/create': typeof UsersCreateRoute
@@ -250,6 +257,7 @@ export interface FileRoutesByTo {
   '/personnel/create': typeof PersonnelCreateRoute
   '/roles/create': typeof RolesCreateRoute
   '/schedules/create': typeof SchedulesCreateRoute
+  '/schedules/timeline-view': typeof SchedulesTimelineViewRoute
   '/trainee-dashboard/$id': typeof TraineeDashboardIdRoute
   '/trainee-dashboard/copy': typeof TraineeDashboardCopyRoute
   '/users/create': typeof UsersCreateRoute
@@ -285,6 +293,7 @@ export interface FileRoutesById {
   '/personnel/create': typeof PersonnelCreateRoute
   '/roles/create': typeof RolesCreateRoute
   '/schedules/create': typeof SchedulesCreateRoute
+  '/schedules/timeline-view': typeof SchedulesTimelineViewRoute
   '/trainee-dashboard/$id': typeof TraineeDashboardIdRoute
   '/trainee-dashboard/copy': typeof TraineeDashboardCopyRoute
   '/users/create': typeof UsersCreateRoute
@@ -321,6 +330,7 @@ export interface FileRouteTypes {
     | '/personnel/create'
     | '/roles/create'
     | '/schedules/create'
+    | '/schedules/timeline-view'
     | '/trainee-dashboard/$id'
     | '/trainee-dashboard/copy'
     | '/users/create'
@@ -353,6 +363,7 @@ export interface FileRouteTypes {
     | '/personnel/create'
     | '/roles/create'
     | '/schedules/create'
+    | '/schedules/timeline-view'
     | '/trainee-dashboard/$id'
     | '/trainee-dashboard/copy'
     | '/users/create'
@@ -387,6 +398,7 @@ export interface FileRouteTypes {
     | '/personnel/create'
     | '/roles/create'
     | '/schedules/create'
+    | '/schedules/timeline-view'
     | '/trainee-dashboard/$id'
     | '/trainee-dashboard/copy'
     | '/users/create'
@@ -421,6 +433,7 @@ export interface RootRouteChildren {
   PersonnelCreateRoute: typeof PersonnelCreateRoute
   RolesCreateRoute: typeof RolesCreateRoute
   SchedulesCreateRoute: typeof SchedulesCreateRoute
+  SchedulesTimelineViewRoute: typeof SchedulesTimelineViewRoute
   TraineeDashboardIdRoute: typeof TraineeDashboardIdRoute
   TraineeDashboardCopyRoute: typeof TraineeDashboardCopyRoute
   UsersCreateRoute: typeof UsersCreateRoute
@@ -588,6 +601,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SchedulesCreateRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/schedules/timeline-view': {
+      id: '/schedules/timeline-view'
+      path: '/schedules/timeline-view'
+      fullPath: '/schedules/timeline-view'
+      preLoaderRoute: typeof SchedulesTimelineViewRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/trainee-dashboard/': {
       id: '/trainee-dashboard/'
       path: '/trainee-dashboard'
@@ -709,6 +729,7 @@ const rootRouteChildren: RootRouteChildren = {
   PersonnelCreateRoute: PersonnelCreateRoute,
   RolesCreateRoute: RolesCreateRoute,
   SchedulesCreateRoute: SchedulesCreateRoute,
+  SchedulesTimelineViewRoute: SchedulesTimelineViewRoute,
   TraineeDashboardIdRoute: TraineeDashboardIdRoute,
   TraineeDashboardCopyRoute: TraineeDashboardCopyRoute,
   UsersCreateRoute: UsersCreateRoute,

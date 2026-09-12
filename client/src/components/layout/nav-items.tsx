@@ -1,6 +1,7 @@
 import type { FileRouteTypes } from '@/routeTree.gen'
 import {
   CalendarClockIcon,
+  CalendarDaysIcon,
   GraduationCapIcon,
   ShieldCheckIcon,
   UsersIcon,
@@ -9,6 +10,7 @@ import {
   MapPinnedIcon,
   MapPinIcon,
   UserIcon,
+  FileTextIcon,
 } from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
 
@@ -47,12 +49,27 @@ export const navItems: NavGroup[] = [
   {
     title: 'Masters',
     items: [
-      { title: 'Personnel', url: '/personnel', icon: UsersIcon },
       { title: 'Event / Mission', url: '/events', icon: TargetIcon },
+      { title: 'Personnel', url: '/personnel', icon: UsersIcon },
       { title: 'Aircraft', url: '/aircraft', icon: PlaneIcon },
       { title: 'Area', url: '/area', icon: MapPinnedIcon },
       { title: 'User', url: '/users', icon: UserIcon },
       { title: 'Location', url: '/locations', icon: MapPinIcon },
+    ],
+  },
+  {
+    title: 'Reports',
+    items: [
+      {
+        title: 'Flight Log',
+        url: '/',
+        icon: FileTextIcon,
+      },
+      {
+        title: 'Shift Report',
+        url: '/',
+        icon: CalendarDaysIcon,
+      },
     ],
   },
   // {
@@ -81,6 +98,11 @@ export const traineeNavItems: NavGroup[] = [
         icon: UserIcon,
       },
       { title: 'My Shedules', url: '/schedules', icon: CalendarClockIcon },
+      {
+        title: 'Day Timeline',
+        url: '/schedules/timeline-view',
+        icon: CalendarDaysIcon,
+      },
     ],
   },
 ]

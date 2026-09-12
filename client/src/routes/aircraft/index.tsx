@@ -28,6 +28,7 @@ import { toast } from '@/components/ui/toast'
 import { BlockingLoaderOverlay } from '@/components/loaders/BlockingLoader'
 import { protectRouteBeforeLoad } from '@/lib/utils'
 import PageCard from '@/components/layout/PageCard'
+import RefreshButton from '@/components/table/refresh-button'
 
 export const Route = createFileRoute('/aircraft/')({
   component: RouteComponent,
@@ -168,7 +169,10 @@ function RouteComponent() {
     <PageCard>
       <div className="items-center gap-1 border-b mb-4 pb-1 flex justify-between">
         <h1 className="text-xl font-bold">Aircraft</h1>
-        <LinkButton to="/aircraft/create" newButton />
+        <div className="flex items-center gap-4">
+          <RefreshButton query={aircraftQ} />
+          <LinkButton to="/aircraft/create" newButton />
+        </div>
       </div>
       <ErrorAlert error={aircraftQ.error} />
       <div className=" mb-3 flex items-center justify-between">

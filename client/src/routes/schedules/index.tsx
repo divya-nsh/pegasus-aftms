@@ -20,8 +20,16 @@ import {
 import { createFileRoute, Link, useNavigate } from '@tanstack/react-router'
 import { createColumnHelper, useTable } from '@tanstack/react-table'
 import type { ColumnDef } from '@tanstack/react-table'
-import { EyeIcon, PencilIcon, TrashIcon } from 'lucide-react'
-import { useMemo, useState } from 'react'
+import {
+  CalendarClockIcon,
+  EyeIcon,
+  PencilIcon,
+  PrinterIcon,
+  TrashIcon,
+} from 'lucide-react'
+import { useMemo, useRef, useState } from 'react'
+import { flushSync } from 'react-dom'
+import { useReactToPrint } from 'react-to-print'
 import { ActionMenu } from '@/components/table/action-menu'
 import trpc, { trpcClient } from '@/trpc'
 import {
@@ -41,6 +49,11 @@ import PageCard from '@/components/layout/PageCard'
 import RefetchButton from '@/components/table/refresh-button'
 import { AccessControl } from '@/context/auth-context'
 import { DropdownMenuItem } from '@/components/ui/dropdown-menu'
+import {
+  EventSchedulePrintDocument,
+  fetchScheduleForPrint,
+} from './-components/print-schedule'
+import type { PrintableSchedule } from './-components/print-schedule'
 
 export const Route = createFileRoute('/schedules/')({
   component: RouteComponent,
@@ -68,15 +81,22 @@ const columns: ColumnDef<TTableFeatures, TScheduleListItem>[] = ch.columns([
   ch.display({
     header: '-',
     cell: (info) => {
-      const handleClick = (action: 'edit' | 'view' | 'delete') => () => {
-        info.table.options.meta?.onRowAction?.(action, info.row.id)
-      }
+      const handleClick =
+        (action: 'edit' | 'view' | 'delete' | 'print') => () => {
+          info.table.options.meta?.onRowAction?.(action, info.row.id)
+        }
       return (
         <ActionMenu>
           <AccessControl module="schedule" action="view">
             <DropdownMenuItem onClick={handleClick('view')}>
               <EyeIcon className="h-4 w-4" />
               View
+            </DropdownMenuItem>
+          </AccessControl>
+          <AccessControl module="schedule" action="view">
+            <DropdownMenuItem onClick={handleClick('print')}>
+              <PrinterIcon className="h-4 w-4" />
+              Print
             </DropdownMenuItem>
           </AccessControl>
           <AccessControl module="schedule" action="edit">
@@ -191,6 +211,23 @@ function RouteComponent() {
   const navigate = useNavigate()
   const [columnFilters, setColumnFilters] = useState<string>('')
   const [statusFilter, setStatusFilter] = useState('all')
+  const [isPrinting, setIsPrinting] = useState(false)
+  const [printSchedule, setPrintSchedule] = useState<PrintableSchedule | null>(
+    null,
+  )
+  const printRef = useRef<HTMLDivElement>(null)
+  const printScheduleRef = useRef<PrintableSchedule | null>(null)
+
+  const printFn = useReactToPrint({
+    contentRef: printRef,
+    documentTitle: () =>
+      `Event Schedule ${printScheduleRef.current?.scheduleNumber || printScheduleRef.current?.name || ''}`.trim(),
+    pageStyle: `@page { margin: 12mm; } body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }`,
+    onAfterPrint: () => {
+      printScheduleRef.current = null
+      setPrintSchedule(null)
+    },
+  })
 
   const filteredItems = useMemo(() => {
     if (statusFilter === 'all') return schedulesQ.data.items
@@ -217,6 +254,26 @@ function RouteComponent() {
     },
   })
 
+  const handlePrint = async (id: number) => {
+    setIsPrinting(true)
+    try {
+      const schedule = await fetchScheduleForPrint(id)
+      printScheduleRef.current = schedule
+      flushSync(() => {
+        setPrintSchedule(schedule)
+      })
+      await printFn()
+    } catch (error) {
+      toast.add({
+        type: 'error',
+        title: 'Failed to print event schedule',
+        description: error instanceof Error ? error.message : undefined,
+      })
+    } finally {
+      setIsPrinting(false)
+    }
+  }
+
   const table = useTable({
     ...baseTableOptions<TScheduleListItem>(),
     data: filteredItems,
@@ -236,6 +293,9 @@ function RouteComponent() {
             break
           case 'view':
             navigate({ to: '/schedules/$id/view', params: { id: rowId } })
+            break
+          case 'print':
+            void handlePrint(Number(rowId))
             break
           case 'delete': {
             const confirm = window.confirm(
@@ -266,6 +326,10 @@ function RouteComponent() {
             isPending={schedulesQ.isFetching}
             disabled={schedulesQ.isFetching}
           />
+          <LinkButton to="/schedules/timeline-view" variant="outline">
+            <CalendarClockIcon />
+            Day timeline
+          </LinkButton>
           <AccessControl module="schedule" action="create">
             <LinkButton to="/schedules/create" newButton />
           </AccessControl>
@@ -305,7 +369,14 @@ function RouteComponent() {
       </div>
       <AppTable table={table} />
       <TablePagination table={table} />
-      <BlockingLoaderOverlay show={deleteMutation.isPending} />
+      {printSchedule ? (
+        <div aria-hidden className="absolute top-0 -left-[10000px] w-[210mm]">
+          <div ref={printRef}>
+            <EventSchedulePrintDocument schedule={printSchedule} />
+          </div>
+        </div>
+      ) : null}
+      <BlockingLoaderOverlay show={deleteMutation.isPending || isPrinting} />
     </PageCard>
   )
 }

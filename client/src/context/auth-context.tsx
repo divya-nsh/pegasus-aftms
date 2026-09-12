@@ -9,7 +9,10 @@ type AuthUser = TrpcRouterOutputs['users']['getMyProfile']
 
 export type AuthContextType = {
   user?: AuthUser | null
+  /** profile means the first personnel in the user's personnel array */
   profile?: AuthUser['personnel'][number]
+  // Alias of profile
+  linkedPersonnel?: AuthUser['personnel'][number]
   isAuthenticated: boolean
   refetch: () => void
   isUserCan: (module: RoleModule, action: ModuleAction) => boolean
@@ -36,7 +39,6 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     [user],
   )
 
-  // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
   if (isPending)
     return (
       <div className="flex min-h-svh items-center justify-center">
@@ -48,7 +50,14 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, profile, refetch, isAuthenticated: !!user, isUserCan }}
+      value={{
+        user,
+        profile,
+        refetch,
+        isAuthenticated: !!user,
+        isUserCan,
+        linkedPersonnel: profile,
+      }}
     >
       {children}
     </AuthContext.Provider>

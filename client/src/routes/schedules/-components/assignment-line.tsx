@@ -9,6 +9,7 @@ import { formatDate } from '@/lib/date'
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogMain,
@@ -28,6 +29,8 @@ import {
   PlusIcon,
   TrashIcon,
   AlertTriangleIcon,
+  ClockIcon,
+  ArrowRightIcon,
 } from 'lucide-react'
 import { getPersonnelType, getPilotQualification } from '@repo/shared'
 import toast from 'react-hot-toast'
@@ -98,17 +101,28 @@ export default function AssignmentLine({
   const personnelQ = useSuspenseQuery(trpc.personnel.getAll.queryOptions())
 
   const handleSave = (assignment: Assignment) => {
+    const nextAssignment = assignment.aircraftId
+      ? assignment
+      : {
+          ...assignment,
+          takeoffTime: null,
+          landingTime: null,
+          aircraftTime: null,
+        }
+
     if (addFormOpen.editIndex != null) {
       onChange(
-        values.map((v, i) => (i === addFormOpen.editIndex ? assignment : v)),
+        values.map((v, i) =>
+          i === addFormOpen.editIndex ? nextAssignment : v,
+        ),
       )
     } else {
       const set = new Set(values.map((v) => v.personnelId))
-      if (set.has(assignment.personnelId)) {
+      if (set.has(nextAssignment.personnelId)) {
         toast.error('Pilot already in the list')
         return
       }
-      onChange([...values, assignment])
+      onChange([...values, nextAssignment])
     }
   }
 
@@ -139,7 +153,7 @@ export default function AssignmentLine({
           <Button
             size="sm"
             variant="secondary"
-            className="border shadow-xs border-neutral-200"
+            className="border shadow-xs border-neutral-200 border-dashed"
             onClick={() => {
               if (timeNotAvailable) {
                 toast.error('Please set the schedule time first')
@@ -185,7 +199,7 @@ export default function AssignmentLine({
                 return (
                   <TableRow
                     key={`${assignment.personnelId}-${index}`}
-                    onClick={() =>
+                    onDoubleClick={() =>
                       setAddFormOpen({ open: true, editIndex: index })
                     }
                   >
@@ -378,6 +392,14 @@ function AssignmentsModal({
       onDynamic: assignmentSchema,
     },
     onSubmit: ({ value, meta }) => {
+      if (warning) {
+        const isConfirm = confirm(
+          'Selected pilots have conflicting schedules. Are you sure you want to add him to line',
+        )
+        if (!isConfirm) {
+          return
+        }
+      }
       onSave(value)
       form.reset()
       if (meta !== 'savestay') {
@@ -405,6 +427,7 @@ function AssignmentsModal({
   }, [personnelQ.data.items, items, selectedPersonnelId])
 
   const takeoffTime = useSelector(form.store, (s) => s.values.takeoffTime)
+  const selectedAircraftId = useSelector(form.store, (s) => s.values.aircraftId)
 
   const selectedPersonnel = useMemo(() => {
     return personnelQ.data.items.find(
@@ -421,6 +444,10 @@ function AssignmentsModal({
           <DialogTitle>
             {mode === 'edit' ? 'Edit Pilot' : 'Add Pilots'}
           </DialogTitle>
+          <DialogDescription className="flex items-center gap-2">
+            <ClockIcon size={16} /> {formatDate(startDateTime!, true)} -{' '}
+            {formatDate(endDateTime!, true)}
+          </DialogDescription>
         </DialogHeader>
         <DialogMain className="space-y-5">
           <FieldColumns className="gap-5" cols={2}>
@@ -449,10 +476,11 @@ function AssignmentsModal({
                         setWarning(
                           <>
                             <ol className=" list-decimal">
-                              {conflictingShedules.map((v, i) => (
+                              {conflictingShedules.map((v) => (
                                 <li className="flex justify-between">
-                                  {i + 1}. {formatDate(v.startDateTime, true)}{' '}
-                                  --- {formatDate(v.endDateTime, true)}
+                                  {formatDate(v.startDateTime, true)}{' '}
+                                  <ArrowRightIcon />{' '}
+                                  {formatDate(v.endDateTime, true)}
                                   <span className="ml-4 font-bold">
                                     {v.scheduleNumber}
                                   </span>
@@ -461,7 +489,7 @@ function AssignmentsModal({
                             </ol>
                           </>,
                         )
-                        toast('⚠ Warnning Shedule Conflict', { id })
+                        toast.error('Warnning Shedule Conflict', { id })
                       } else {
                         toast.success('No Conflicting Shedules', { id })
                       }
@@ -487,6 +515,12 @@ function AssignmentsModal({
                     value: aircraft.id,
                   }))}
                   valueAsNumber
+                  onCommited={(value) => {
+                    if (value) return
+                    form.setFieldValue('takeoffTime', null)
+                    form.setFieldValue('landingTime', null)
+                    form.setFieldValue('aircraftTime', null)
+                  }}
                 />
               )}
             />
@@ -531,49 +565,51 @@ function AssignmentsModal({
             <>
               <hr className="my-4" />
 
-              <FieldColumns className="gap-5" cols={2}>
-                <form.AppField
-                  name="takeoffTime"
-                  children={(f) => (
-                    <f.CDateField
-                      time
-                      label="Takeoff Time"
-                      placeholder="Enter takeoff time"
-                    />
-                  )}
-                />
-                <form.AppField
-                  name="landingTime"
-                  validators={{
-                    onDynamic({ value }) {
-                      if (
-                        value &&
-                        new Date(value) > new Date(takeoffTime ?? '')
-                      ) {
-                        return 'Landing time must be after takeoff time'
-                      }
-                      return undefined
-                    },
-                  }}
-                  children={(f) => (
-                    <f.CDateField
-                      time
-                      label="Landing Time"
-                      placeholder="Enter landing time"
-                    />
-                  )}
-                />
-                <form.AppField
-                  name="aircraftTime"
-                  children={(f) => (
-                    <f.CDateField
-                      time
-                      label="Aircraft Time"
-                      placeholder="Enter aircraft time"
-                    />
-                  )}
-                />
-              </FieldColumns>
+              {selectedAircraftId ? (
+                <FieldColumns className="gap-5" cols={2}>
+                  <form.AppField
+                    name="takeoffTime"
+                    children={(f) => (
+                      <f.CDateField
+                        time
+                        label="Takeoff Time"
+                        placeholder="Enter takeoff time"
+                      />
+                    )}
+                  />
+                  <form.AppField
+                    name="landingTime"
+                    validators={{
+                      onDynamic({ value }) {
+                        if (
+                          value &&
+                          new Date(value) > new Date(takeoffTime ?? '')
+                        ) {
+                          return 'Landing time must be after takeoff time'
+                        }
+                        return undefined
+                      },
+                    }}
+                    children={(f) => (
+                      <f.CDateField
+                        time
+                        label="Landing Time"
+                        placeholder="Enter landing time"
+                      />
+                    )}
+                  />
+                  <form.AppField
+                    name="aircraftTime"
+                    children={(f) => (
+                      <f.CDateField
+                        time
+                        label="Aircraft Time"
+                        placeholder="Enter aircraft time"
+                      />
+                    )}
+                  />
+                </FieldColumns>
+              ) : null}
 
               <div className="pb-2 mt-4 mb-4">
                 <p className="text-sm text-muted-foreground font-bold border-b pb-2 mb-4">
@@ -632,14 +668,14 @@ function AssignmentsModal({
                 type="button"
                 onClick={() => form.handleSubmit('savestay')}
               >
-                Save
+                Add
               </Button>
               <Button
                 type="button"
                 variant="outline"
                 onClick={() => form.handleSubmit()}
               >
-                Save & Close
+                Add & Close
               </Button>
             </>
           )}

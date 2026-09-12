@@ -19,6 +19,7 @@ import FullPageSpinner from '@/components/loaders/page-loader'
 import { toast } from '@/components/ui/toast'
 import { BlockingLoaderOverlay } from '@/components/loaders/BlockingLoader'
 import PageCard from '@/components/layout/PageCard'
+import RefreshButton from '@/components/table/refresh-button'
 import NewButton from '@/components/buttons/new-button'
 import columns from './-components/columns'
 
@@ -120,7 +121,10 @@ function RouteComponent() {
             Define training activities for the training program
           </p>
         </div>
-        <NewButton onClick={() => setFormModel({ open: true })} />
+        <div className="flex items-center gap-4">
+          <RefreshButton query={missionsQ} />
+          <NewButton onClick={() => setFormModel({ open: true })} />
+        </div>
       </div>
       <ErrorAlert error={missionsQ.error} />
       <div className=" mb-3 flex items-center justify-between">
