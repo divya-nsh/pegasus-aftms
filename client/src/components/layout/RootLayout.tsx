@@ -15,10 +15,21 @@ import {
   SidebarInset,
   SidebarRail,
   SidebarSeparator,
+  SidebarMenuSubItem,
+  SidebarMenuSubButton,
+  SidebarMenuSub,
 } from '@/components/ui/sidebar'
 import { useAuth } from '@/context/auth-context'
 import { NavUser } from './nav-user'
-import { traineeNavItems, navItems } from './nav-items'
+import { traineeNavItems, navItems } from './siderbar-items'
+import type { NavMenuItem } from './sidebar.types'
+import {
+  Collapsible,
+  CollapsibleTrigger,
+  CollapsibleContent,
+} from '../ui/collapsible'
+import { ChevronRight } from 'lucide-react'
+import type { FileRouteTypes } from '@/routeTree.gen'
 
 function isNavActive(pathname: string, url: string) {
   return pathname === url || pathname.startsWith(`${url}/`)
@@ -40,7 +51,6 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export function AppSidebar() {
-  const pathname = useRouterState({ select: (s) => s.location.pathname })
   const { user } = useAuth()
 
   const isTrainee = user!.role?.id === 'trainee'
@@ -77,16 +87,7 @@ export function AppSidebar() {
             <SidebarGroupContent>
               <SidebarMenu>
                 {group.items.map((item) => (
-                  <SidebarMenuItem key={item.title}>
-                    <SidebarMenuButton
-                      isActive={isNavActive(pathname, item.url)}
-                      tooltip={item.title}
-                      render={<Link to={item.url} />}
-                    >
-                      {item.icon && <item.icon />}
-                      <span>{item.title}</span>
-                    </SidebarMenuButton>
-                  </SidebarMenuItem>
+                  <RenderSidebarMenuItem key={item.title} item={item} />
                 ))}
               </SidebarMenu>
             </SidebarGroupContent>
@@ -102,39 +103,57 @@ export function AppSidebar() {
   )
 }
 
-// function SideBarFooterContent() {
-//   const { user } = useAuth()
+function RenderSidebarMenuItem({ item }: { item: NavMenuItem }) {
+  const pathname = useRouterState({ select: (s) => s.location.pathname })
 
-//   return (
-//     <SidebarMenu>
-//       <SidebarMenuItem>
-//         <SidebarMenuButton>
-//           <User2Icon /> {user!.name || user!.username || 'Unknown'}
-//         </SidebarMenuButton>
-//       </SidebarMenuItem>
-//     </SidebarMenu>
-//   )
-// }
+  const isActive = isNavActive(pathname, item.url)
 
-// function LogoutButton() {
-//   const queryClient = useQueryClient()
+  if (!item.items) {
+    return (
+      <SidebarMenuItem>
+        <SidebarMenuButton
+          tooltip={item.title}
+          isActive={isActive}
+          render={
+            <Link to={item.url as FileRouteTypes['to']}>
+              {item.icon && <item.icon />}
+              <span>{item.title}</span>
+            </Link>
+          }
+        />
+      </SidebarMenuItem>
+    )
+  }
 
-//   const logoutMutation = useMutation({
-//     mutationFn: () => trpcClient.auth.logout.mutate(),
-//     onSuccess: async () => {
-//       queryClient.clear()
-//       window.location.reload()
-//     },
-//   })
-
-//   return (
-//     <SidebarMenuButton
-//       tooltip="Sign out"
-//       disabled={logoutMutation.isPending}
-//       onClick={() => logoutMutation.mutate()}
-//     >
-//       <LogOutIcon />
-//       <span>{logoutMutation.isPending ? 'Signing out…' : 'Sign out'}</span>
-//     </SidebarMenuButton>
-//   )
-// }
+  return (
+    <Collapsible key={item.title} className="group/collapsible">
+      <SidebarMenuItem>
+        <CollapsibleTrigger
+          render={
+            <SidebarMenuButton tooltip={item.title} isActive={isActive}>
+              {item.icon && <item.icon />}
+              <span>{item.title}</span>
+              <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+            </SidebarMenuButton>
+          }
+        />
+        <CollapsibleContent>
+          <SidebarMenuSub>
+            {item.items.map((subItem) => (
+              <SidebarMenuSubItem key={subItem.title}>
+                <SidebarMenuSubButton
+                  isActive={isNavActive(pathname, subItem.url)}
+                  render={
+                    <Link to={subItem.url as FileRouteTypes['to']}>
+                      {subItem.title}
+                    </Link>
+                  }
+                />
+              </SidebarMenuSubItem>
+            ))}
+          </SidebarMenuSub>
+        </CollapsibleContent>
+      </SidebarMenuItem>
+    </Collapsible>
+  )
+}

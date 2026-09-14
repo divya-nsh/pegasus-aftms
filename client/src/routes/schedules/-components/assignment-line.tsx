@@ -163,7 +163,7 @@ export default function AssignmentLine({
             }}
           >
             <PlusIcon className="size-4" />
-            Add Pilot
+            Add
           </Button>
         )}
       </div>

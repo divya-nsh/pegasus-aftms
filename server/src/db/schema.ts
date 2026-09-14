@@ -254,3 +254,61 @@ export const sessionTable = snakeCase.table("session", {
 //   permission: varchar().notNull(),
 //   ...timeStampts,
 // });
+
+// ---------------- Gradding --------------------//
+export const gradingAttributeTable = snakeCase.table("grading_attribute", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  name: varchar().notNull().unique(),
+  notes: varchar(),
+  ...timeStampts,
+});
+
+export const gradingTemplateTable = snakeCase.table("grading_template", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  name: varchar().notNull(),
+  notes: varchar(),
+  ...timeStampts,
+});
+
+export const gradingTemplateAttributeTable = snakeCase.table(
+  "grading_template_attribute",
+  {
+    id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    templateId: integer()
+      .references(() => gradingTemplateTable.id, {
+        onDelete: "cascade",
+      })
+      .notNull(),
+    attributeId: integer()
+      .references(() => gradingAttributeTable.id)
+      .notNull(),
+    weight: integer().notNull(),
+    ...timeStampts,
+  },
+  (table) => [
+    uniqueIndex("unique_template_id_attribute_id_idx").on(
+      table.templateId,
+      table.attributeId,
+    ),
+  ],
+);
+
+export const gradingScaleTable = snakeCase.table("grading_scale", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  name: varchar().notNull(),
+  notes: varchar(),
+  ...timeStampts,
+});
+
+export const gradingScaleOptionTable = snakeCase.table("grading_scale_option", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  gradingScaleId: integer()
+    .references(() => gradingScaleTable.id, {
+      onDelete: "cascade",
+    })
+    .notNull(),
+  label: varchar().notNull(),
+  minValue: integer().notNull(),
+  maxValue: integer().notNull(),
+  ...timeStampts,
+});

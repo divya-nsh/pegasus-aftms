@@ -1,4 +1,3 @@
-import type { FileRouteTypes } from '@/routeTree.gen'
 import {
   CalendarClockIcon,
   CalendarDaysIcon,
@@ -13,20 +12,9 @@ import {
   FileTextIcon,
   PrinterIcon,
 } from 'lucide-react'
-import type { LucideIcon } from 'lucide-react'
+import type { NavItems } from './sidebar.types'
 
-export type NavGroup = {
-  title: string
-  items: NavItem[]
-}
-
-export type NavItem = {
-  title: string
-  url: FileRouteTypes['to']
-  icon?: LucideIcon
-}
-
-export const navItems: NavGroup[] = [
+export const navItems: NavItems[] = [
   {
     title: 'Operations',
     items: [
@@ -56,6 +44,16 @@ export const navItems: NavGroup[] = [
       { title: 'Area', url: '/area', icon: MapPinnedIcon },
       { title: 'User', url: '/users', icon: UserIcon },
       { title: 'Location', url: '/locations', icon: MapPinIcon },
+      {
+        title: 'Gradding',
+        url: '#',
+        icon: GraduationCapIcon,
+        items: [
+          { title: 'Template', url: '#' },
+          { title: 'Scale', url: '#' },
+          { title: 'Attribute', url: '/grading-attribute' },
+        ],
+      },
     ],
   },
   {
@@ -68,12 +66,12 @@ export const navItems: NavGroup[] = [
       },
       {
         title: 'Flight Log',
-        url: '/',
+        url: '#',
         icon: FileTextIcon,
       },
       {
         title: 'Shift Report',
-        url: '/',
+        url: '#',
         icon: CalendarDaysIcon,
       },
     ],
@@ -89,7 +87,7 @@ export const navItems: NavGroup[] = [
   // }
 ]
 
-export const traineeNavItems: NavGroup[] = [
+export const traineeNavItems: NavItems[] = [
   {
     title: 'Training',
     items: [
