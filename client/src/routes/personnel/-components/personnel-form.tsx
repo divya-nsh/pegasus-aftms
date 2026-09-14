@@ -5,7 +5,7 @@ import trpc, { trpcClient } from '@/trpc'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import { Link, useNavigate } from '@tanstack/react-router'
 import type { ReactNode } from 'react'
-import { cn, getErrorMessage } from '@/lib/utils'
+import { calcAge, cn, getErrorMessage } from '@/lib/utils'
 import { toast } from 'react-hot-toast'
 import { z } from 'zod'
 import {
@@ -296,17 +296,33 @@ export default function PersonnelForm({
                 )}
               />
 
-              <form.AppField
-                name="dateOfBirth"
-                children={(f) => (
-                  <f.CTextField
-                    label="Date of Birth"
-                    type="date"
-                    readOnly={isReadOnly}
-                    required
-                  />
-                )}
-              />
+              <div>
+                <form.AppField
+                  name="dateOfBirth"
+                  children={(f) => (
+                    <f.CTextField
+                      max={new Date().toISOString().slice(0, 10)}
+                      label="Date of Birth"
+                      type="date"
+                      readOnly={isReadOnly}
+                      required
+                    />
+                  )}
+                />
+                <form.Subscribe selector={(state) => state.values.dateOfBirth}>
+                  {(dateOfBirth) => {
+                    const age = dateOfBirth ? calcAge(dateOfBirth) : null
+                    if (!age) return null
+                    return (
+                      <p className="mt-1 px-2 text-sm text-muted-foreground">
+                        {age.years} {age.years === 1 ? 'year' : 'years'} old
+                        {/* ,{' '}
+                        {age.months} {age.months === 1 ? 'month' : 'months'} */}
+                      </p>
+                    )
+                  }}
+                </form.Subscribe>
+              </div>
             </div>
 
             <form.Field
