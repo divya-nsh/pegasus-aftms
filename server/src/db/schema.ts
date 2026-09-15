@@ -10,6 +10,7 @@ import {
   boolean,
   jsonb,
   uniqueIndex,
+  numeric,
 } from "drizzle-orm/pg-core";
 
 export const genderEnum = pgEnum("gender", ["male", "female", "other"]);
@@ -308,7 +309,17 @@ export const gradingScaleOptionTable = snakeCase.table("grading_scale_option", {
     })
     .notNull(),
   label: varchar().notNull(),
-  minValue: integer().notNull(),
-  maxValue: integer().notNull(),
+  point: numeric({
+    precision: 5, // up to 999.99
+    scale: 2,
+  }).notNull(),
+  lowerBound: numeric({
+    precision: 5,
+    scale: 2,
+  }).notNull(),
+  upperBound: numeric({
+    precision: 5,
+    scale: 2,
+  }).notNull(),
   ...timeStampts,
 });

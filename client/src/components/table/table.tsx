@@ -82,10 +82,12 @@ export function AppTable<TData extends RowData>({
   table,
   className,
   rounded = true,
+  coverFullWidth = false,
 }: {
   table: ReactTable<typeof features, TData>
   className?: string
   rounded?: boolean
+  coverFullWidth?: boolean
 }) {
   return (
     <div
@@ -98,7 +100,10 @@ export function AppTable<TData extends RowData>({
       <Table
         className="border-separate border-spacing-0"
         maxHeight={400}
-        style={{ tableLayout: 'fixed', width: table.getCenterTotalSize() }}
+        style={{
+          tableLayout: 'fixed',
+          width: coverFullWidth ? '100%' : table.getCenterTotalSize(),
+        }}
       >
         <TableHeader>
           {table.getHeaderGroups().map((group) => (

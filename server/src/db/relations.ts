@@ -48,4 +48,10 @@ export const relations = defineRelations({ ...schema }, (r) => ({
       to: r.aircraftTable.id,
     }),
   },
+  gradingScaleTable: {
+    options: r.many.gradingScaleOptionTable({
+      from: r.gradingScaleTable.id,
+      to: r.gradingScaleOptionTable.gradingScaleId,
+    }),
+  },
 }));

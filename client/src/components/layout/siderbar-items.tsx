@@ -50,7 +50,7 @@ export const navItems: NavItems[] = [
         icon: GraduationCapIcon,
         items: [
           { title: 'Template', url: '#' },
-          { title: 'Scale', url: '#' },
+          { title: 'Scale', url: '/grading-scale' },
           { title: 'Attribute', url: '/grading-attribute' },
         ],
       },

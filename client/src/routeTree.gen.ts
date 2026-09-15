@@ -24,6 +24,7 @@ import { Route as AircraftCreateRouteImport } from './routes/aircraft/create'
 import { Route as AreaIndexRouteImport } from './routes/area/index'
 import { Route as EventsIndexRouteImport } from './routes/events/index'
 import { Route as GradingAttributeIndexRouteImport } from './routes/grading-attribute/index'
+import { Route as GradingScaleIndexRouteImport } from './routes/grading-scale/index'
 import { Route as InstructorDashboardIndexRouteImport } from './routes/instructor-dashboard/index'
 import { Route as LocationsIndexRouteImport } from './routes/locations/index'
 import { Route as PersonnelIndexRouteImport } from './routes/personnel/index'
@@ -119,6 +120,11 @@ const EventsIndexRoute = EventsIndexRouteImport.update({
 const GradingAttributeIndexRoute = GradingAttributeIndexRouteImport.update({
   id: '/grading-attribute/',
   path: '/grading-attribute/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GradingScaleIndexRoute = GradingScaleIndexRouteImport.update({
+  id: '/grading-scale/',
+  path: '/grading-scale/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const InstructorDashboardIndexRoute =
@@ -252,6 +258,7 @@ export interface FileRoutesByFullPath {
   '/area/': typeof AreaIndexRoute
   '/events/': typeof EventsIndexRoute
   '/grading-attribute/': typeof GradingAttributeIndexRoute
+  '/grading-scale/': typeof GradingScaleIndexRoute
   '/instructor-dashboard/': typeof InstructorDashboardIndexRoute
   '/locations/': typeof LocationsIndexRoute
   '/personnel/': typeof PersonnelIndexRoute
@@ -288,6 +295,7 @@ export interface FileRoutesByTo {
   '/area': typeof AreaIndexRoute
   '/events': typeof EventsIndexRoute
   '/grading-attribute': typeof GradingAttributeIndexRoute
+  '/grading-scale': typeof GradingScaleIndexRoute
   '/instructor-dashboard': typeof InstructorDashboardIndexRoute
   '/locations': typeof LocationsIndexRoute
   '/personnel': typeof PersonnelIndexRoute
@@ -327,6 +335,7 @@ export interface FileRoutesById {
   '/area/': typeof AreaIndexRoute
   '/events/': typeof EventsIndexRoute
   '/grading-attribute/': typeof GradingAttributeIndexRoute
+  '/grading-scale/': typeof GradingScaleIndexRoute
   '/instructor-dashboard/': typeof InstructorDashboardIndexRoute
   '/locations/': typeof LocationsIndexRoute
   '/personnel/': typeof PersonnelIndexRoute
@@ -367,6 +376,7 @@ export interface FileRouteTypes {
     | '/area/'
     | '/events/'
     | '/grading-attribute/'
+    | '/grading-scale/'
     | '/instructor-dashboard/'
     | '/locations/'
     | '/personnel/'
@@ -403,6 +413,7 @@ export interface FileRouteTypes {
     | '/area'
     | '/events'
     | '/grading-attribute'
+    | '/grading-scale'
     | '/instructor-dashboard'
     | '/locations'
     | '/personnel'
@@ -441,6 +452,7 @@ export interface FileRouteTypes {
     | '/area/'
     | '/events/'
     | '/grading-attribute/'
+    | '/grading-scale/'
     | '/instructor-dashboard/'
     | '/locations/'
     | '/personnel/'
@@ -477,6 +489,7 @@ export interface RootRouteChildren {
   UsersCreateRoute: typeof UsersCreateRoute
   EventsIndexRoute: typeof EventsIndexRoute
   GradingAttributeIndexRoute: typeof GradingAttributeIndexRoute
+  GradingScaleIndexRoute: typeof GradingScaleIndexRoute
   InstructorDashboardIndexRoute: typeof InstructorDashboardIndexRoute
   LocationsIndexRoute: typeof LocationsIndexRoute
   PersonnelIndexRoute: typeof PersonnelIndexRoute
@@ -596,6 +609,13 @@ declare module '@tanstack/react-router' {
       path: '/grading-attribute'
       fullPath: '/grading-attribute/'
       preLoaderRoute: typeof GradingAttributeIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/grading-scale/': {
+      id: '/grading-scale/'
+      path: '/grading-scale'
+      fullPath: '/grading-scale/'
+      preLoaderRoute: typeof GradingScaleIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/instructor-dashboard/': {
@@ -797,6 +817,7 @@ const rootRouteChildren: RootRouteChildren = {
   UsersCreateRoute: UsersCreateRoute,
   EventsIndexRoute: EventsIndexRoute,
   GradingAttributeIndexRoute: GradingAttributeIndexRoute,
+  GradingScaleIndexRoute: GradingScaleIndexRoute,
   InstructorDashboardIndexRoute: InstructorDashboardIndexRoute,
   LocationsIndexRoute: LocationsIndexRoute,
   PersonnelIndexRoute: PersonnelIndexRoute,

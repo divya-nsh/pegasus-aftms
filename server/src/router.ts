@@ -14,6 +14,7 @@ import mediaRouter from "./modules/media/media.router.js";
 import roleRouter from "./modules/role/role.router.js";
 import userService from "./modules/user/user.service.js";
 import gradingAttributeRouter from "./modules/grading-attribute/grading-attribute.router.js";
+import gradingScaleRouter from "./modules/grading-scale/grading-scale.router.js";
 
 export const appRouter = router({
   hello: protectedProcedure.query(() => {
@@ -29,6 +30,7 @@ export const appRouter = router({
   roles: roleRouter,
   media: mediaRouter,
   gradingAttribute: gradingAttributeRouter,
+  gradingScale: gradingScaleRouter,
   auth: router({
     me: publicProcedure.query(({ ctx }) => ctx.user),
     login: publicProcedure

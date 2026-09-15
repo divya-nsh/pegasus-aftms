@@ -1,4 +1,5 @@
 import {
+  baseFormOptions,
   handleSubmitInvalid,
   useAppForm,
 } from '@/components/form/tanstack-form'
@@ -16,28 +17,42 @@ import { revalidateLogic } from '@tanstack/react-form'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { z } from 'zod'
+import { FieldError } from '@/components/ui/field'
+import { ScaleOptionsLine } from './options-line'
+
+const scoreValue = z.number().min(0, 'Min 0').max(100, 'Max 100')
+
+const optionSchema = z.object({
+  label: z.string().trim().min(1, 'Required'),
+  point: scoreValue,
+  lowerBound: scoreValue,
+  upperBound: scoreValue,
+})
 
 const schema = z.object({
   name: z.string().min(1, 'Required').min(3),
-  notes: z.string().optional(),
+  notes: z.string(),
+  options: z.array(optionSchema).min(1, 'Add at least one option'),
 })
 
-export type GradingAttributeFormData = z.infer<typeof schema>
+export type GradingScaleOptionFormData = z.infer<typeof optionSchema>
+export type GradingScaleFormData = z.infer<typeof schema>
 
-export type GradingAttributeFormProps = {
+export type GradingScaleFormProps = {
   mode: 'create' | 'edit'
   toEditId?: number
-  initialFormData?: GradingAttributeFormData
+  initialFormData?: GradingScaleFormData
   onOpenChange: (open: boolean) => void
 }
 
-export default function GradingAttributeDialog({
+export default function GradingScaleDialog({
   mode,
   toEditId,
   initialFormData = defaultFormData,
   onOpenChange,
-}: GradingAttributeFormProps) {
+}: GradingScaleFormProps) {
   const form = useAppForm({
+    ...baseFormOptions,
     defaultValues: initialFormData,
     validationLogic: revalidateLogic(),
     validators: {
@@ -50,19 +65,18 @@ export default function GradingAttributeDialog({
 
   const queryClient = useQueryClient()
   const mutation = useMutation({
-    mutationFn: async (data: GradingAttributeFormData) => {
+    mutationFn: async (data: GradingScaleFormData) => {
       if (toEditId) {
-        return trpcClient.gradingAttribute.update.mutate({
+        return trpcClient.gradingScale.update.mutate({
           ...data,
           toEditId,
         })
-      } else {
-        return trpcClient.gradingAttribute.create.mutate(data)
       }
+      return trpcClient.gradingScale.create.mutate(data)
     },
     onSuccess: () => {
-      queryClient.resetQueries(trpc.gradingAttribute.pathFilter())
-      toast.success('Grading Attribute Saved Successfully')
+      queryClient.resetQueries(trpc.gradingScale.pathFilter())
+      toast.success('Grading Scale Saved Successfully')
       onOpenChange(false)
     },
     onError: (error) => {
@@ -70,17 +84,14 @@ export default function GradingAttributeDialog({
     },
   })
 
-  const title =
-    mode === 'create' ? 'New Grading Attribute' : 'Edit Grading Attribute'
+  const title = mode === 'create' ? 'New Grading Scale' : 'Edit Grading Scale'
 
   const validateNameUnique = async ({ value }: { value: string }) => {
     try {
-      const isNameExists = await trpcClient.gradingAttribute.isNameExists.query(
-        {
-          name: value,
-          excludeId: toEditId,
-        },
-      )
+      const isNameExists = await trpcClient.gradingScale.isNameExists.query({
+        name: value,
+        excludeId: toEditId,
+      })
       if (isNameExists) return 'Name already exists'
     } catch (error) {
       return getErrorMessage(error)
@@ -95,11 +106,11 @@ export default function GradingAttributeDialog({
         onOpenChange(nextOpen)
       }}
     >
-      <DialogContent className="sm:max-w-lg">
-        <DialogHeader className="">
-          <DialogTitle className=" ">{title}</DialogTitle>
+      <DialogContent className="min-w-xl">
+        <DialogHeader>
+          <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
-        <DialogMain className="grid gap-4">
+        <DialogMain className=" space-y-4">
           <form.AppField
             name="name"
             validators={{
@@ -108,8 +119,8 @@ export default function GradingAttributeDialog({
             children={(f) => (
               <f.CTextField
                 required
-                label="Grading Attribute"
-                placeholder="eg. Endurance, Knowledge, etc."
+                label="Scale Name"
+                placeholder="eg. ABCF Scale"
               />
             )}
           />
@@ -120,6 +131,19 @@ export default function GradingAttributeDialog({
                 label="Description"
                 placeholder="Optional description or any notes"
               />
+            )}
+          />
+
+          <form.AppField
+            name="options"
+            children={(f) => (
+              <>
+                <ScaleOptionsLine
+                  options={f.state.value}
+                  setOptions={f.handleChange}
+                />
+                <FieldError errors={f.state.meta.errors} />
+              </>
             )}
           />
         </DialogMain>
@@ -135,7 +159,8 @@ export default function GradingAttributeDialog({
   )
 }
 
-const defaultFormData: GradingAttributeFormData = {
+const defaultFormData: GradingScaleFormData = {
   name: '',
   notes: '',
+  options: [],
 }

@@ -395,3 +395,53 @@ generated_at datetime
 ```
 
 ```
+
+## Grading Attribute
+
+This module hold attributes for grading
+
+### Example Item
+
+- Tactics
+- Strenght
+- Flying
+- Speed
+- Takeoff
+
+## Grade Scale
+
+this store patter for scoring and scale template
+
+### Example Scale
+
+- Name: ABCF Scale
+- Options:
+  | Label | Min | Max |
+  | ----- | --- | --- |
+  | A     | 80  | 100 |
+  | B     | 60  | 79  |
+  | C     | 1   | 59  |
+  | F     | 0   | 0   |
+
+## Gradding Template
+
+### Example Item
+
+- Name: Flying Grading
+- Scale: ABCD
+- Attributes: Tactics, Strenght, Takeoff, Speed
+
+## Test
+
+### Example Test Data
+
+- Name: Flying Aircraft For 1 Hour
+- type: Flying
+- Grade Template: Flying Grading (Scale ABCF)
+- Grading Personnel X data
+  - Tactics: A = 100
+  - Strenght: C = 59
+  - Takeoff: B = 79
+  - Speed: F = 0
+- Overall Score: 238/ 400 *100 = 59.5
+- overall Grade: ????
