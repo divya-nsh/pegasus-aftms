@@ -44,7 +44,7 @@ export const relations = defineRelations({ ...schema }, (r) => ({
       from: r.missionScheduleTable.id,
       to: r.missionAssignmentTable.scheduleId,
     }),
-    area: r.one.aircraftTable({
+    area: r.one.areaTable({
       from: r.missionScheduleTable.areaId,
       to: r.areaTable.id,
     }),

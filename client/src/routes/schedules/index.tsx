@@ -429,7 +429,7 @@ function RouteComponent() {
       <AppTable table={table} />
       <TablePagination table={table} />
       {printSchedule ? (
-        <div aria-hidden className="absolute top-0 -left-[10000px] w-[210mm]">
+        <div aria-hidden className="absolute top-0 left-[-10000px] w-[210mm]">
           <div ref={printRef}>
             <EventSchedulePrintDocument schedule={printSchedule} />
           </div>

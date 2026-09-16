@@ -76,18 +76,16 @@ export function CBasicSelect({
   return (
     <BasicSelectField
       {...props}
-
-      value={field.state.value?.toString() ?? ''}
+      value={field.state.value}
       onValueChange={(value) => {
-        const _value = value?.toString() ?? ''
         if (valueAsNumber) {
-          if (_value.trim() === '') {
-            field.handleChange(null)
+          if (!value) {
+            field.handleChange(value)
           } else {
-            field.handleChange(Number(_value))
+            field.handleChange(Number(value))
           }
         } else {
-          field.handleChange(_value)
+          field.handleChange(value)
         }
         onCommited?.(value)
       }}

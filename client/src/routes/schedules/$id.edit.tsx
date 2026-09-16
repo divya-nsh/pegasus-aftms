@@ -63,7 +63,7 @@ export function EditScheduleRouteComponent({
             aircraftId: assignment.aircraftId,
             remarks: assignment.remarks || '',
             attendanceStatus: assignment.attendanceStatus,
-            score: assignment.score,
+            // score: assignment.score,
             result: assignment.result,
             takeoffTime: assignment.takeoffTime,
             landingTime: assignment.landingTime,

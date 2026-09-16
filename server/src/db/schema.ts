@@ -94,11 +94,23 @@ export const missionStatusEnum = pgEnum("mission_status", [
   "in_progress",
 ]);
 
+export const attendanceStatusEnum = pgEnum("attendance_status", [
+  "present",
+  "absent",
+  "excused",
+]);
+
+export const missionScheduleStatusEnum = pgEnum("mission_result", [
+  "passed",
+  "failed",
+]);
+
 export const missionTable = snakeCase.table("mission", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   name: varchar().notNull(),
-  description: varchar(),
+  description: varchar().default(""),
   aircraftId: integer().references(() => aircraftTable.id),
+  gradingTemplateId: integer().references(() => gradingTemplateTable.id),
   durationMinutes: integer().notNull().default(60),
   // Types are Hardcoded in the Codebase
   missionType: varchar().notNull().default(missionTypes[0]!.id),
@@ -124,17 +136,9 @@ export const missionScheduleTable = snakeCase.table("mission_schedule", {
   ...timeStampts,
 });
 
-export const attendanceStatusEnum = pgEnum("attendance_status", [
-  "present",
-  "absent",
-  "excused",
-]);
-
-export const missionResultEnum = pgEnum("mission_result", ["passed", "failed"]);
-
 // Mission Assigned to whom and there stats
 export const missionAssignmentTable = snakeCase.table(
-  "mission_assignment",
+  "mission_schedule_assignment",
   {
     id: integer().primaryKey().generatedAlwaysAsIdentity().notNull(),
     scheduleId: integer()
@@ -152,8 +156,13 @@ export const missionAssignmentTable = snakeCase.table(
     takeoffTime: timestamp(),
     landingTime: timestamp(),
     remarks: varchar(),
-    score: integer(),
-    result: missionResultEnum(),
+    overallGradeId: integer().references(() => gradingScaleOptionTable.id),
+    // Total score form 0 to 100 in percentage
+    totalRawScore: numeric({
+      precision: 5, // up to 999.99
+      scale: 2,
+    }),
+    result: missionScheduleStatusEnum(),
     lineNumber: integer(),
     ...timeStampts,
   },
@@ -163,6 +172,33 @@ export const missionAssignmentTable = snakeCase.table(
       table.personnelId,
     ),
   ],
+);
+
+export const missionAssignmentGradingTable = snakeCase.table(
+  "mission_assignment_grading",
+  {
+    id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    // misison Assignment own the table so we use cascade
+    missionAssignmentId: integer()
+      .references(() => missionAssignmentTable.id, {
+        onDelete: "cascade",
+      })
+      .notNull(),
+    gradingTemplateAttributeId: integer()
+      .references(() => gradingTemplateAttributeTable.id)
+      .notNull(),
+    // Can be null if the attribute is not graded on a scale
+    gradingScaleOptionId: integer().references(
+      () => gradingScaleOptionTable.id,
+    ),
+    weightAtGrading: integer().notNull(), //// frozen copy of templateAttribute.weight
+    // denormalized copy of the grading scale option value for faster lookup
+    scaleOptionValue: numeric({
+      precision: 5, // up to 999.99
+      scale: 2,
+    }).notNull(),
+    ...timeStampts,
+  },
 );
 
 export const aircraftTable = snakeCase.table("aircraft", {
@@ -326,6 +362,7 @@ export const gradingTemplateAttributeTable = snakeCase.table(
       .references(() => gradingAttributeTable.id)
       .notNull(),
     weight: integer().notNull(),
+    sortOrder: integer().notNull().default(0),
     ...timeStampts,
   },
   (table) => [

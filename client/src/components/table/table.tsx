@@ -215,7 +215,7 @@ export function AppTable<TData extends RowData>({
               </TableCell>
             </TableRow>
           )}
-          {table.getRowModel().rows.map((row) => (
+          {table.getRowModel().rows.map((row, i) => (
             <TableRow
               key={row.id}
               className={''}
@@ -234,6 +234,7 @@ export function AppTable<TData extends RowData>({
                     }}
                     className={cn(
                       'align-middle relative truncate',
+                      table.getRowModel().rows.length - 1 === i && 'border-b-0',
                       cell.column.getIsResizing() &&
                         'z-20 overflow-visible border-r border-dotted border-ring/60',
                     )}

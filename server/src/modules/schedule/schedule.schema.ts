@@ -28,8 +28,8 @@ export const createSchema = z.object({
   ),
   aircraftId: optionalId,
   areaId: optionalId,
-  instructorId: optionalId,
-  pilotId: optionalId,
+  // instructorId: optionalId,
+  // pilotId: optionalId,
   remarks: optionalText,
   assignments: z.array(
     z.object({
@@ -49,7 +49,7 @@ export const updateSchema = createSchema.extend({
         .enum(["present", "absent", "excused"])
         .nullable()
         .optional(),
-      score: z.number().int().min(0).max(100).nullable().optional(),
+      // score: z.number().int().min(0).max(100).nullable().optional(),
       aircraftId: z.int().nullable(),
       aircraftTime: z.coerce.date().optional().nullable(),
       takeoffTime: z.coerce.date().optional().nullable(),

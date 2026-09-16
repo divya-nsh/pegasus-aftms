@@ -1,7 +1,6 @@
 import ErrorAlert from '@/components/errors/ErrorAlert'
 import FullPageSpinner from '@/components/loaders/page-loader'
 import { createFileRoute } from '@tanstack/react-router'
-import { EditScheduleRouteComponent } from './$id.edit'
 
 export const Route = createFileRoute('/schedules/$id/view')({
   component: RouteComponent,
@@ -13,5 +12,5 @@ export const Route = createFileRoute('/schedules/$id/view')({
 
 export function RouteComponent() {
   const { id } = Route.useParams()
-  return <EditScheduleRouteComponent id={Number(id)} viewOnly={true} />
+  return <div></div>
 }

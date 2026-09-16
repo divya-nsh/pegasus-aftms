@@ -126,6 +126,7 @@ class GradingScaleService {
         });
       }
 
+      // Delete and Re-insert the options again
       await tx
         .delete(gradingScaleOptionTable)
         .where(eq(gradingScaleOptionTable.gradingScaleId, id));

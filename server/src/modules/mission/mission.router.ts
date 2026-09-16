@@ -17,6 +17,7 @@ const createSchema = z.object({
   name: z.string().min(1),
   description: optionalText,
   aircraftId: optionalId,
+  gradingTemplateId: optionalId.nullable(),
   durationMinutes: z.number().int().min(0).default(0),
   missionType: z.enum(missionTypes.map((type) => type.id)),
 });
@@ -33,6 +34,7 @@ const missionRouter = router({
         name: missionTable.name,
         description: missionTable.description,
         aircraftId: missionTable.aircraftId,
+        gradingTemplateId: missionTable.gradingTemplateId,
         durationMinutes: missionTable.durationMinutes,
         createdAt: missionTable.createdAt,
         updatedAt: missionTable.updatedAt,

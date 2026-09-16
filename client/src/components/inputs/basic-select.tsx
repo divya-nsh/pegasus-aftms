@@ -9,7 +9,9 @@ import {
 } from '../ui/select'
 import { startTransition, useMemo, useState } from 'react'
 
-export type SelectValue = string | null
+const CLEAR_VALUE = '$$CLEAR_VALUE$$'
+
+export type SelectValue = string | number | null
 
 export type BasicSelectOption = {
   label: string
@@ -66,7 +68,7 @@ export default function BasicSelect({
       required={required}
       disabled={disabled}
       readOnly={readOnly}
-      value={value?.toString() ?? null}
+      value={value ? value.toString() : undefined}
       onValueChange={(nextValue) => {
         if (readOnly) return
         setOpen(false)
@@ -74,7 +76,7 @@ export default function BasicSelect({
         // Keep parent updates (and any Suspense refetch) off the urgent path
         // so this popup can unmount instead of staying portaled open.
         startTransition(() => {
-          onValueChange?.(nextValue)
+          onValueChange?.(nextValue === CLEAR_VALUE ? null : nextValue)
         })
       }}
       items={items}
@@ -89,7 +91,7 @@ export default function BasicSelect({
         <SelectGroup>
           {allowClear && (
             <SelectItem
-              value=""
+              value={CLEAR_VALUE}
               className="hover:text-muted-foreground focus:text-muted-foreground"
               showIndicator={false}
             >

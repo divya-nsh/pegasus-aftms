@@ -24,6 +24,7 @@ const schema = z.object({
   name: z.string().min(1, 'Required').min(3),
   description: z.string(),
   aircraftId: z.number().nullable(),
+  gradingTemplateId: z.number().nullable(),
   durationMinutes: z.number().nullable(),
   missionType: z.string().min(1, 'Required'),
 })
@@ -45,6 +46,9 @@ export default function MissionForm({
 }: MissionFormProps) {
   const queryClient = useQueryClient()
   const aircraftQ = useSuspenseQuery(trpc.aircraft.getAll.queryOptions())
+  const gradingTemplateQ = useSuspenseQuery(
+    trpc.gradingTemplate.getAll.queryOptions(),
+  )
 
   const form = useAppForm({
     defaultValues: initialFormData ?? defaultValues,
@@ -59,6 +63,9 @@ export default function MissionForm({
         name: data.name,
         description: data.description,
         aircraftId: data.aircraftId ? Number(data.aircraftId) : undefined,
+        gradingTemplateId: data.gradingTemplateId
+          ? Number(data.gradingTemplateId)
+          : null,
         durationMinutes: Number(data.durationMinutes),
         missionType: data.missionType,
       }
@@ -80,6 +87,11 @@ export default function MissionForm({
   const aircraftOptions = aircraftQ.data.items.map((item) => ({
     value: item.id,
     label: item.tailNumber ? `${item.name} (${item.tailNumber})` : item.name,
+  }))
+
+  const gradingTemplateOptions = gradingTemplateQ.data.items.map((item) => ({
+    value: item.id,
+    label: item.name,
   }))
 
   return (
@@ -141,6 +153,17 @@ export default function MissionForm({
             )}
           />
           <form.AppField
+            name="gradingTemplateId"
+            children={(f) => (
+              <f.CBasicSelect
+                valueAsNumber
+                label="Grading Template"
+                placeholder="Optional"
+                options={gradingTemplateOptions}
+              />
+            )}
+          />
+          <form.AppField
             name="description"
             children={(f) => (
               <f.CTextAreaField
@@ -166,6 +189,7 @@ const defaultValues: MissionFormData = {
   name: '',
   description: '',
   aircraftId: null,
+  gradingTemplateId: null,
   durationMinutes: null,
   missionType: defaultMissionTypeId,
 }

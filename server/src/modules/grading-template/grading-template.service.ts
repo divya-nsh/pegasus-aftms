@@ -20,6 +20,7 @@ const templateWith = {
   gradingScale: true,
   gradingTemplateAttributes: {
     with: { gradingAttribute: true },
+    orderBy: { sortOrder: "asc" },
   },
 } as const;
 
@@ -84,10 +85,11 @@ class GradingTemplateService {
         .returning({ id: gradingTemplateTable.id });
 
       await tx.insert(gradingTemplateAttributeTable).values(
-        values.attributes.map((attr) => ({
+        values.attributes.map((attr, index) => ({
           gradingTemplateId: template!.id,
           attributeId: attr.attributeId,
           weight: attr.weight,
+          sortOrder: index,
         })),
       );
 
@@ -127,10 +129,11 @@ class GradingTemplateService {
         .where(eq(gradingTemplateAttributeTable.gradingTemplateId, id));
 
       await tx.insert(gradingTemplateAttributeTable).values(
-        values.attributes.map((attr) => ({
+        values.attributes.map((attr, index) => ({
           gradingTemplateId: id,
           attributeId: attr.attributeId,
           weight: attr.weight,
+          sortOrder: index,
         })),
       );
 

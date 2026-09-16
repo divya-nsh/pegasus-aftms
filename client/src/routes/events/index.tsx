@@ -22,6 +22,7 @@ import PageCard from '@/components/layout/PageCard'
 import RefreshButton from '@/components/table/refresh-button'
 import NewButton from '@/components/buttons/new-button'
 import columns from './-components/columns'
+import { z } from 'zod'
 
 export const Route = createFileRoute('/events/')({
   component: RouteComponent,
@@ -86,13 +87,8 @@ function RouteComponent() {
             open: true,
             editItemId: row.id,
             data: {
-              name: row.name,
+              ...row,
               description: row.description ?? '',
-              aircraftId: row.aircraftId ? Number(row.aircraftId) : null,
-              durationMinutes: row.durationMinutes
-                ? Number(row.durationMinutes)
-                : null,
-              missionType: row.missionType,
             },
           })
         } else if (action === 'delete') {

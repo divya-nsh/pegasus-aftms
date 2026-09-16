@@ -36,7 +36,6 @@ import { getPersonnelType, getPilotQualification } from '@repo/shared'
 import toast from 'react-hot-toast'
 import { trpc, trpcClient } from '@/trpc'
 import AttendanceBadge, { ResultBadge } from './attendance-badge'
-import { cn } from 'cn'
 import type { FormMode } from '@/types/general'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 
@@ -55,7 +54,7 @@ export const assignmentSchema = z.object({
     })
     .optional(),
   attendanceStatus: z.enum(['present', 'absent', 'excused']).nullable(),
-  score: z.number().int().min(0).max(100).nullable(),
+  // score: z.number().int().min(0).max(100).nullable(),
   result: z.enum(['passed', 'failed']).nullable(),
   remarks: z.string(),
   aircraftId: z.number().nullable(),
@@ -69,7 +68,7 @@ export type Assignment = z.infer<typeof assignmentSchema>
 const defaultAssignmentFormData: Assignment = {
   personnelId: null as unknown as number,
   attendanceStatus: null,
-  score: null,
+  // score: null,
   result: null,
   remarks: '',
   aircraftId: null,
@@ -148,7 +147,7 @@ export default function AssignmentLine({
   return (
     <div>
       <div className="border-b pb-2 text-sm font-semibold flex justify-between items-center">
-        <p>Pilots List {values.length > 0 ? `(${values.length})` : ''}</p>
+        <p>Personnels {values.length > 0 ? `(${values.length})` : ''}</p>
         {mode !== 'view' && (
           <Button
             size="sm"
@@ -183,7 +182,7 @@ export default function AssignmentLine({
                   'Aircraft',
                   'Attendance',
                   'Result',
-                  'Score',
+                  // 'Score',
                   'Remarks',
                 ].map((header) => (
                   <TableHead className="border">{header}</TableHead>
@@ -281,7 +280,7 @@ export default function AssignmentLine({
                     <TableCell className="border align-top">
                       <ResultBadge result={assignment.result} />
                     </TableCell>
-                    <TableCell
+                    {/* <TableCell
                       className={cn(
                         'border align-top tabular-nums',
                         assignment.score
@@ -290,7 +289,7 @@ export default function AssignmentLine({
                       )}
                     >
                       {assignment.score || '—'}
-                    </TableCell>
+                    </TableCell> */}
                     <TableCell className="max-w-64 truncate align-top text-muted-foreground line-clamp-3">
                       {assignment.remarks || '—'}
                     </TableCell>
@@ -643,7 +642,7 @@ function AssignmentsModal({
                       />
                     )}
                   />
-                  <form.AppField
+                  {/* <form.AppField
                     name="score"
                     children={(f) => (
                       <f.CTextField
@@ -655,7 +654,7 @@ function AssignmentsModal({
                         max={100}
                       />
                     )}
-                  />
+                  /> */}
                 </FieldColumns>
               </div>
             </>
