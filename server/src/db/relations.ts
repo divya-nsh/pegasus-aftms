@@ -1,5 +1,6 @@
 import { defineRelations } from "drizzle-orm";
 import * as schema from "./schema.js";
+//Note: We gone only define relations we actualy use in the code. example: we never gone need to fetch gradding template attributes without the grading template.
 
 export const relations = defineRelations({ ...schema }, (r) => ({
   userTable: {
@@ -45,13 +46,29 @@ export const relations = defineRelations({ ...schema }, (r) => ({
     }),
     area: r.one.aircraftTable({
       from: r.missionScheduleTable.areaId,
-      to: r.aircraftTable.id,
+      to: r.areaTable.id,
     }),
   },
   gradingScaleTable: {
     options: r.many.gradingScaleOptionTable({
       from: r.gradingScaleTable.id,
       to: r.gradingScaleOptionTable.gradingScaleId,
+    }),
+  },
+  gradingTemplateTable: {
+    gradingScale: r.one.gradingScaleTable({
+      from: r.gradingTemplateTable.gradingScaleId,
+      to: r.gradingScaleTable.id,
+    }),
+    gradingTemplateAttributes: r.many.gradingTemplateAttributeTable({
+      from: r.gradingTemplateTable.id,
+      to: r.gradingTemplateAttributeTable.gradingTemplateId,
+    }),
+  },
+  gradingTemplateAttributeTable: {
+    gradingAttribute: r.one.gradingAttributeTable({
+      from: r.gradingTemplateAttributeTable.attributeId,
+      to: r.gradingAttributeTable.id,
     }),
   },
 }));

@@ -264,10 +264,52 @@ export const gradingAttributeTable = snakeCase.table("grading_attribute", {
   ...timeStampts,
 });
 
+export const gradingScaleTable = snakeCase.table("grading_scale", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  name: varchar().notNull(),
+  notes: varchar(),
+  ...timeStampts,
+});
+
+export const gradingScaleOptionTable = snakeCase.table(
+  "grading_scale_option",
+  {
+    id: integer().primaryKey().generatedAlwaysAsIdentity(),
+    gradingScaleId: integer()
+      .references(() => gradingScaleTable.id, {
+        onDelete: "cascade",
+      })
+      .notNull(),
+    label: varchar().notNull(),
+    point: numeric({
+      precision: 5, // up to 999.99
+      scale: 2,
+    }).notNull(),
+    lowerBound: numeric({
+      precision: 5,
+      scale: 2,
+    }).notNull(),
+    upperBound: numeric({
+      precision: 5,
+      scale: 2,
+    }).notNull(),
+    ...timeStampts,
+  },
+  (table) => [
+    uniqueIndex("unique_grading_scale_id_label_idx").on(
+      table.gradingScaleId,
+      table.label,
+    ),
+  ],
+);
+
 export const gradingTemplateTable = snakeCase.table("grading_template", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   name: varchar().notNull(),
   notes: varchar(),
+  gradingScaleId: integer()
+    .references(() => gradingScaleTable.id)
+    .notNull(),
   ...timeStampts,
 });
 
@@ -275,7 +317,7 @@ export const gradingTemplateAttributeTable = snakeCase.table(
   "grading_template_attribute",
   {
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
-    templateId: integer()
+    gradingTemplateId: integer()
       .references(() => gradingTemplateTable.id, {
         onDelete: "cascade",
       })
@@ -288,38 +330,8 @@ export const gradingTemplateAttributeTable = snakeCase.table(
   },
   (table) => [
     uniqueIndex("unique_template_id_attribute_id_idx").on(
-      table.templateId,
+      table.gradingTemplateId,
       table.attributeId,
     ),
   ],
 );
-
-export const gradingScaleTable = snakeCase.table("grading_scale", {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  name: varchar().notNull(),
-  notes: varchar(),
-  ...timeStampts,
-});
-
-export const gradingScaleOptionTable = snakeCase.table("grading_scale_option", {
-  id: integer().primaryKey().generatedAlwaysAsIdentity(),
-  gradingScaleId: integer()
-    .references(() => gradingScaleTable.id, {
-      onDelete: "cascade",
-    })
-    .notNull(),
-  label: varchar().notNull(),
-  point: numeric({
-    precision: 5, // up to 999.99
-    scale: 2,
-  }).notNull(),
-  lowerBound: numeric({
-    precision: 5,
-    scale: 2,
-  }).notNull(),
-  upperBound: numeric({
-    precision: 5,
-    scale: 2,
-  }).notNull(),
-  ...timeStampts,
-});
