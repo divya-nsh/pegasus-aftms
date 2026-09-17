@@ -350,6 +350,7 @@ export default function ScheduleForm3({
                   <FieldError errors={f.state.meta.errors} />
                 )}
                 <AssignmentLine
+                  gradingTemplateId={selectedMission?.gradingTemplateId || 0}
                   startDateTime={startDateTime}
                   endDateTime={endDateTime}
                   mode={mode}

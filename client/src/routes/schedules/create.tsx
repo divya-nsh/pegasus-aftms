@@ -10,7 +10,6 @@ import { trpc } from '@/trpc'
 export const Route = createFileRoute('/schedules/create')({
   component: RouteComponent,
   pendingComponent: FullPageSpinner,
-  beforeLoad: protectRouteBeforeLoad('schedule', 'create'),
   validateSearch: z.object({
     missionId: z.coerce.number().optional(),
   }),

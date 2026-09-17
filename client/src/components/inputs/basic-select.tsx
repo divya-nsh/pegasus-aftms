@@ -38,7 +38,7 @@ export default function BasicSelect({
   options,
   value,
   onValueChange,
-  placeholder,
+  placeholder = 'Select',
   required,
   disabled,
   className,

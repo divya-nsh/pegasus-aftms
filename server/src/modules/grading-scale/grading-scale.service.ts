@@ -1,9 +1,12 @@
 import db from "#/db/db.js";
 import { gradingScaleOptionTable, gradingScaleTable } from "#/db/schema.js";
+import { diffIds } from "#/lib/diffIds.js";
 import { TRPCError } from "@trpc/server";
 import { and, eq, ne, sql } from "drizzle-orm";
+import { inArray } from "drizzle-orm/pg-core/expressions";
 
 type TGradingScaleOption = {
+  id: number | null;
   label: string;
   point: number;
   lowerBound: number;
@@ -125,11 +128,61 @@ class GradingScaleService {
           message: "Grading scale not found",
         });
       }
+      const existingOptionsIds = await this.getOptionsIdSet(id);
 
-      // Delete and Re-insert the options again
-      await tx
-        .delete(gradingScaleOptionTable)
-        .where(eq(gradingScaleOptionTable.gradingScaleId, id));
+      const { toInsert, toUpdate, toDelete } = diffIds(
+        values.options,
+        existingOptionsIds,
+      );
+
+      if (toInsert.length > 0) {
+        await tx.insert(gradingScaleOptionTable).values(
+          toInsert.map((option) => ({
+            gradingScaleId: id,
+            label: option.label,
+            point: String(option.point),
+            lowerBound: String(option.lowerBound),
+            upperBound: String(option.upperBound),
+          })),
+        );
+      }
+
+      if (toDelete.length > 0) {
+        await tx
+          .delete(gradingScaleOptionTable)
+          .where(inArray(gradingScaleOptionTable.id, toDelete));
+      }
+
+      for (const updateItem of toUpdate) {
+        await tx
+          .update(gradingScaleOptionTable)
+          .set({
+            label: updateItem.label,
+            point: String(updateItem.point),
+            lowerBound: String(updateItem.lowerBound),
+            upperBound: String(updateItem.upperBound),
+          })
+          .where(eq(gradingScaleOptionTable.id, id));
+      }
+
+      // for (const newOption of values.options) {
+      //   if (existingOptionsIdSet.has(newOption.id)) {
+      //     await tx
+      //       .update(gradingScaleOptionTable)
+      //       .set({
+      //         label: newOption.label,
+      //         point: String(newOption.point),
+      //         lowerBound: String(newOption.lowerBound),
+      //         upperBound: String(newOption.upperBound),
+      //       })
+      //       .where(eq(gradingScaleOptionTable.id, newOption.id));
+      //   }
+      // }
+
+      // // Delete and Re-insert the options again
+      // await tx
+      //   .delete(gradingScaleOptionTable)
+      //   .where(eq(gradingScaleOptionTable.gradingScaleId, id));
 
       await tx.insert(gradingScaleOptionTable).values(
         values.options.map((option) => ({
@@ -159,6 +212,16 @@ class GradingScaleService {
     }
 
     return scale;
+  }
+
+  async getOptionsIdSet(gradingScaleId: number) {
+    const options = await db.query.gradingScaleOptionTable.findMany({
+      columns: {
+        id: true,
+      },
+      where: { gradingScaleId },
+    });
+    return options.map((option) => option.id);
   }
 }
 

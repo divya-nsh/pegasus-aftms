@@ -163,7 +163,9 @@ function RouteComponent() {
   return (
     <PageCard className="space-y-4">
       <div className="items-center gap-1 border-b mb-4 pb-1 flex justify-between">
-        <h1 className="text-xl font-bold">Grading Attribute</h1>
+        <h1 className="text-lg font-bold">
+          Grading Attribute / Evaluation Categories
+        </h1>
         <div className="flex items-center gap-4">
           <RefreshButton query={gradingAttributeQ} />
           <NewButton onClick={() => setFormModel({ open: true })} />

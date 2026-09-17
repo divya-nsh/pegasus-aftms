@@ -2,36 +2,60 @@ import * as React from 'react'
 
 import { cn } from '@/lib/utils'
 
+type CellVerticalAlign = 'top' | 'middle' | 'bottom'
+
+type TableStyleConfig = {
+  fullGridLine: boolean
+  cellVerticalAlign: CellVerticalAlign
+}
+
+const tableContext = React.createContext<TableStyleConfig>({
+  fullGridLine: false,
+  cellVerticalAlign: 'middle',
+})
+
 function Table({
   className,
   maxHeight,
+  fullGridLine = false,
   ...props
-}: React.ComponentProps<'table'> & { maxHeight?: number }) {
+}: React.ComponentProps<'table'> & {
+  maxHeight?: number
+  fullGridLine?: boolean
+}) {
   return (
-    <div
-      data-slot="table-container"
-      className="relative w-full min-w-0 overflow-auto scroll-thin"
-      style={{
-        maxHeight,
+    <tableContext.Provider
+      value={{
+        fullGridLine: fullGridLine || false,
+        cellVerticalAlign: 'middle',
       }}
     >
-      <table
-        data-slot="table"
-        className={cn(
-          'w-full caption-bottom text-sm border-collapse',
-          className,
-        )}
-        {...props}
-      />
-    </div>
+      <div
+        data-slot="table-container"
+        className="relative w-full min-w-0 overflow-auto scroll-thin"
+        style={{
+          maxHeight,
+        }}
+      >
+        <table
+          data-slot="table"
+          className={cn(
+            'w-full caption-bottom text-sm border-collapse',
+            className,
+          )}
+          {...props}
+        />
+      </div>
+    </tableContext.Provider>
   )
 }
 
 function TableHeader({ className, ...props }: React.ComponentProps<'thead'>) {
+  const { fullGridLine } = React.useContext(tableContext)
   return (
     <thead
       data-slot="table-header"
-      className={cn('[&_tr]:border-b', className)}
+      className={cn('[&_tr]:border-b', fullGridLine && 'border', className)}
       {...props}
     />
   )
@@ -87,11 +111,13 @@ function TableHead({ className, ...props }: React.ComponentProps<'th'>) {
 }
 
 function TableCell({ className, ...props }: React.ComponentProps<'td'>) {
+  const { fullGridLine } = React.useContext(tableContext)
   return (
     <td
       data-slot="table-cell"
       className={cn(
         'p-2 px-4 align-middle whitespace-nowrap [&:has([role=checkbox])]:pr-0 border-b',
+        fullGridLine && 'border',
         className,
       )}
       {...props}

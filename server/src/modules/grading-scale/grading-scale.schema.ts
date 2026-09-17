@@ -3,6 +3,7 @@ import { z } from "zod";
 const scoreValue = z.coerce.number().min(0).max(100);
 
 const optionSchema = z.object({
+  id: z.number().nullable().default(null),
   label: z.string().trim().min(1),
   point: scoreValue,
   lowerBound: scoreValue,

@@ -6,13 +6,14 @@ import {
   isNameExistsSchema,
   updateSchema,
 } from "./grading-template.schema.js";
+import { z } from "zod";
 
 const gradingTemplateRouter = router({
   getAll: protectedProcedure.query(() => gradingTemplateService.getAll()),
 
   getById: protectedProcedure
-    .input(idSchema)
-    .query(({ input }) => gradingTemplateService.getById(input.id)),
+    .input(z.number())
+    .query(({ input }) => gradingTemplateService.getById(input)),
 
   isNameExists: protectedProcedure
     .input(isNameExistsSchema)

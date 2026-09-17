@@ -36,7 +36,23 @@ class GradingTemplateService {
 
   async getById(id: number) {
     const template = await db.query.gradingTemplateTable.findFirst({
-      with: templateWith,
+      with: {
+        gradingScale: {
+          with: {
+            options: true,
+          },
+        },
+        gradingTemplateAttributes: {
+          with: {
+            gradingAttribute: {
+              columns: {
+                id: true,
+                name: true,
+              },
+            },
+          },
+        },
+      },
       where: { id },
     });
 

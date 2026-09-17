@@ -20,6 +20,7 @@ import {
   Table,
   TableBody,
   TableCell,
+  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
@@ -38,6 +39,7 @@ import { trpc, trpcClient } from '@/trpc'
 import AttendanceBadge, { ResultBadge } from './attendance-badge'
 import type { FormMode } from '@/types/general'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
+import BasicSelect from '@/components/inputs/basic-select'
 
 const optionalTextSchema = z.string().optional().nullable()
 
@@ -61,6 +63,12 @@ export const assignmentSchema = z.object({
   takeoffTime: optionalTextSchema,
   landingTime: optionalTextSchema,
   aircraftTime: optionalTextSchema,
+  gradingAttributes: z.array(
+    z.object({
+      gradingTemplateAttributeId: z.number(),
+      gradingScaleOptionId: z.number(),
+    }),
+  ),
 })
 
 export type Assignment = z.infer<typeof assignmentSchema>
@@ -75,6 +83,7 @@ const defaultAssignmentFormData: Assignment = {
   takeoffTime: null,
   landingTime: null,
   aircraftTime: null,
+  gradingAttributes: [],
 }
 
 export default function AssignmentLine({
@@ -83,12 +92,14 @@ export default function AssignmentLine({
   mode,
   startDateTime,
   endDateTime,
+  gradingTemplateId,
 }: {
   values: Assignment[]
   onChange: (values: Assignment[]) => void
   mode: 'create' | 'edit' | 'view'
   startDateTime?: string | null
   endDateTime?: string | null
+  gradingTemplateId: number
 }) {
   const [addFormOpen, setAddFormOpen] = useState<{
     open: boolean
@@ -98,6 +109,7 @@ export default function AssignmentLine({
   })
   const aircraftsQ = useSuspenseQuery(trpc.aircraft.getAll.queryOptions())
   const personnelQ = useSuspenseQuery(trpc.personnel.getAll.queryOptions())
+  useSuspenseQuery(trpc.gradingTemplate.getById.queryOptions(gradingTemplateId))
 
   const handleSave = (assignment: Assignment) => {
     const nextAssignment = assignment.aircraftId
@@ -339,6 +351,7 @@ export default function AssignmentLine({
       </div>
       {addFormOpen.open && (
         <AssignmentsModal
+          gradingTemplateId={gradingTemplateId}
           startDateTime={startDateTime}
           endDateTime={endDateTime}
           formMode={mode}
@@ -371,6 +384,7 @@ function AssignmentsModal({
   startDateTime,
   endDateTime,
   items,
+  gradingTemplateId,
 }: {
   onClose: (open: boolean) => void
   onSave: (assignment: Assignment) => void
@@ -380,6 +394,7 @@ function AssignmentsModal({
   startDateTime?: string | null
   endDateTime?: string | null
   items: Assignment[]
+  gradingTemplateId: number
 }) {
   const [warning, setWarning] = useState<ReactNode>('')
   const aircraftsQ = useSuspenseQuery(trpc.aircraft.getAll.queryOptions())
@@ -407,6 +422,10 @@ function AssignmentsModal({
     },
     ...baseFormOptions,
   })
+
+  const { data: gradingTemplate } = useSuspenseQuery(
+    trpc.gradingTemplate.getById.queryOptions(gradingTemplateId),
+  )
 
   const selectedPersonnelId = useSelector(
     form.store,
@@ -657,6 +676,13 @@ function AssignmentsModal({
                   /> */}
                 </FieldColumns>
               </div>
+
+              <div className="pb-2 mt-4 mb-4">
+                <p className="text-sm text-muted-foreground font-bold border-b pb-2 mb-4">
+                  Grading Using ({gradingTemplate.name})
+                </p>
+                <GradingGrid gradingTemplateId={gradingTemplateId} />
+              </div>
             </>
           )}
         </DialogMain>
@@ -687,4 +713,140 @@ function AssignmentsModal({
       </DialogContent>
     </Dialog>
   )
+}
+
+const GradingGrid = ({ gradingTemplateId }: { gradingTemplateId: number }) => {
+  const { data: gradingTemplate } = useSuspenseQuery(
+    trpc.gradingTemplate.getById.queryOptions(gradingTemplateId),
+  )
+
+  const [data, setData] = useState(
+    gradingTemplate.gradingTemplateAttributes.reduce<
+      Record<number, { gradeId: number; weight: number }>
+    >((acc, item) => {
+      acc[item.id] = {
+        gradeId: 0,
+        weight: Number(item.weight),
+      }
+      return acc
+    }, {}),
+  )
+
+  const gradeOptionsMap = useMemo(() => {
+    const map = new Map<
+      number,
+      { label: string; value: number; point: number }
+    >()
+    gradingTemplate.gradingScale!.options.forEach((item) => {
+      map.set(item.id, {
+        label: `${item.label} (${+item.point})`,
+        value: item.id,
+        point: +item.point,
+      })
+    })
+    return map
+  }, [gradingTemplate])
+
+  const totalGrad = (() => {
+    // Since Each Score is in scale 0-100 it return percentage
+    const totalScorePercent = calculateWeightedScore(
+      Object.values(data).map((item) => ({
+        score: gradeOptionsMap.get(Number(item.gradeId))?.point ?? 0,
+        weight: Number(item.weight),
+      })),
+    )
+    // Scale range is inclusive
+    const roundedScore = Math.round(totalScorePercent)
+    const grade = gradingTemplate.gradingScale!.options.find(
+      (item) =>
+        roundedScore >= +item.lowerBound && roundedScore <= +item.upperBound,
+    )
+
+    return {
+      totalMarks: roundedScore,
+      gradeLabel: grade?.label ?? 'N/A',
+      gradeId: grade?.id ?? 0,
+    }
+  })()
+
+  return (
+    <Table className="border rounded-md shadow-sm" fullGridLine>
+      <TableHeader>
+        <TableRow className=" bg-muted/30 ">
+          <TableHead className="border">Attribute</TableHead>
+          <TableHead className=" text-center">Weightage</TableHead>
+          <TableHead>Grade</TableHead>
+        </TableRow>
+      </TableHeader>
+      <TableBody>
+        {gradingTemplate.gradingTemplateAttributes.map((attribute) => {
+          return (
+            <TableRow>
+              <TableCell>{attribute.gradingAttribute!.name}</TableCell>
+              <TableCell className="text-center">{attribute.weight}</TableCell>
+              <TableCell>
+                <BasicSelect
+                  value={data[attribute.id]?.gradeId}
+                  onValueChange={(value) => {
+                    const gradeId = Number(value)
+                    setData((prev) => ({
+                      ...prev,
+                      [attribute.id]: {
+                        gradeId: Number.isFinite(gradeId) ? gradeId : 0,
+                        weight: Number(attribute.weight),
+                      },
+                    }))
+                  }}
+                  placeholder="Pick a Grade"
+                  options={gradingTemplate.gradingScale!.options.map(
+                    (option) => ({
+                      label: `${option.label} (${+option.point})`,
+                      value: option.id,
+                    }),
+                  )}
+                  valueAsNumber
+                />
+              </TableCell>
+            </TableRow>
+          )
+        })}
+      </TableBody>
+      <TableFooter>
+        <TableRow>
+          <TableCell colSpan={3} className="text-right">
+            <div className="flex flex-col gap-2">
+              <span>
+                <span className="font-bold w-20 inline-block">
+                  Total Score:
+                </span>{' '}
+                {totalGrad.totalMarks}%
+              </span>
+              <span>
+                <span className="font-bold w-20 inline-block">Grade:</span>{' '}
+                {totalGrad.gradeLabel} Grade
+              </span>
+            </div>
+          </TableCell>
+        </TableRow>
+      </TableFooter>
+    </Table>
+  )
+}
+
+type ScoreItem = {
+  score: number
+  weight: number
+}
+// All items Score must be in same Scale for this give meanigfull output
+function calculateWeightedScore(items: ScoreItem[]): number {
+  const totalWeight = items.reduce((sum, item) => sum + Number(item.weight), 0)
+
+  if (totalWeight === 0) return 0
+
+  const weightedTotal = items.reduce(
+    (sum, item) => sum + Number(item.score) * Number(item.weight),
+    0,
+  )
+
+  return weightedTotal / totalWeight
 }

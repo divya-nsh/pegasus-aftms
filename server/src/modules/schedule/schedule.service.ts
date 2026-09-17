@@ -103,10 +103,10 @@ export class ScheduleService {
       }
 
       // Average score (ignore null scores)
-      if (assignment.score !== null && assignment.score !== undefined) {
-        scoreTotal += assignment.score;
-        scoredAssignments++;
-      }
+      // if (assignment.score !== null && assignment.score !== undefined) {
+      //   scoreTotal += assignment.score;
+      //   scoredAssignments++;
+      // }
 
       // Flying hours
       if (
