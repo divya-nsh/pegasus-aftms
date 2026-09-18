@@ -2,7 +2,7 @@ import { z } from "zod";
 
 const attributeSchema = z.object({
   attributeId: z.int().positive(),
-  weight: z.int().min(1).max(100),
+  weight: z.int().min(1).max(100).default(100),
 });
 
 export const createSchema = z.object({

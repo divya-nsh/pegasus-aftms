@@ -1,7 +1,7 @@
 import React, { useId } from 'react'
 import { Input } from '../ui/input'
 import { cn } from '@/lib/utils.ts'
-import { Field, FieldError, FieldLabel } from '../ui/field'
+import { Field, FieldDescription, FieldError, FieldLabel } from '../ui/field'
 import { Textarea } from '../ui/textarea'
 import BasicSelect from './basic-select'
 import type { BasicSelectProps } from './basic-select'
@@ -9,6 +9,8 @@ import ComboboxWrapper from './combox'
 import type { ComboboxWrapperProps } from './combox'
 import type { DatePickerProps } from './date-picker'
 import DatePicker from './date-picker'
+import type { AppComboboxProps, ComboOption } from './combox2'
+import AppCombobox from './combox2'
 
 export type TextFieldProps = {
   label: string
@@ -153,6 +155,32 @@ export function DateField({
         {label}
       </FieldLabel>
       <DatePicker {...rest} />
+      {errors && <FieldError errors={errors} />}
+    </Field>
+  )
+}
+
+export type ComboboxFieldProps<T extends ComboOption> = {
+  label: string
+  errors?: Array<{ message?: string } | undefined>
+  description?: string
+} & AppComboboxProps<T>
+
+export function ComboboxField2<T extends ComboOption>({
+  label,
+  className,
+  errors,
+  description,
+  ...rest
+}: ComboboxFieldProps<T>) {
+  const id = useId()
+  return (
+    <Field className={cn(className)} data-invalid={!!errors}>
+      <FieldLabel htmlFor={id} required={rest.required}>
+        {label}
+      </FieldLabel>
+      <AppCombobox inputId={id} invalid={!!errors} {...rest} />
+      {description && <FieldDescription>{description}</FieldDescription>}
       {errors && <FieldError errors={errors} />}
     </Field>
   )

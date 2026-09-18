@@ -12,6 +12,7 @@ import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as AircraftRouteRouteImport } from './routes/aircraft/route'
 import { Route as AreaRouteRouteImport } from './routes/area/route'
+import { Route as ComboxRouteImport } from './routes/combox'
 import { Route as DateRouteImport } from './routes/date'
 import { Route as FormGeneratorRouteImport } from './routes/form-generator'
 import { Route as LoginRouteImport } from './routes/login'
@@ -61,6 +62,11 @@ const AircraftRouteRoute = AircraftRouteRouteImport.update({
 const AreaRouteRoute = AreaRouteRouteImport.update({
   id: '/area',
   path: '/area',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ComboxRoute = ComboxRouteImport.update({
+  id: '/combox',
+  path: '/combox',
   getParentRoute: () => rootRouteImport,
 } as any)
 const DateRoute = DateRouteImport.update({
@@ -244,6 +250,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/aircraft': typeof AircraftRouteRouteWithChildren
   '/area': typeof AreaRouteRouteWithChildren
+  '/combox': typeof ComboxRoute
   '/date': typeof DateRoute
   '/form-generator': typeof FormGeneratorRoute
   '/login': typeof LoginRoute
@@ -282,6 +289,7 @@ export interface FileRoutesByFullPath {
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/combox': typeof ComboxRoute
   '/date': typeof DateRoute
   '/form-generator': typeof FormGeneratorRoute
   '/login': typeof LoginRoute
@@ -323,6 +331,7 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/aircraft': typeof AircraftRouteRouteWithChildren
   '/area': typeof AreaRouteRouteWithChildren
+  '/combox': typeof ComboxRoute
   '/date': typeof DateRoute
   '/form-generator': typeof FormGeneratorRoute
   '/login': typeof LoginRoute
@@ -365,6 +374,7 @@ export interface FileRouteTypes {
     | '/'
     | '/aircraft'
     | '/area'
+    | '/combox'
     | '/date'
     | '/form-generator'
     | '/login'
@@ -403,6 +413,7 @@ export interface FileRouteTypes {
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/combox'
     | '/date'
     | '/form-generator'
     | '/login'
@@ -443,6 +454,7 @@ export interface FileRouteTypes {
     | '/'
     | '/aircraft'
     | '/area'
+    | '/combox'
     | '/date'
     | '/form-generator'
     | '/login'
@@ -484,6 +496,7 @@ export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   AircraftRouteRoute: typeof AircraftRouteRouteWithChildren
   AreaRouteRoute: typeof AreaRouteRouteWithChildren
+  ComboxRoute: typeof ComboxRoute
   DateRoute: typeof DateRoute
   FormGeneratorRoute: typeof FormGeneratorRoute
   LoginRoute: typeof LoginRoute
@@ -538,6 +551,13 @@ declare module '@tanstack/react-router' {
       path: '/area'
       fullPath: '/area'
       preLoaderRoute: typeof AreaRouteRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/combox': {
+      id: '/combox'
+      path: '/combox'
+      fullPath: '/combox'
+      preLoaderRoute: typeof ComboxRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/date': {
@@ -820,6 +840,7 @@ const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   AircraftRouteRoute: AircraftRouteRouteWithChildren,
   AreaRouteRoute: AreaRouteRouteWithChildren,
+  ComboxRoute: ComboxRoute,
   DateRoute: DateRoute,
   FormGeneratorRoute: FormGeneratorRoute,
   LoginRoute: LoginRoute,

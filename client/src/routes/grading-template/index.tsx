@@ -168,7 +168,10 @@ function RouteComponent() {
             data: {
               name: row.name,
               notes: row.notes ?? '',
-              gradingScaleId: row.gradingScaleId,
+              gradingScaleId: {
+                label: row.gradingScale!.name,
+                value: row.gradingScaleId,
+              },
               attributes: toFormAttributes(row.gradingTemplateAttributes),
             },
           })

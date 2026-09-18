@@ -1,10 +1,12 @@
 import TextField, {
   BasicSelectField,
+  ComboboxField2,
   DateField,
   TextAreaField,
 } from '@/components/inputs/TextField'
 import type {
   BasicSelectFieldProps,
+  ComboboxFieldProps,
   DateFieldProps,
   TextAreaFieldProps,
   TextFieldProps,
@@ -13,6 +15,7 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { useId } from 'react'
 import { useFieldContext } from './form-context'
 import { Field, FieldLabel } from '../ui/field'
+import type { ComboOption } from '../inputs/combox2'
 
 // C = Controller, All are Binded Form Fields
 
@@ -148,6 +151,22 @@ export function CDateField({
         onAfterCommit?.(value)
       }}
       errors={isInvalid ? field.state.meta.errors : undefined}
+    />
+  )
+}
+
+export function CComboboxField<T extends ComboOption>({
+  ...rest
+}: Omit<ComboboxFieldProps<T>, 'value' | 'onValueChange' | 'errors'>) {
+  const field = useFieldContext<T | null>()
+  const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid
+
+  return (
+    <ComboboxField2
+      value={field.state.value}
+      onValueChange={rest.disabled ? undefined : field.handleChange}
+      errors={isInvalid ? field.state.meta.errors : undefined}
+      {...rest}
     />
   )
 }

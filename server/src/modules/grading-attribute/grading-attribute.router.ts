@@ -10,6 +10,15 @@ import {
 const gradingAttributeRouter = router({
   getAll: protectedProcedure.query(() => gradingAttributeService.getAll()),
 
+  /** Helper query to get options for combobox */
+  getComboboxOptions: protectedProcedure.query(async () => {
+    const { items } = await gradingAttributeService.getAll();
+    return items.map((attribute) => ({
+      label: attribute.name,
+      value: attribute.id,
+    }));
+  }),
+
   getById: protectedProcedure
     .input(idSchema)
     .query(({ input }) => gradingAttributeService.getById(input.id)),
