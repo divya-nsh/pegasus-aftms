@@ -1,8 +1,4 @@
-import {
-  baseFormOptions,
-  handleSubmitInvalid,
-  useAppForm,
-} from '@/components/form/tanstack-form'
+import { baseFormOptions, useAppForm } from '@/components/form/tanstack-form'
 import {
   Dialog,
   DialogContent,
@@ -13,37 +9,16 @@ import {
 } from '@/components/ui/dialog'
 import { getErrorMessage } from '@/lib/utils'
 import trpc, { trpcClient } from '@/trpc'
-import { revalidateLogic } from '@tanstack/react-form'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
-import { z } from 'zod'
 import { FieldError } from '@/components/ui/field'
 import { TemplateAttributesLine } from './attributes-line'
 import { useMemo } from 'react'
-
-const attributeSchema = z.object({
-  attributeId: z
-    .object({
-      label: z.string(),
-      value: z.number(),
-    })
-    .transform((data) => data.value),
-  // weight: z.number().int().min(1, 'Min 1').max(100, 'Max 100'),
-})
-
-const schema = z.object({
-  name: z.string().min(1, 'Required').min(3),
-  notes: z.string(),
-  gradingScaleId: z
-    .object({
-      label: z.string(),
-      value: z.number(),
-    })
-    .transform((data) => data.value),
-  attributes: z.array(attributeSchema).min(1, 'Add at least one attribute'),
-})
-
-export type GradingTemplateFormData = z.input<typeof schema>
+import { gradingTemplateSchema } from './schema'
+import type {
+  GradingTemplateFormData,
+  GradingTemplateFormSchemaOutput,
+} from './schema'
 
 export type GradingTemplateFormProps = {
   mode: 'create' | 'edit'
@@ -62,22 +37,19 @@ export default function GradingTemplateDialog({
     ...baseFormOptions,
     defaultValues: initialFormData,
     validators: {
-      onDynamic: schema,
+      onDynamic: gradingTemplateSchema,
     },
     onSubmit: ({ value }) => {
-      const data = schema.parse(value)
+      const data = gradingTemplateSchema.parse(value)
       mutation.mutateAsync(data)
     },
   })
 
   const queryClient = useQueryClient()
   const gradingScaleQ = useQuery(trpc.gradingScale.getAll.queryOptions())
-  const gradingAttributeQ = useQuery(
-    trpc.gradingAttribute.getAll.queryOptions(),
-  )
 
   const mutation = useMutation({
-    mutationFn: async (data: z.infer<typeof schema>) => {
+    mutationFn: async (data: GradingTemplateFormSchemaOutput) => {
       if (toEditId) {
         return trpcClient.gradingTemplate.update.mutate({
           ...data,
@@ -148,7 +120,11 @@ export default function GradingTemplateDialog({
           />
           <form.Subscribe
             selector={(state) => state.values.gradingScaleId}
-            children={() => {
+            children={(gradingScaleId) => {
+              const selectedScale = gradingScaleQ.data?.items.find(
+                (scale) => scale.id === gradingScaleId?.value,
+              )
+
               return (
                 <form.AppField
                   name="gradingScaleId"
@@ -156,9 +132,12 @@ export default function GradingTemplateDialog({
                     <f.CComboboxField
                       required
                       label="Grading Scale"
-                      placeholder="Select grading scale"
                       items={scaleOptions}
-                      description={`This will be used to grade the attributes.`}
+                      description={
+                        selectedScale
+                          ? `Options: ${selectedScale.options.map((o) => `${o.label} (${+o.upperBound} - ${+o.lowerBound})`).join(', ')}`
+                          : `This will be used to grade the attributes.`
+                      }
                     />
                   )}
                 />
@@ -192,7 +171,7 @@ export default function GradingTemplateDialog({
         <DialogFooter>
           <form.AppForm>
             <form.SubscribeButton
-              label={mode === 'create' ? 'Create' : 'Update'}
+              label={mode === 'create' ? 'Create' : 'Save'}
             />
           </form.AppForm>
         </DialogFooter>
@@ -204,6 +183,6 @@ export default function GradingTemplateDialog({
 const defaultFormData: GradingTemplateFormData = {
   name: '',
   notes: '',
-  gradingScaleId: null as any,
+  gradingScaleId: null,
   attributes: [],
 }

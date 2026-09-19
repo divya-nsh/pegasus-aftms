@@ -154,7 +154,7 @@ export function DateField({
       <FieldLabel htmlFor={id} required={rest.required}>
         {label}
       </FieldLabel>
-      <DatePicker {...rest} />
+      <DatePicker {...rest} aria-invalid={!!errors} />
       {errors && <FieldError errors={errors} />}
     </Field>
   )

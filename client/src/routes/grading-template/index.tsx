@@ -14,7 +14,6 @@ import type { ColumnDef } from '@tanstack/react-table'
 import { PencilIcon, TrashIcon } from 'lucide-react'
 import { useState } from 'react'
 import GradingTemplateDialog from './-components/grading-template-form'
-import type { GradingTemplateFormData } from './-components/grading-template-form'
 import trpc, { trpcClient } from '@/trpc'
 import {
   useQueryClient,
@@ -29,6 +28,7 @@ import { BlockingLoaderOverlay } from '@/components/loaders/BlockingLoader'
 import PageCard from '@/components/layout/PageCard'
 import NewButton from '@/components/buttons/new-button'
 import RefreshButton from '@/components/table/refresh-button'
+import type { GradingTemplateFormData } from './-components/schema'
 
 export const Route = createFileRoute('/grading-template/')({
   component: RouteComponent,
@@ -40,17 +40,6 @@ export const Route = createFileRoute('/grading-template/')({
 
 type TGradingTemplateListItem =
   TrpcRouterOutputs['gradingTemplate']['getAll']['items'][number]
-
-function toFormAttributes(
-  attributes: TGradingTemplateListItem['gradingTemplateAttributes'],
-): GradingTemplateFormData['attributes'] {
-  return [...attributes]
-    .sort((a, b) => a.sortOrder - b.sortOrder)
-    .map((attribute) => ({
-      attributeId: attribute.attributeId,
-      weight: attribute.weight,
-    }))
-}
 
 const ch = createColumnHelper<TTableFeatures, TGradingTemplateListItem>()
 
@@ -172,7 +161,12 @@ function RouteComponent() {
                 label: row.gradingScale!.name,
                 value: row.gradingScaleId,
               },
-              attributes: toFormAttributes(row.gradingTemplateAttributes),
+              attributes: row.gradingTemplateAttributes.map((attribute) => ({
+                attributeId: {
+                  label: attribute.gradingAttribute!.name,
+                  value: attribute.attributeId,
+                },
+              })),
             },
           })
         } else if (action === 'delete') {

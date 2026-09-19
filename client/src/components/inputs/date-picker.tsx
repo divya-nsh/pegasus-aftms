@@ -21,6 +21,7 @@ export type DatePickerProps = {
   className?: string
   disabled?: boolean
   placeholder?: string
+  'aria-invalid'?: boolean
 }
 
 export default function DatePicker({
@@ -98,6 +99,7 @@ export default function DatePicker({
       <PopoverTrigger
         render={
           <Button
+            aria-invalid={rest['aria-invalid']}
             variant="outline"
             data-empty={!value}
             className="justify-between hover:bg-transparent gap-4 text-left font-normal data-[empty=true]:text-muted-foreground"

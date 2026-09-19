@@ -157,7 +157,7 @@ export function CDateField({
 
 export function CComboboxField<T extends ComboOption>({
   ...rest
-}: Omit<ComboboxFieldProps<T>, 'value' | 'onValueChange' | 'errors'>) {
+}: Omit<ComboboxFieldProps<T>, 'value' | 'errors'>) {
   const field = useFieldContext<T | null>()
   const isInvalid = field.state.meta.isTouched && !field.state.meta.isValid
 

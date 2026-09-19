@@ -22,9 +22,11 @@ export type AppComboboxProps<T extends ComboOption> = {
   allowClear?: boolean
   icon?: React.ReactNode
   inputRef?: React.RefObject<HTMLInputElement | null>
+  autoFocus?: boolean
 }
 
 function AppCombobox<T extends ComboOption>({
+  autoFocus,
   className,
   value,
   onValueChange,
@@ -55,6 +57,7 @@ function AppCombobox<T extends ComboOption>({
       //   limit={limitOptions}
     >
       <ShadcnCombobox.ComboboxInput
+        autoFocus={autoFocus}
         showClear={required ? false : allowClear}
         className={className}
         id={inputId}

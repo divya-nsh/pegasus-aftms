@@ -156,9 +156,15 @@ export const missionAssignmentTable = snakeCase.table(
     takeoffTime: timestamp(),
     landingTime: timestamp(),
     remarks: varchar(),
-    overallGradeId: integer().references(() => gradingScaleOptionTable.id),
-    // Total score form 0 to 100 in percentage
-    totalRawScore: numeric({
+
+    // This Stores Overall Result of the Mission
+    obtainedGradeId: integer().references(() => gradingScaleOptionTable.id),
+    // this score can be any value
+    obtainedScoreValue: numeric({
+      precision: 10, // up to 9999999999.99
+      scale: 2,
+    }),
+    obtainedScorePercentage: numeric({
       precision: 5, // up to 999.99
       scale: 2,
     }),

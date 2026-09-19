@@ -18,34 +18,12 @@ import toast from 'react-hot-toast'
 import { trpcClient, trpc } from '@/trpc'
 import { BlockingLoaderOverlay } from '@/components/loaders/BlockingLoader'
 import MissionStatusBadge from './mission-stage-bar'
-import AssignmentLine, { assignmentSchema } from './assignment-line'
-import type { Assignment } from './assignment-line'
 import type { FormMode } from '@/types/general'
 import { Link, useRouter } from '@tanstack/react-router'
 import { ArrowLeftIcon } from 'lucide-react'
 import promptConfirm from '@/lib/confirm'
-
-const requiredTextSchema = z.string().min(1, 'Required')
-
-const schema = z.object({
-  // Only for edit mode\
-  id: z.number().optional(),
-  status: z.string().optional(),
-  missionId: z.number().min(1, 'Required'),
-  scheduleNumber: z.string(),
-  name: requiredTextSchema,
-  description: z.string(),
-  startDateTime: requiredTextSchema,
-  endDateTime: requiredTextSchema,
-  areaId: z.number().min(1, 'Required'),
-  remarks: z.string(),
-  assignments: z
-    .array(assignmentSchema)
-    .min(1, 'At least one pilot is required'),
-})
-
-export type FormData = z.infer<typeof schema>
-export type { Assignment }
+import type { ScheduleFormData } from './type'
+import AssignmentLine from './assignment-line'
 
 // ----------------------------------------------------
 // --------------------- Form Component ---------------------
@@ -53,9 +31,10 @@ export type { Assignment }
 
 export type ScheduleForm3Props = {
   mode: FormMode
-  defaultValues: FormData
+  defaultValues: ScheduleFormData
 }
 
+// In this From since its big complex validation are define on field level
 export default function ScheduleForm3({
   mode,
   defaultValues,
@@ -64,13 +43,14 @@ export default function ScheduleForm3({
   const queryClient = useQueryClient()
 
   const mutation = useMutation({
-    mutationFn: async (data: FormData) => {
-      if (mode === 'view') return
-      if (mode === 'create') {
-        await trpcClient.schedules.create.mutate(data)
-      } else {
-        await trpcClient.schedules.update.mutate({ ...data, id: data.id! })
-      }
+    mutationFn: async () => {
+      // const data = schema.parse(unProcessedData)
+      // if (mode === 'view') return
+      // if (mode === 'create') {
+      //   await trpcClient.schedules.create.mutate(data)
+      // } else {
+      //   await trpcClient.schedules.update.mutate({ ...data, id: data.id! })
+      // }
     },
     onSuccess: () => {
       toast.success('Schedule saved successfully')
@@ -99,32 +79,24 @@ export default function ScheduleForm3({
   const form = useAppForm({
     defaultValues: defaultValues,
     validationLogic: revalidateLogic(),
-    validators: {
-      onDynamic: schema,
+    onSubmit: ({ value }) => {
+      // mutation.mutate(value)
     },
-    onSubmit: ({ value }) => mutation.mutate(value),
     onSubmitInvalid: handleSubmitInvalid,
   })
 
-  const missionsQ = useSuspenseQuery(trpc.missions.getAll.queryOptions())
   const areasQ = useSuspenseQuery(trpc.areas.getAll.queryOptions())
   //   const personnelQ = useSuspenseQuery(trpc.personnel.getAll.queryOptions())
 
-  const selectedMissionId = useSelector(
+  const selectedMission = useSelector(
     form.store,
-    (state) => state.values.missionId,
+    (state) => state.values.mission,
   )
 
   const [startDateTime, endDateTime] = useSelector(form.store, (state) => [
     state.values.startDateTime,
     state.values.endDateTime,
   ])
-
-  const selectedMission = useMemo(() => {
-    return missionsQ.data.items.find(
-      (itm) => itm.id === Number(selectedMissionId),
-    )
-  }, [missionsQ.data.items, selectedMissionId])
 
   return (
     <>
@@ -206,32 +178,20 @@ export default function ScheduleForm3({
       {/* Form Body */}
       <div className="mt-4 space-y-6">
         <form.AppField
-          name="missionId"
+          validators={{
+            onDynamic: ({ value }) => required(value),
+          }}
+          name="mission.label"
           children={(f) => (
-            <f.CBasicSelect
-              required
-              disabled={!!f.state.value}
-              placeholder="Select Event"
-              label="Event"
-              options={missionsQ.data.items.map((mission) => ({
-                label: `${mission.name} (type: ${mission.missionType}, ${mission.durationMinutes} min)`,
-                value: mission.id,
-              }))}
-              onCommited={(newValue) => {
-                if (!newValue) return
-                const mission = missionsQ.data.items.find(
-                  (itm) => itm.id === Number(newValue),
-                )
-                if (!mission) return
-                form.setFieldValue('description', mission.description || '')
-              }}
-              valueAsNumber
-            />
+            <f.CTextField disabled placeholder="Select Event" label="Event" />
           )}
         />
         <FieldColumns>
           <form.AppField
             name="name"
+            validators={{
+              onDynamic: ({ value }) => required(value),
+            }}
             children={(f) => (
               <f.CTextField
                 label="Schedule Name"
@@ -253,6 +213,9 @@ export default function ScheduleForm3({
 
           <form.AppField
             name="startDateTime"
+            validators={{
+              onDynamic: ({ value }) => required(value),
+            }}
             children={(f) => (
               <f.CDateField
                 time={true}
@@ -264,7 +227,7 @@ export default function ScheduleForm3({
                     'endDateTime',
                     addMinutesToDateTimeLocal(
                       value,
-                      selectedMission?.durationMinutes || 0,
+                      selectedMission.durationMinutes,
                     ),
                   )
                 }}
@@ -275,9 +238,8 @@ export default function ScheduleForm3({
           <form.AppField
             name="endDateTime"
             validators={{
-              onChangeListenTo: ['startDateTime'],
-              onChange: ({ value }) => {
-                if (!value) return undefined
+              onDynamic: ({ value }) => {
+                if (!value) return 'This is Required'
                 if (
                   startDateTime &&
                   new Date(value) < new Date(startDateTime)
@@ -303,22 +265,24 @@ export default function ScheduleForm3({
             readOnly
             value={(
               formatDateDifference(startDateTime, endDateTime) ??
-              (selectedMission?.durationMinutes || 0)
+              selectedMission.durationMinutes
             ).toString()}
             label="Duration"
           />
 
           <form.AppField
-            name="areaId"
+            name="area"
+            validators={{
+              onDynamic: ({ value }) => required(value),
+            }}
             children={(f) => (
-              <f.CBasicSelect
+              <f.CComboboxField
                 label="Area"
                 placeholder="Select Area"
-                options={areasQ.data.items.map((area) => ({
+                items={areasQ.data.items.map((area) => ({
                   label: area.name,
                   value: area.id,
                 }))}
-                valueAsNumber
               />
             )}
           />
@@ -343,6 +307,9 @@ export default function ScheduleForm3({
 
         <div>
           <form.Field
+            validators={{
+              onDynamic: ({ value }) => required(value),
+            }}
             name="assignments"
             children={(f) => (
               <>
@@ -350,7 +317,7 @@ export default function ScheduleForm3({
                   <FieldError errors={f.state.meta.errors} />
                 )}
                 <AssignmentLine
-                  gradingTemplateId={selectedMission?.gradingTemplateId || 0}
+                  gradingTemplateId={selectedMission.gradingTemplateId}
                   startDateTime={startDateTime}
                   endDateTime={endDateTime}
                   mode={mode}
@@ -372,4 +339,12 @@ export default function ScheduleForm3({
       </div>
     </>
   )
+}
+
+export const required = (value: unknown) => {
+  if (!value) return 'This is Required'
+  if (typeof value === 'string' && !value.trim()) return 'This is Required'
+  if (Array.isArray(value) && value.length === 0)
+    return 'At least one Item is required'
+  return undefined
 }

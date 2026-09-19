@@ -20,8 +20,14 @@ const getPilotQualification = (id: string) => {
   return pilotQualifications.find((qualification) => qualification.id === id);
 };
 
+const getQualificationLabel = (id: string | null) => {
+  if (!id) return "";
+  return getPilotQualification(id)?.name || id;
+};
+
 export {
   pilotQualifications,
   pilotQualificationOptions,
   getPilotQualification,
+  getQualificationLabel,
 };

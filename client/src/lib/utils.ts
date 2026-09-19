@@ -89,3 +89,6 @@ export const calcAge = (birthDate: Date | string) => {
 
   return { years, months }
 }
+
+export const wait = async (ms: number) =>
+  new Promise((resolve) => setTimeout(resolve, ms))

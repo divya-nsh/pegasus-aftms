@@ -13,6 +13,7 @@ import {
   pilotQualifications,
   getPilotQualification,
   pilotQualificationOptions,
+  getQualificationLabel,
 } from "./constants/pilot-qualifications.js";
 
 export {
@@ -26,4 +27,5 @@ export {
   pilotQualifications,
   getPilotQualification,
   pilotQualificationOptions,
+  getQualificationLabel,
 };

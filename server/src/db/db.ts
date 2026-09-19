@@ -5,6 +5,9 @@ import { relations } from "./relations.js";
 
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
+  max: 10,
+  idleTimeoutMillis: 1000 * 60 * 10, // 10 minutes
+  min: 1,
 });
 const db = drizzle({ client: pool, relations });
 

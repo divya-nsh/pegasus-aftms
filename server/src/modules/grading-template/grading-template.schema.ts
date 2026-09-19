@@ -8,7 +8,7 @@ const attributeSchema = z.object({
 export const createSchema = z.object({
   name: z.string().trim().min(1),
   notes: z.string().trim().default(""),
-  gradingScaleId: z.int().positive(),
+  gradingScaleId: z.int().min(1, "Required"),
   attributes: z.array(attributeSchema).min(1),
 });
 

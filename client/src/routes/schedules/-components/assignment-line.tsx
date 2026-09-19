@@ -1,4 +1,3 @@
-import { z } from 'zod'
 import { baseFormOptions, useAppForm } from '@/components/form/tanstack-form'
 import { useSelector } from '@tanstack/react-form'
 import { useSuspenseQuery } from '@tanstack/react-query'
@@ -33,56 +32,34 @@ import {
   ClockIcon,
   ArrowRightIcon,
 } from 'lucide-react'
-import { getPersonnelType, getPilotQualification } from '@repo/shared'
+import {
+  getPersonnelType,
+  getPilotQualification,
+  getQualificationLabel,
+} from '@repo/shared'
 import toast from 'react-hot-toast'
-import { trpc, trpcClient } from '@/trpc'
+import { trpc } from '@/trpc'
 import AttendanceBadge, { ResultBadge } from './attendance-badge'
 import type { FormMode } from '@/types/general'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import BasicSelect from '@/components/inputs/basic-select'
+import type { ScheduleFormAssignment } from './type'
+import { required } from './shedule-form'
 
-const optionalTextSchema = z.string().optional().nullable()
-
-export const assignmentSchema = z.object({
-  personnelId: z.number().min(1, 'Required'),
-  // For display in the table it is not required by server
-  personnelDataForDisplay: z
-    .object({
-      firstName: optionalTextSchema,
-      lastName: optionalTextSchema,
-      personnelType: optionalTextSchema,
-      qualification: optionalTextSchema,
-      rank: optionalTextSchema,
-    })
-    .optional(),
-  attendanceStatus: z.enum(['present', 'absent', 'excused']).nullable(),
-  // score: z.number().int().min(0).max(100).nullable(),
-  result: z.enum(['passed', 'failed']).nullable(),
-  remarks: z.string(),
-  aircraftId: z.number().nullable(),
-  takeoffTime: optionalTextSchema,
-  landingTime: optionalTextSchema,
-  aircraftTime: optionalTextSchema,
-  gradingAttributes: z.array(
-    z.object({
-      gradingTemplateAttributeId: z.number(),
-      gradingScaleOptionId: z.number(),
-    }),
-  ),
-})
-
-export type Assignment = z.infer<typeof assignmentSchema>
-
-const defaultAssignmentFormData: Assignment = {
-  personnelId: null as unknown as number,
+const defaultAssignmentFormData: ScheduleFormAssignment = {
+  personnel: null,
   attendanceStatus: null,
+  aircraft: null,
   // score: null,
   result: null,
   remarks: '',
-  aircraftId: null,
   takeoffTime: null,
   landingTime: null,
   aircraftTime: null,
+  briefingTime: null,
+  obtainedGrade: null,
+  obtainedScoreValue: null,
+  obtainedScorePercentage: null,
   gradingAttributes: [],
 }
 
@@ -94,8 +71,8 @@ export default function AssignmentLine({
   endDateTime,
   gradingTemplateId,
 }: {
-  values: Assignment[]
-  onChange: (values: Assignment[]) => void
+  values: ScheduleFormAssignment[]
+  onChange: (values: ScheduleFormAssignment[]) => void
   mode: 'create' | 'edit' | 'view'
   startDateTime?: string | null
   endDateTime?: string | null
@@ -107,12 +84,11 @@ export default function AssignmentLine({
   }>({
     open: false,
   })
-  const aircraftsQ = useSuspenseQuery(trpc.aircraft.getAll.queryOptions())
-  const personnelQ = useSuspenseQuery(trpc.personnel.getAll.queryOptions())
+
   useSuspenseQuery(trpc.gradingTemplate.getById.queryOptions(gradingTemplateId))
 
-  const handleSave = (assignment: Assignment) => {
-    const nextAssignment = assignment.aircraftId
+  const handleSave = (assignment: ScheduleFormAssignment) => {
+    const nextAssignment = assignment.aircraft
       ? assignment
       : {
           ...assignment,
@@ -128,33 +104,24 @@ export default function AssignmentLine({
         ),
       )
     } else {
-      const set = new Set(values.map((v) => v.personnelId))
-      if (set.has(nextAssignment.personnelId)) {
-        toast.error('Pilot already in the list')
+      const set = new Set(values.map((v) => v.personnel))
+      if (set.has(nextAssignment.personnel)) {
+        toast.error('Personnel already in the list')
         return
       }
       onChange([...values, nextAssignment])
     }
   }
 
-  const getPersonnel = (personnelId: number) => {
-    const person = personnelQ.data.items.find((p) => p.id === personnelId)
-    if (!person) return null
-    return person
-  }
-
-  const personnelName = (personnelId: number) => {
-    const person = getPersonnel(personnelId)
-    if (!person) return '—'
-    return `${person.firstName} ${person.lastName}`
-  }
-
-  const aircraftName = (aircraftId: number | null) => {
-    if (!aircraftId) return '—'
-    return aircraftsQ.data.items.find((a) => a.id === aircraftId)?.name ?? '—'
-  }
-
   const timeNotAvailable = !startDateTime || !endDateTime
+
+  const openModal = () => {
+    if (timeNotAvailable) {
+      toast.error('Please set the schedule time first')
+      return
+    }
+    setAddFormOpen({ open: true })
+  }
 
   return (
     <div>
@@ -165,13 +132,7 @@ export default function AssignmentLine({
             size="sm"
             variant="secondary"
             className="border shadow-xs border-neutral-200 border-dashed"
-            onClick={() => {
-              if (timeNotAvailable) {
-                toast.error('Please set the schedule time first')
-                return
-              }
-              setAddFormOpen({ open: true })
-            }}
+            onClick={openModal}
           >
             <PlusIcon className="size-4" />
             Add
@@ -206,10 +167,9 @@ export default function AssignmentLine({
             </TableHeader>
             <TableBody>
               {values.map((assignment, index) => {
-                const _personnel = getPersonnel(assignment.personnelId)
                 return (
                   <TableRow
-                    key={`${assignment.personnelId}-${index}`}
+                    key={`${assignment.personnel?.value}-${index}`}
                     onDoubleClick={() =>
                       setAddFormOpen({ open: true, editIndex: index })
                     }
@@ -218,37 +178,38 @@ export default function AssignmentLine({
                       {index + 1}
                     </TableCell>
                     <TableCell className="border align-top">
-                      <div className="max-w-[250px] grid">
+                      <div className="max-w-62.5 grid">
                         <span className=" truncate">
-                          {personnelName(assignment.personnelId)}
+                          {assignment.personnel?.label || 'N/A'}
                         </span>
-                        {_personnel?.personnelType && (
+                        {assignment.personnel?.type && (
                           <span className="text-muted-foreground">
                             Type:{' '}
-                            {getPersonnelType(_personnel.personnelType)?.name ??
-                              _personnel.personnelType}
+                            {getPersonnelType(assignment.personnel.type)
+                              ?.name ?? assignment.personnel.type}
                           </span>
                         )}
                         <span className="text-muted-foreground">
-                          ID: {_personnel?.code}{' '}
+                          ID: {assignment.personnel?.value}{' '}
                         </span>
-                        {_personnel?.qualification && (
+                        {assignment.personnel?.qualification && (
                           <span className="text-muted-foreground">
                             Qualification:{' '}
-                            {getPilotQualification(_personnel.qualification)
-                              ?.name ?? _personnel.qualification}
+                            {getQualificationLabel(
+                              assignment.personnel.qualification,
+                            )}
                           </span>
                         )}
                       </div>
                     </TableCell>
                     <TableCell className="border align-top">
-                      {assignment.aircraftId ? (
+                      {assignment.aircraft ? (
                         <div className="flex max-w-62.5 flex-col gap-1.5 py-1">
                           <span
                             className="truncate text-sm font-medium"
-                            title={aircraftName(assignment.aircraftId)}
+                            title={assignment.aircraft.label}
                           >
-                            {aircraftName(assignment.aircraftId)}
+                            {assignment.aircraft.label}
                           </span>
 
                           <div className="flex flex-col gap-0.5 text-xs text-muted-foreground">
@@ -343,7 +304,7 @@ export default function AssignmentLine({
         ) : (
           <div
             className="py-8 text-center text-sm text-muted-foreground cursor-pointer hover:bg-muted"
-            onClick={() => setAddFormOpen({ open: true })}
+            onClick={openModal}
           >
             No Assignments added yet
           </div>
@@ -374,7 +335,6 @@ export default function AssignmentLine({
 // -------------------------------------------------------------
 // ---------------- Form Modal ---------------------------------
 // -------------------------------------------------------------
-
 function AssignmentsModal({
   onClose,
   onSave,
@@ -387,13 +347,13 @@ function AssignmentsModal({
   gradingTemplateId,
 }: {
   onClose: (open: boolean) => void
-  onSave: (assignment: Assignment) => void
+  onSave: (assignment: ScheduleFormAssignment) => void
   mode: 'add' | 'edit'
-  defaultValues?: Assignment
+  defaultValues?: ScheduleFormAssignment
   formMode: FormMode
   startDateTime?: string | null
   endDateTime?: string | null
-  items: Assignment[]
+  items: ScheduleFormAssignment[]
   gradingTemplateId: number
 }) {
   const [warning, setWarning] = useState<ReactNode>('')
@@ -402,9 +362,6 @@ function AssignmentsModal({
 
   const form = useAppForm({
     defaultValues: defaultValues || defaultAssignmentFormData,
-    validators: {
-      onDynamic: assignmentSchema,
-    },
     onSubmit: ({ value, meta }) => {
       if (warning) {
         const isConfirm = confirm(
@@ -429,23 +386,20 @@ function AssignmentsModal({
 
   const selectedPersonnelId = useSelector(
     form.store,
-    (s) => s.values.personnelId,
+    (s) => s.values.personnel?.value,
   )
 
   const personnelOptions = useMemo(() => {
-    const set = new Set(items.map((item) => item.personnelId))
-    return personnelQ.data.items
-      .filter(
-        (person) => !set.has(person.id) || person.id === selectedPersonnelId,
-      )
-      .map((person) => ({
-        label: `${person.firstName} ${person.lastName} (${[person.personnelType, person.qualification].filter(Boolean).join(', ')})`,
-        value: person.id,
-      }))
-  }, [personnelQ.data.items, items, selectedPersonnelId])
+    return personnelQ.data.items.map((person) => ({
+      label: `${person.firstName} ${person.lastName}`,
+      value: person.id,
+      type: person.personnelType,
+      qualification: person.qualification,
+    }))
+  }, [personnelQ.data])
 
   const takeoffTime = useSelector(form.store, (s) => s.values.takeoffTime)
-  const selectedAircraftId = useSelector(form.store, (s) => s.values.aircraftId)
+  const isHasAircraft = useSelector(form.store, (s) => !!s.values.aircraft)
 
   const selectedPersonnel = useMemo(() => {
     return personnelQ.data.items.find(
@@ -455,9 +409,7 @@ function AssignmentsModal({
 
   return (
     <Dialog open onOpenChange={onClose}>
-      <DialogContent
-        className={formMode === 'create' ? 'min-w-xl' : 'min-w-2xl'}
-      >
+      <DialogContent className={'min-w-3xl'}>
         <DialogHeader>
           <DialogTitle>
             {mode === 'edit' ? 'Edit Pilot' : 'Add Pilots'}
@@ -470,75 +422,104 @@ function AssignmentsModal({
         <DialogMain className="space-y-5">
           <FieldColumns className="gap-5" cols={2}>
             <form.AppField
-              name="personnelId"
+              name="personnel"
+              validators={{
+                onDynamic: ({ value }) => required(value),
+              }}
               children={(f) => (
-                <f.CBasicSelect
-                  label="Pilot"
-                  placeholder="Select Pilot"
-                  options={personnelOptions}
-                  valueAsNumber
-                  onCommited={async (value) => {
+                <f.CComboboxField
+                  required
+                  itemToStringLabel={(item) =>
+                    `${item.label} (${item.type} - ${item.qualification})`
+                  }
+                  label="Personnel"
+                  placeholder="Select Personnel"
+                  items={personnelOptions}
+                  onValueChange={(value) => {
                     if (!value) return
-                    const id = 'jfsdafklsdjalkfjd'
-                    toast.loading('Checking for Pilot Availability....', { id })
-                    try {
-                      const conflictingShedules =
-                        await trpcClient.schedules.checkConflictingSchedule.query(
-                          {
-                            personnelId: Number(value),
-                            startDateTime,
-                            endDateTime,
-                          },
-                        )
-                      if (conflictingShedules.length) {
-                        setWarning(
-                          <>
-                            <ol className=" list-decimal">
-                              {conflictingShedules.map((v) => (
-                                <li className="flex justify-between">
-                                  {formatDate(v.startDateTime, true)}{' '}
-                                  <ArrowRightIcon />{' '}
-                                  {formatDate(v.endDateTime, true)}
-                                  <span className="ml-4 font-bold">
-                                    {v.scheduleNumber}
-                                  </span>
-                                </li>
-                              ))}
-                            </ol>
-                          </>,
-                        )
-                        toast.error('Warnning Shedule Conflict', { id })
-                      } else {
-                        toast.success('No Conflicting Shedules', { id })
-                      }
-                    } catch (error) {
-                      toast.error(
-                        `Error Checking Pilot Availability: ${(error as any).message}`,
-                        { id },
+                    if (
+                      items.some(
+                        (item) => item.personnel?.value === value.value,
                       )
+                    ) {
+                      toast.error('Personnel already in the list')
+                      return
                     }
+                    f.handleChange(value)
                   }}
+                  // onCommited={async (value) => {
+                  //   if (!value) return
+                  //   const id = 'jfsdafklsdjalkfjd'
+                  //   toast.loading('Checking for Pilot Availability....', { id })
+                  //   try {
+                  //     const conflictingShedules =
+                  //       await trpcClient.schedules.checkConflictingSchedule.query(
+                  //         {
+                  //           personnelId: Number(value),
+                  //           startDateTime,
+                  //           endDateTime,
+                  //         },
+                  //       )
+                  //     if (conflictingShedules.length) {
+                  //       setWarning(
+                  //         <>
+                  //           <ol className=" list-decimal">
+                  //             {conflictingShedules.map((v) => (
+                  //               <li className="flex justify-between">
+                  //                 {formatDate(v.startDateTime, true)}{' '}
+                  //                 <ArrowRightIcon />{' '}
+                  //                 {formatDate(v.endDateTime, true)}
+                  //                 <span className="ml-4 font-bold">
+                  //                   {v.scheduleNumber}
+                  //                 </span>
+                  //               </li>
+                  //             ))}
+                  //           </ol>
+                  //         </>,
+                  //       )
+                  //       toast.error('Warnning Shedule Conflict', { id })
+                  //     } else {
+                  //       toast.success('No Conflicting Shedules', { id })
+                  //     }
+                  //   } catch (error) {
+                  //     toast.error(
+                  //       `Error Checking Pilot Availability: ${(error as any).message}`,
+                  //       { id },
+                  //     )
+                  //   }
+                  // }}
                 />
               )}
             />
 
             <form.AppField
-              name="aircraftId"
+              name="aircraft"
               children={(f) => (
-                <f.CBasicSelect
+                <f.CComboboxField
                   label="Aircraft"
                   placeholder="Select Aircraft to be used"
-                  options={aircraftsQ.data.items.map((aircraft) => ({
+                  items={aircraftsQ.data.items.map((aircraft) => ({
                     label: `${aircraft.name}`,
                     value: aircraft.id,
                   }))}
-                  valueAsNumber
-                  onCommited={(value) => {
-                    if (value) return
-                    form.setFieldValue('takeoffTime', null)
-                    form.setFieldValue('landingTime', null)
-                    form.setFieldValue('aircraftTime', null)
+                  onValueChange={(value) => {
+                    f.handleChange(value)
+                    if (!value) {
+                      form.setFieldValue('takeoffTime', null)
+                      form.setFieldValue('landingTime', null)
+                      form.setFieldValue('aircraftTime', null)
+                    }
                   }}
+                />
+              )}
+            />
+            <form.AppField
+              name="briefingTime"
+              children={(f) => (
+                <f.CDateField
+                  time
+                  label="Briefing Time"
+                  placeholder="Enter briefing time"
                 />
               )}
             />
@@ -548,10 +529,8 @@ function AssignmentsModal({
             <div className="text-sm bg-muted/50 p-2 rounded-md grid grid-cols-[120px_1fr] gap-4 gap-y-2 text-muted-foreground">
               <span> Qualification: </span>
               <span>
-                {getPilotQualification(selectedPersonnel.qualification ?? '')
-                  ?.name ||
-                  selectedPersonnel.qualification ||
-                  'None'}
+                {getQualificationLabel(selectedPersonnel.qualification) ||
+                  'N/A'}
               </span>
               <span> Medical Status: </span>
               <span>
@@ -579,112 +558,123 @@ function AssignmentsModal({
               />
             )}
           />
-          {formMode !== 'create' && (
-            <>
-              <hr className="my-4" />
+          <>
+            {isHasAircraft ? (
+              <FieldColumns className="gap-5 border-t pt-4" cols={2}>
+                <form.AppField
+                  name="takeoffTime"
+                  children={(f) => (
+                    <f.CDateField
+                      time
+                      label="Takeoff Time"
+                      placeholder="Enter takeoff time"
+                    />
+                  )}
+                />
+                <form.AppField
+                  name="landingTime"
+                  validators={{
+                    onDynamic({ value }) {
+                      if (
+                        value &&
+                        new Date(value) > new Date(takeoffTime ?? '')
+                      ) {
+                        return 'Landing time must be after takeoff time'
+                      }
+                      return undefined
+                    },
+                  }}
+                  children={(f) => (
+                    <f.CDateField
+                      time
+                      label="Landing Time"
+                      placeholder="Enter landing time"
+                    />
+                  )}
+                />
+                <form.AppField
+                  name="aircraftTime"
+                  children={(f) => (
+                    <f.CDateField
+                      time
+                      label="Aircraft Time"
+                      placeholder="Enter aircraft time"
+                    />
+                  )}
+                />
+              </FieldColumns>
+            ) : null}
 
-              {selectedAircraftId ? (
-                <FieldColumns className="gap-5" cols={2}>
-                  <form.AppField
-                    name="takeoffTime"
-                    children={(f) => (
-                      <f.CDateField
-                        time
-                        label="Takeoff Time"
-                        placeholder="Enter takeoff time"
-                      />
-                    )}
-                  />
-                  <form.AppField
-                    name="landingTime"
-                    validators={{
-                      onDynamic({ value }) {
-                        if (
-                          value &&
-                          new Date(value) > new Date(takeoffTime ?? '')
-                        ) {
-                          return 'Landing time must be after takeoff time'
-                        }
-                        return undefined
-                      },
-                    }}
-                    children={(f) => (
-                      <f.CDateField
-                        time
-                        label="Landing Time"
-                        placeholder="Enter landing time"
-                      />
-                    )}
-                  />
-                  <form.AppField
-                    name="aircraftTime"
-                    children={(f) => (
-                      <f.CDateField
-                        time
-                        label="Aircraft Time"
-                        placeholder="Enter aircraft time"
-                      />
-                    )}
-                  />
-                </FieldColumns>
-              ) : null}
+            {/* <div className="pb-2 mt-4 mb-4">
+              <p className="text-sm text-muted-foreground font-bold border-b pb-2 mb-4">
+                Evaluation
+              </p>
+              <FieldColumns className="gap-4" cols={3}>
+                <form.AppField
+                  name="attendanceStatus"
+                  children={(f) => (
+                    <f.CBasicSelect
+                      label="Attendance Status"
+                      placeholder="Select attendance status"
+                      options={[
+                        { label: 'Present', value: 'present' },
+                        { label: 'Absent', value: 'absent' },
+                        { label: 'Excused', value: 'excused' },
+                      ]}
+                    />
+                  )}
+                />
+                <form.AppField
+                  name="result"
+                  children={(f) => (
+                    <f.CBasicSelect
+                      label="Result"
+                      placeholder="Select result"
+                      options={[
+                        { label: 'Passed', value: 'passed' },
+                        { label: 'Failed', value: 'failed' },
+                      ]}
+                    />
+                  )}
+                />
+                <form.AppField
+                  name="score"
+                  children={(f) => (
+                    <f.CTextField
+                      label="Score"
+                      placeholder="From 0 to 100"
+                      valueAsNumber
+                      type="number"
+                      min={0}
+                      max={100}
+                    />
+                  )}
+                />
+              </FieldColumns>
+            </div> */}
 
-              <div className="pb-2 mt-4 mb-4">
-                <p className="text-sm text-muted-foreground font-bold border-b pb-2 mb-4">
-                  Evaluation
-                </p>
-                <FieldColumns className="gap-4" cols={3}>
-                  <form.AppField
-                    name="attendanceStatus"
-                    children={(f) => (
-                      <f.CBasicSelect
-                        label="Attendance Status"
-                        placeholder="Select attendance status"
-                        options={[
-                          { label: 'Present', value: 'present' },
-                          { label: 'Absent', value: 'absent' },
-                          { label: 'Excused', value: 'excused' },
-                        ]}
-                      />
-                    )}
+            <div className="pb-2 mt-4 mb-4">
+              <p className="text-sm text-muted-foreground font-bold border-b pb-2 mb-4">
+                Grading (Template: {gradingTemplate.name})
+              </p>
+              <form.AppField
+                name="attendanceStatus"
+                children={(f) => (
+                  <f.CBasicSelect
+                    className="my-4 max-w-60"
+                    label="Attendance Status"
+                    placeholder="Select attendance status"
+                    options={[
+                      { label: 'Present', value: 'present' },
+                      { label: 'Absent', value: 'absent' },
+                      { label: 'Excused', value: 'excused' },
+                    ]}
                   />
-                  <form.AppField
-                    name="result"
-                    children={(f) => (
-                      <f.CBasicSelect
-                        label="Result"
-                        placeholder="Select result"
-                        options={[
-                          { label: 'Passed', value: 'passed' },
-                          { label: 'Failed', value: 'failed' },
-                        ]}
-                      />
-                    )}
-                  />
-                  {/* <form.AppField
-                    name="score"
-                    children={(f) => (
-                      <f.CTextField
-                        label="Score"
-                        placeholder="From 0 to 100"
-                        valueAsNumber
-                        type="number"
-                        min={0}
-                        max={100}
-                      />
-                    )}
-                  /> */}
-                </FieldColumns>
-              </div>
-
-              <div className="pb-2 mt-4 mb-4">
-                <p className="text-sm text-muted-foreground font-bold border-b pb-2 mb-4">
-                  Grading Using ({gradingTemplate.name})
-                </p>
-                <GradingGrid gradingTemplateId={gradingTemplateId} />
-              </div>
-            </>
-          )}
+                )}
+              />
+              <GradingGrid gradingTemplateId={gradingTemplateId} />
+            </div>
+          </>
         </DialogMain>
         <DialogFooter className="py-2" hidden={formMode === 'view'}>
           {mode === 'add' && (
@@ -774,7 +764,7 @@ const GradingGrid = ({ gradingTemplateId }: { gradingTemplateId: number }) => {
       <TableHeader>
         <TableRow className=" bg-muted/30 ">
           <TableHead className="border">Attribute</TableHead>
-          <TableHead className=" text-center">Weightage</TableHead>
+          {/* <TableHead className=" text-center">Weightage</TableHead> */}
           <TableHead>Grade</TableHead>
         </TableRow>
       </TableHeader>
@@ -783,7 +773,7 @@ const GradingGrid = ({ gradingTemplateId }: { gradingTemplateId: number }) => {
           return (
             <TableRow>
               <TableCell>{attribute.gradingAttribute!.name}</TableCell>
-              <TableCell className="text-center">{attribute.weight}</TableCell>
+              {/* <TableCell className="text-center">{attribute.weight}</TableCell> */}
               <TableCell>
                 <BasicSelect
                   value={data[attribute.id]?.gradeId}
@@ -837,6 +827,7 @@ type ScoreItem = {
   score: number
   weight: number
 }
+
 // All items Score must be in same Scale for this give meanigfull output
 function calculateWeightedScore(items: ScoreItem[]): number {
   const totalWeight = items.reduce((sum, item) => sum + Number(item.weight), 0)

@@ -150,7 +150,7 @@ export default function GradingScaleDialog({
         <DialogFooter>
           <form.AppForm>
             <form.SubscribeButton
-              label={mode === 'create' ? 'Create' : 'Update'}
+              label={mode === 'create' ? 'Create' : 'Save'}
             />
           </form.AppForm>
         </DialogFooter>

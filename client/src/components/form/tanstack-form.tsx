@@ -1,3 +1,4 @@
+import type { AnyFormApi } from '@tanstack/react-form'
 import {
   createFormHook,
   formOptions,
@@ -19,7 +20,7 @@ export const { useAppForm } = createFormHook({
   formContext,
 })
 
-export const handleSubmitInvalid = () => {
+export const handleSubmitInvalid = ({ formApi }: { formApi: AnyFormApi }) => {
   const firstInvalidField = document.querySelector<HTMLInputElement>(
     '[aria-invalid="true"]',
   )
@@ -33,7 +34,10 @@ export const handleSubmitInvalid = () => {
     }
   }
 
-  toast.error('Invalid form values')
+  const errors = formApi.state.errors
+  console.log('Error Validating Form:', errors)
+
+  toast.error('Form validation failed. Please check the form and try again.')
 }
 
 export const baseFormOptions = formOptions({

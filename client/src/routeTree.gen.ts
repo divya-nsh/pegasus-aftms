@@ -46,7 +46,6 @@ import { Route as AircraftIdEditRouteImport } from './routes/aircraft/$id.edit'
 import { Route as PersonnelIdEditRouteImport } from './routes/personnel/$id.edit'
 import { Route as RolesIdEditRouteImport } from './routes/roles/$id.edit'
 import { Route as SchedulesIdEditRouteImport } from './routes/schedules/$id.edit'
-import { Route as SchedulesIdViewRouteImport } from './routes/schedules/$id.view'
 import { Route as UsersIdEditRouteImport } from './routes/users/$id.edit'
 
 const IndexRoute = IndexRouteImport.update({
@@ -235,11 +234,6 @@ const SchedulesIdEditRoute = SchedulesIdEditRouteImport.update({
   path: '/schedules/$id/edit',
   getParentRoute: () => rootRouteImport,
 } as any)
-const SchedulesIdViewRoute = SchedulesIdViewRouteImport.update({
-  id: '/schedules/$id/view',
-  path: '/schedules/$id/view',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const UsersIdEditRoute = UsersIdEditRouteImport.update({
   id: '/users/$id/edit',
   path: '/users/$id/edit',
@@ -284,7 +278,6 @@ export interface FileRoutesByFullPath {
   '/personnel/$id/edit': typeof PersonnelIdEditRoute
   '/roles/$id/edit': typeof RolesIdEditRoute
   '/schedules/$id/edit': typeof SchedulesIdEditRoute
-  '/schedules/$id/view': typeof SchedulesIdViewRoute
   '/users/$id/edit': typeof UsersIdEditRoute
 }
 export interface FileRoutesByTo {
@@ -323,7 +316,6 @@ export interface FileRoutesByTo {
   '/personnel/$id/edit': typeof PersonnelIdEditRoute
   '/roles/$id/edit': typeof RolesIdEditRoute
   '/schedules/$id/edit': typeof SchedulesIdEditRoute
-  '/schedules/$id/view': typeof SchedulesIdViewRoute
   '/users/$id/edit': typeof UsersIdEditRoute
 }
 export interface FileRoutesById {
@@ -365,7 +357,6 @@ export interface FileRoutesById {
   '/personnel/$id/edit': typeof PersonnelIdEditRoute
   '/roles/$id/edit': typeof RolesIdEditRoute
   '/schedules/$id/edit': typeof SchedulesIdEditRoute
-  '/schedules/$id/view': typeof SchedulesIdViewRoute
   '/users/$id/edit': typeof UsersIdEditRoute
 }
 export interface FileRouteTypes {
@@ -408,7 +399,6 @@ export interface FileRouteTypes {
     | '/personnel/$id/edit'
     | '/roles/$id/edit'
     | '/schedules/$id/edit'
-    | '/schedules/$id/view'
     | '/users/$id/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -447,7 +437,6 @@ export interface FileRouteTypes {
     | '/personnel/$id/edit'
     | '/roles/$id/edit'
     | '/schedules/$id/edit'
-    | '/schedules/$id/view'
     | '/users/$id/edit'
   id:
     | '__root__'
@@ -488,7 +477,6 @@ export interface FileRouteTypes {
     | '/personnel/$id/edit'
     | '/roles/$id/edit'
     | '/schedules/$id/edit'
-    | '/schedules/$id/view'
     | '/users/$id/edit'
   fileRoutesById: FileRoutesById
 }
@@ -526,7 +514,6 @@ export interface RootRouteChildren {
   PersonnelIdEditRoute: typeof PersonnelIdEditRoute
   RolesIdEditRoute: typeof RolesIdEditRoute
   SchedulesIdEditRoute: typeof SchedulesIdEditRoute
-  SchedulesIdViewRoute: typeof SchedulesIdViewRoute
   UsersIdEditRoute: typeof UsersIdEditRoute
 }
 
@@ -791,13 +778,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SchedulesIdEditRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/schedules/$id/view': {
-      id: '/schedules/$id/view'
-      path: '/schedules/$id/view'
-      fullPath: '/schedules/$id/view'
-      preLoaderRoute: typeof SchedulesIdViewRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/users/$id/edit': {
       id: '/users/$id/edit'
       path: '/users/$id/edit'
@@ -870,7 +850,6 @@ const rootRouteChildren: RootRouteChildren = {
   PersonnelIdEditRoute: PersonnelIdEditRoute,
   RolesIdEditRoute: RolesIdEditRoute,
   SchedulesIdEditRoute: SchedulesIdEditRoute,
-  SchedulesIdViewRoute: SchedulesIdViewRoute,
   UsersIdEditRoute: UsersIdEditRoute,
 }
 export const routeTree = rootRouteImport
