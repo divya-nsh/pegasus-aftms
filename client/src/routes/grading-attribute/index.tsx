@@ -74,6 +74,7 @@ const columns: ColumnDef<TTableFeatures, TGradingAttributeListItem>[] =
       id: 'actions',
       meta: {
         align: 'center',
+        preventDefaultRowClick: true,
       },
       minSize: 70,
     }),
@@ -124,29 +125,33 @@ function RouteComponent() {
     },
   })
 
+  const openModal = (rowId?: string) => {
+    if (rowId) {
+      const row = table.getRow(rowId).original
+      setFormModel({
+        open: true,
+        editItemId: row.id,
+        data: {
+          name: row.name,
+          notes: row.notes ?? '',
+        },
+      })
+    } else {
+      setFormModel({
+        open: true,
+      })
+    }
+  }
+
   const table = useTable({
     ...baseTableOptions<TGradingAttributeListItem>(),
     data: gradingAttributeQ.data.items,
     getRowId: (row) => row.id.toString(),
     columns,
-    initialState: {
-      pagination: {
-        pageIndex: 0,
-        pageSize: 50,
-      },
-    },
     meta: {
       onRowAction: (action, rowId) => {
-        const row = table.getRow(rowId).original
         if (action === 'edit') {
-          setFormModel({
-            open: true,
-            editItemId: row.id,
-            data: {
-              name: row.name,
-              notes: row.notes ?? '',
-            },
-          })
+          openModal(rowId)
         } else if (action === 'delete') {
           const confirm = window.confirm(
             'Are you sure you want to delete this grading attribute?',
@@ -156,6 +161,7 @@ function RouteComponent() {
           }
         }
       },
+      onRowDoubleClick: openModal,
     },
     globalFilterFn: 'includesString',
   })
@@ -168,7 +174,7 @@ function RouteComponent() {
         </h1>
         <div className="flex items-center gap-4">
           <RefreshButton query={gradingAttributeQ} />
-          <NewButton onClick={() => setFormModel({ open: true })} />
+          <NewButton onClick={() => openModal()} />
         </div>
       </div>
       <ErrorAlert error={gradingAttributeQ.error} />

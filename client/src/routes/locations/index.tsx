@@ -8,11 +8,10 @@ import {
   // eslint-disable-next-line import/consistent-type-specifier-style
   type TTableFeatures,
 } from '@/components/table/table.tsx'
-import { Button } from '@/components/ui/button'
 import { createFileRoute } from '@tanstack/react-router'
 import { createColumnHelper, useTable } from '@tanstack/react-table'
 import type { ColumnDef } from '@tanstack/react-table'
-import { PencilIcon, PlusIcon, TrashIcon } from 'lucide-react'
+import { PencilIcon, TrashIcon } from 'lucide-react'
 import { useState } from 'react'
 import LocationForm from './-components/location-form'
 import type { LocationFormData as FormData } from './-components/location-form'
@@ -77,26 +76,26 @@ const columns: ColumnDef<TTableFeatures, TLocationListItem>[] = ch.columns([
     id: 'actions',
     meta: {
       align: 'center',
+      preventDefaultRowClick: true,
     },
     minSize: 70,
   }),
-  ch.display({
-    header: 'S.No',
-    cell: ({ row }) => {
-      const displayIndex = row.getDisplayIndex()
-      return displayIndex === -1 ? '' : displayIndex + 1
-    },
-    size: 70,
-    id: 'index',
-    meta: {
-      align: 'center',
-    },
-  }),
+  // ch.display({
+  //   header: 'S.No',
+  //   cell: ({ row }) => {
+  //     const displayIndex = row.getDisplayIndex()
+  //     return displayIndex === -1 ? '' : displayIndex + 1
+  //   },
+  //   size: 70,
+  //   id: 'index',
+  //   meta: {
+  //     align: 'center',
+  //   },
+  // }),
   ch.accessor('code', {
     header: 'Code',
     size: 150,
   }),
-
   ch.accessor('name', {
     header: 'Name',
   }),
@@ -110,15 +109,15 @@ const columns: ColumnDef<TTableFeatures, TLocationListItem>[] = ch.columns([
     header: 'Description',
   }),
 
-  ch.accessor('createdAt', {
-    header: 'Created At',
-    cell: (info) => formatDate(info.getValue<Date>(), true),
-  }),
+  // ch.accessor('createdAt', {
+  //   header: 'Created At',
+  //   cell: (info) => formatDate(info.getValue<Date>(), true),
+  // }),
 
-  ch.accessor('updatedAt', {
-    header: 'Updated At',
-    cell: (info) => formatDate(info.getValue<Date>(), true),
-  }),
+  // ch.accessor('updatedAt', {
+  //   header: 'Updated At',
+  //   cell: (info) => formatDate(info.getValue<Date>(), true),
+  // }),
 ])
 
 function RouteComponent() {
@@ -155,6 +154,26 @@ function RouteComponent() {
     },
   })
 
+  const openModal = (row?: TLocationListItem) => {
+    if (row) {
+      setFormModel({
+        open: true,
+        editItemId: row.id,
+        data: {
+          name: row.name,
+          code: row.code,
+          address: row.address ?? '',
+          phone: row.phone ?? '',
+          description: row.description ?? '',
+        },
+      })
+    } else {
+      setFormModel({
+        open: true,
+      })
+    }
+  }
+
   const table = useTable({
     ...baseTableOptions<TLocationListItem>(),
     data: locationsQ.data.items,
@@ -170,17 +189,7 @@ function RouteComponent() {
       onRowAction: (action, rowId) => {
         const row = table.getRow(rowId).original
         if (action === 'edit') {
-          setFormModel({
-            open: true,
-            editItemId: row.id,
-            data: {
-              name: row.name,
-              code: row.code,
-              address: row.address ?? '',
-              phone: row.phone ?? '',
-              description: row.description ?? '',
-            },
-          })
+          openModal(row)
         } else if (action === 'delete') {
           const confirm = window.confirm(
             'Are you sure you want to delete this location?',
@@ -189,6 +198,12 @@ function RouteComponent() {
             deleteMutation.mutate({ toDeleteId: Number(rowId) })
           }
         }
+      },
+      onRowDoubleClick: (rowId) => {
+        const row = table.getRow(rowId).original
+
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        if (row) openModal(row)
       },
     },
     state: {
@@ -204,7 +219,7 @@ function RouteComponent() {
         {/* <Separator orientation="vertical" className="mx-2" /> */}
         <h1 className="text-xl font-bold mr-auto">Locations</h1>
         <RefreshButton query={locationsQ} />
-        <NewButton onClick={() => setFormModel({ open: true })} />
+        <NewButton onClick={() => openModal()} />
       </div>
       <ErrorAlert error={locationsQ.error} />
       <div className=" mb-3 flex items-center justify-between">

@@ -30,14 +30,14 @@ export type AreaFormProps = {
   mode: 'create' | 'edit'
   toEditId?: number
   initialFormData?: AreaFormData
-  onOpenChange: (open: boolean) => void
+  onClose: () => void
 }
 
 export default function AreaForm({
   mode,
   toEditId,
   initialFormData = defaultFormData,
-  onOpenChange,
+  onClose,
 }: AreaFormProps) {
   const form = useAppForm({
     defaultValues: initialFormData,
@@ -65,7 +65,7 @@ export default function AreaForm({
     onSuccess: () => {
       queryClient.resetQueries(trpc.areas.pathFilter())
       toast.success('Area Saved Successfully')
-      onOpenChange(false)
+      onClose()
     },
     onError: (error) => {
       toast.error(error.message)
@@ -89,9 +89,9 @@ export default function AreaForm({
   return (
     <Dialog
       open={true}
-      onOpenChange={(nextOpen) => {
+      onOpenChange={() => {
         if (mutation.isPending) return
-        onOpenChange(nextOpen)
+        onClose()
       }}
     >
       <DialogContent className="sm:max-w-lg">
@@ -129,7 +129,7 @@ export default function AreaForm({
         <DialogFooter>
           <form.AppForm>
             <form.SubscribeButton
-              label={mode === 'create' ? 'Create' : 'Update'}
+              label={mode === 'create' ? 'Create' : 'Save'}
             />
           </form.AppForm>
         </DialogFooter>

@@ -19,7 +19,6 @@ import {
   Table,
   TableBody,
   TableCell,
-  TableFooter,
   TableHead,
   TableHeader,
   TableRow,
@@ -30,19 +29,16 @@ import {
   TrashIcon,
   AlertTriangleIcon,
   ClockIcon,
-  ArrowRightIcon,
+  ClipboardCheckIcon,
 } from 'lucide-react'
-import {
-  getPersonnelType,
-  getPilotQualification,
-  getQualificationLabel,
-} from '@repo/shared'
+import { ActionMenu } from '@/components/table/action-menu'
+import GradeModal, { GradeStatusCell } from './grade-modal'
+import { getPersonnelType, getQualificationLabel } from '@repo/shared'
 import toast from 'react-hot-toast'
 import { trpc } from '@/trpc'
-import AttendanceBadge, { ResultBadge } from './attendance-badge'
+import AttendanceBadge from './attendance-badge'
 import type { FormMode } from '@/types/general'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
-import BasicSelect from '@/components/inputs/basic-select'
 import type { ScheduleFormAssignment } from './type'
 import { required } from './shedule-form'
 
@@ -84,6 +80,7 @@ export default function AssignmentLine({
   }>({
     open: false,
   })
+  const [gradeIndex, setGradeIndex] = useState<number | null>(null)
 
   useSuspenseQuery(trpc.gradingTemplate.getById.queryOptions(gradingTemplateId))
 
@@ -150,19 +147,12 @@ export default function AssignmentLine({
             <TableHeader>
               <TableRow className=" bg-muted/40">
                 <TableHead className="border text-center w-10 ">S.No</TableHead>
-                {[
-                  'Pilot',
-                  'Aircraft',
-                  'Attendance',
-                  'Result',
-                  // 'Score',
-                  'Remarks',
-                ].map((header) => (
-                  <TableHead className="border">{header}</TableHead>
-                ))}
-                {mode !== 'view' && (
-                  <TableHead className="border text-center w-10">-</TableHead>
+                {['Pilot', 'Aircraft', 'Attendance', 'Grade', 'Remarks'].map(
+                  (header) => (
+                    <TableHead className="border">{header}</TableHead>
+                  ),
                 )}
+                <TableHead className="border text-center w-10">-</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -251,51 +241,41 @@ export default function AssignmentLine({
                       />
                     </TableCell>
                     <TableCell className="border align-top">
-                      <ResultBadge result={assignment.result} />
+                      <GradeStatusCell assignment={assignment} />
                     </TableCell>
-                    {/* <TableCell
-                      className={cn(
-                        'border align-top tabular-nums',
-                        assignment.score
-                          ? 'text-foreground'
-                          : 'text-muted-foreground',
-                      )}
-                    >
-                      {assignment.score || '—'}
-                    </TableCell> */}
                     <TableCell className="max-w-64 truncate align-top text-muted-foreground line-clamp-3">
                       {assignment.remarks || '—'}
                     </TableCell>
-                    {mode !== 'view' && (
-                      <TableCell
-                        className="text-right border align-top"
-                        onClick={(e) => e.stopPropagation()}
-                      >
-                        <Button
-                          type="button"
-                          variant="ghost"
-                          size="icon-sm"
-                          onClick={() => {
-                            setAddFormOpen({ open: true, editIndex: index })
-                          }}
-                        >
-                          <PencilIcon className="size-4 text-primary" />
-                          <span className="sr-only">Edit</span>
-                        </Button>
-                        <Button
-                          type="button"
-                          variant="ghost-destructive"
-                          size="icon-sm"
-                          onClick={(e) => {
-                            e.stopPropagation()
-                            onChange(values.filter((_, i) => i !== index))
-                          }}
-                        >
-                          <TrashIcon className="size-4 text-destructive" />
-                          <span className="sr-only">Delete</span>
-                        </Button>
-                      </TableCell>
-                    )}
+                    <TableCell
+                      className="text-right border align-top"
+                      onClick={(e) => e.stopPropagation()}
+                    >
+                      <ActionMenu
+                        actions={[
+                          {
+                            label:
+                              assignment.obtainedScorePercentage != null
+                                ? 'Edit grade'
+                                : 'Grade',
+                            icon: <ClipboardCheckIcon />,
+                            onClick: () => setGradeIndex(index),
+                          },
+                          mode !== 'view' && {
+                            label: 'Edit',
+                            icon: <PencilIcon />,
+                            onClick: () =>
+                              setAddFormOpen({ open: true, editIndex: index }),
+                          },
+                          mode !== 'view' && {
+                            label: 'Delete',
+                            icon: <TrashIcon />,
+                            isDestructive: true,
+                            onClick: () =>
+                              onChange(values.filter((_, i) => i !== index)),
+                          },
+                        ]}
+                      />
+                    </TableCell>
                   </TableRow>
                 )
               })}
@@ -312,7 +292,6 @@ export default function AssignmentLine({
       </div>
       {addFormOpen.open && (
         <AssignmentsModal
-          gradingTemplateId={gradingTemplateId}
           startDateTime={startDateTime}
           endDateTime={endDateTime}
           formMode={mode}
@@ -326,6 +305,24 @@ export default function AssignmentLine({
               : undefined
           }
           onSave={handleSave}
+        />
+      )}
+      {gradeIndex != null && values[gradeIndex] && (
+        <GradeModal
+          key={gradeIndex}
+          gradingTemplateId={gradingTemplateId}
+          assignment={values[gradeIndex]}
+          readOnly={mode === 'view'}
+          onClose={() => setGradeIndex(null)}
+          onSave={(payload) => {
+            onChange(
+              values.map((assignment, i) =>
+                i === gradeIndex ? { ...assignment, ...payload } : assignment,
+              ),
+            )
+            setGradeIndex(null)
+            toast.success('Grade saved on line')
+          }}
         />
       )}
     </div>
@@ -344,7 +341,6 @@ function AssignmentsModal({
   startDateTime,
   endDateTime,
   items,
-  gradingTemplateId,
 }: {
   onClose: (open: boolean) => void
   onSave: (assignment: ScheduleFormAssignment) => void
@@ -354,7 +350,6 @@ function AssignmentsModal({
   startDateTime?: string | null
   endDateTime?: string | null
   items: ScheduleFormAssignment[]
-  gradingTemplateId: number
 }) {
   const [warning, setWarning] = useState<ReactNode>('')
   const aircraftsQ = useSuspenseQuery(trpc.aircraft.getAll.queryOptions())
@@ -379,10 +374,6 @@ function AssignmentsModal({
     },
     ...baseFormOptions,
   })
-
-  const { data: gradingTemplate } = useSuspenseQuery(
-    trpc.gradingTemplate.getById.queryOptions(gradingTemplateId),
-  )
 
   const selectedPersonnelId = useSelector(
     form.store,
@@ -605,75 +596,21 @@ function AssignmentsModal({
               </FieldColumns>
             ) : null}
 
-            {/* <div className="pb-2 mt-4 mb-4">
-              <p className="text-sm text-muted-foreground font-bold border-b pb-2 mb-4">
-                Evaluation
-              </p>
-              <FieldColumns className="gap-4" cols={3}>
-                <form.AppField
-                  name="attendanceStatus"
-                  children={(f) => (
-                    <f.CBasicSelect
-                      label="Attendance Status"
-                      placeholder="Select attendance status"
-                      options={[
-                        { label: 'Present', value: 'present' },
-                        { label: 'Absent', value: 'absent' },
-                        { label: 'Excused', value: 'excused' },
-                      ]}
-                    />
-                  )}
+            <form.AppField
+              name="attendanceStatus"
+              children={(f) => (
+                <f.CBasicSelect
+                  className="max-w-60"
+                  label="Attendance Status"
+                  placeholder="Select attendance status"
+                  options={[
+                    { label: 'Present', value: 'present' },
+                    { label: 'Absent', value: 'absent' },
+                    { label: 'Excused', value: 'excused' },
+                  ]}
                 />
-                <form.AppField
-                  name="result"
-                  children={(f) => (
-                    <f.CBasicSelect
-                      label="Result"
-                      placeholder="Select result"
-                      options={[
-                        { label: 'Passed', value: 'passed' },
-                        { label: 'Failed', value: 'failed' },
-                      ]}
-                    />
-                  )}
-                />
-                <form.AppField
-                  name="score"
-                  children={(f) => (
-                    <f.CTextField
-                      label="Score"
-                      placeholder="From 0 to 100"
-                      valueAsNumber
-                      type="number"
-                      min={0}
-                      max={100}
-                    />
-                  )}
-                />
-              </FieldColumns>
-            </div> */}
-
-            <div className="pb-2 mt-4 mb-4">
-              <p className="text-sm text-muted-foreground font-bold border-b pb-2 mb-4">
-                Grading (Template: {gradingTemplate.name})
-              </p>
-              <form.AppField
-                name="attendanceStatus"
-                children={(f) => (
-                  <f.CBasicSelect
-                    className="my-4 max-w-60"
-                    label="Attendance Status"
-                    placeholder="Select attendance status"
-                    options={[
-                      { label: 'Present', value: 'present' },
-                      { label: 'Absent', value: 'absent' },
-                      { label: 'Excused', value: 'excused' },
-                    ]}
-                  />
-                )}
-              />
-              <GradingGrid gradingTemplateId={gradingTemplateId} />
-            </div>
+              )}
+            />
           </>
         </DialogMain>
         <DialogFooter className="py-2" hidden={formMode === 'view'}>
@@ -703,141 +640,4 @@ function AssignmentsModal({
       </DialogContent>
     </Dialog>
   )
-}
-
-const GradingGrid = ({ gradingTemplateId }: { gradingTemplateId: number }) => {
-  const { data: gradingTemplate } = useSuspenseQuery(
-    trpc.gradingTemplate.getById.queryOptions(gradingTemplateId),
-  )
-
-  const [data, setData] = useState(
-    gradingTemplate.gradingTemplateAttributes.reduce<
-      Record<number, { gradeId: number; weight: number }>
-    >((acc, item) => {
-      acc[item.id] = {
-        gradeId: 0,
-        weight: Number(item.weight),
-      }
-      return acc
-    }, {}),
-  )
-
-  const gradeOptionsMap = useMemo(() => {
-    const map = new Map<
-      number,
-      { label: string; value: number; point: number }
-    >()
-    gradingTemplate.gradingScale!.options.forEach((item) => {
-      map.set(item.id, {
-        label: `${item.label} (${+item.point})`,
-        value: item.id,
-        point: +item.point,
-      })
-    })
-    return map
-  }, [gradingTemplate])
-
-  const totalGrad = (() => {
-    // Since Each Score is in scale 0-100 it return percentage
-    const totalScorePercent = calculateWeightedScore(
-      Object.values(data).map((item) => ({
-        score: gradeOptionsMap.get(Number(item.gradeId))?.point ?? 0,
-        weight: Number(item.weight),
-      })),
-    )
-    // Scale range is inclusive
-    const roundedScore = Math.round(totalScorePercent)
-    const grade = gradingTemplate.gradingScale!.options.find(
-      (item) =>
-        roundedScore >= +item.lowerBound && roundedScore <= +item.upperBound,
-    )
-
-    return {
-      totalMarks: roundedScore,
-      gradeLabel: grade?.label ?? 'N/A',
-      gradeId: grade?.id ?? 0,
-    }
-  })()
-
-  return (
-    <Table className="border rounded-md shadow-sm" fullGridLine>
-      <TableHeader>
-        <TableRow className=" bg-muted/30 ">
-          <TableHead className="border">Attribute</TableHead>
-          {/* <TableHead className=" text-center">Weightage</TableHead> */}
-          <TableHead>Grade</TableHead>
-        </TableRow>
-      </TableHeader>
-      <TableBody>
-        {gradingTemplate.gradingTemplateAttributes.map((attribute) => {
-          return (
-            <TableRow>
-              <TableCell>{attribute.gradingAttribute!.name}</TableCell>
-              {/* <TableCell className="text-center">{attribute.weight}</TableCell> */}
-              <TableCell>
-                <BasicSelect
-                  value={data[attribute.id]?.gradeId}
-                  onValueChange={(value) => {
-                    const gradeId = Number(value)
-                    setData((prev) => ({
-                      ...prev,
-                      [attribute.id]: {
-                        gradeId: Number.isFinite(gradeId) ? gradeId : 0,
-                        weight: Number(attribute.weight),
-                      },
-                    }))
-                  }}
-                  placeholder="Pick a Grade"
-                  options={gradingTemplate.gradingScale!.options.map(
-                    (option) => ({
-                      label: `${option.label} (${+option.point})`,
-                      value: option.id,
-                    }),
-                  )}
-                  valueAsNumber
-                />
-              </TableCell>
-            </TableRow>
-          )
-        })}
-      </TableBody>
-      <TableFooter>
-        <TableRow>
-          <TableCell colSpan={3} className="text-right">
-            <div className="flex flex-col gap-2">
-              <span>
-                <span className="font-bold w-20 inline-block">
-                  Total Score:
-                </span>{' '}
-                {totalGrad.totalMarks}%
-              </span>
-              <span>
-                <span className="font-bold w-20 inline-block">Grade:</span>{' '}
-                {totalGrad.gradeLabel} Grade
-              </span>
-            </div>
-          </TableCell>
-        </TableRow>
-      </TableFooter>
-    </Table>
-  )
-}
-
-type ScoreItem = {
-  score: number
-  weight: number
-}
-
-// All items Score must be in same Scale for this give meanigfull output
-function calculateWeightedScore(items: ScoreItem[]): number {
-  const totalWeight = items.reduce((sum, item) => sum + Number(item.weight), 0)
-
-  if (totalWeight === 0) return 0
-
-  const weightedTotal = items.reduce(
-    (sum, item) => sum + Number(item.score) * Number(item.weight),
-    0,
-  )
-
-  return weightedTotal / totalWeight
 }

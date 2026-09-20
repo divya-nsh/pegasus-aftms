@@ -8,8 +8,7 @@ import {
   // eslint-disable-next-line import/consistent-type-specifier-style
   type TTableFeatures,
 } from '@/components/table/table.tsx'
-import LinkButton from '@/components/ui/link-button'
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import { createColumnHelper, useTable } from '@tanstack/react-table'
 import type { ColumnDef } from '@tanstack/react-table'
 import { PencilIcon, TrashIcon } from 'lucide-react'
@@ -29,6 +28,9 @@ import { BlockingLoaderOverlay } from '@/components/loaders/BlockingLoader'
 import { protectRouteBeforeLoad } from '@/lib/utils'
 import PageCard from '@/components/layout/PageCard'
 import RefreshButton from '@/components/table/refresh-button'
+import NewButton from '@/components/buttons/new-button'
+import AircraftForm from './-components/aircraft-form'
+import type { AircraftFormData } from './-components/aircraft-form'
 
 export const Route = createFileRoute('/aircraft/')({
   component: RouteComponent,
@@ -74,6 +76,7 @@ const columns: ColumnDef<TTableFeatures, TAircraftListItem>[] = ch.columns([
     id: 'actions',
     meta: {
       align: 'center',
+      preventDefaultRowClick: true,
     },
     minSize: 70,
   }),
@@ -110,8 +113,39 @@ const columns: ColumnDef<TTableFeatures, TAircraftListItem>[] = ch.columns([
 function RouteComponent() {
   const aircraftQ = useSuspenseQuery(trpc.aircraft.getAll.queryOptions())
   const queryClient = useQueryClient()
-  const navigate = useNavigate()
+
+  const [formModel, setFormModel] = useState<{
+    data?: AircraftFormData
+    open: boolean
+    editItemId?: number
+  } | null>({
+    open: false,
+  })
+
   const [columnFilters, setColumnFilters] = useState<string>('')
+
+  const openModal = (rowId?: string) => {
+    const row = rowId ? table.getRow(rowId).original : undefined
+    if (row) {
+      setFormModel({
+        open: true,
+        editItemId: row.id,
+        data: {
+          name: row.name,
+          tailNumber: row.tailNumber,
+          serialNumber: row.serialNumber ?? '',
+          aircraftType: row.aircraftType ?? '',
+          inductionDate: row.inductionDate ?? '',
+          remarks: row.remarks ?? '',
+          status: row.status ?? '',
+        },
+      })
+    } else {
+      setFormModel({
+        open: true,
+      })
+    }
+  }
 
   const deleteMutation = useMutation({
     mutationFn: ({ toDeleteId }: { toDeleteId: number }) => {
@@ -147,7 +181,7 @@ function RouteComponent() {
     meta: {
       onRowAction: (action, rowId) => {
         if (action === 'edit') {
-          navigate({ to: '/aircraft/$id/edit', params: { id: rowId } })
+          openModal(rowId)
         } else if (action === 'delete') {
           const confirm = window.confirm(
             'Are you sure you want to delete this aircraft?',
@@ -157,6 +191,7 @@ function RouteComponent() {
           }
         }
       },
+      onRowDoubleClick: openModal,
     },
     state: {
       globalFilter: columnFilters,
@@ -171,7 +206,7 @@ function RouteComponent() {
         <h1 className="text-xl font-bold">Aircraft</h1>
         <div className="flex items-center gap-4">
           <RefreshButton query={aircraftQ} />
-          <LinkButton to="/aircraft/create" newButton />
+          <NewButton onClick={() => openModal()} />
         </div>
       </div>
       <ErrorAlert error={aircraftQ.error} />
@@ -188,6 +223,15 @@ function RouteComponent() {
       </div>
       <AppTable table={table} />
       <TablePagination table={table} />
+
+      {formModel?.open && (
+        <AircraftForm
+          mode={formModel.editItemId ? 'edit' : 'create'}
+          initialFormData={formModel.data}
+          toEditId={formModel.editItemId}
+          onClose={() => setFormModel({ open: false })}
+        />
+      )}
       <BlockingLoaderOverlay show={deleteMutation.isPending} />
     </PageCard>
   )

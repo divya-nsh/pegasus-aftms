@@ -1,5 +1,12 @@
 // Label Represent Display Lable here for UI Select boxes
 
+export type AssignmentGradingAttribute = {
+  templateAttributeId: number
+  gradeId: number | null
+  weight: number
+  status: 'pending' | 'scored' | 'exempt'
+}
+
 export type ScheduleFormAssignment = {
   personnel: {
     label: string
@@ -24,7 +31,7 @@ export type ScheduleFormAssignment = {
   } | null
   obtainedScoreValue: number | null
   obtainedScorePercentage: number | null
-  gradingAttributes: Array<{}>
+  gradingAttributes: AssignmentGradingAttribute[]
 }
 
 export type ScheduleFormData = {

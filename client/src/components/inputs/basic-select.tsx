@@ -56,6 +56,10 @@ export default function BasicSelect({
     }))
   }, [options])
 
+  console.log({
+    value,
+  })
+
   return (
     <Select
       open={readOnly ? false : open}
@@ -69,15 +73,14 @@ export default function BasicSelect({
       disabled={disabled}
       readOnly={readOnly}
       value={value ? value.toString() : undefined}
-      onValueChange={(nextValue) => {
+      onValueChange={(_value) => {
         if (readOnly) return
         setOpen(false)
         if (disabled) return
         // Keep parent updates (and any Suspense refetch) off the urgent path
         // so this popup can unmount instead of staying portaled open.
-        startTransition(() => {
-          onValueChange?.(nextValue === CLEAR_VALUE ? null : nextValue)
-        })
+        const nextValue = _value === CLEAR_VALUE ? null : _value
+        onValueChange?.(nextValue)
       }}
       items={items}
     >
@@ -89,9 +92,9 @@ export default function BasicSelect({
       </SelectTrigger>
       <SelectContent alignItemWithTrigger={false}>
         <SelectGroup>
-          {allowClear && (
+          {allowClear && value !== null && options.length > 0 && (
             <SelectItem
-              value={CLEAR_VALUE}
+              value={null}
               className="hover:text-muted-foreground focus:text-muted-foreground"
               showIndicator={false}
             >
@@ -100,6 +103,13 @@ export default function BasicSelect({
               </span>
             </SelectItem>
           )}
+
+          {options.length === 0 && (
+            <p className="text-muted-foreground text-center text-sm py-2">
+              No options found
+            </p>
+          )}
+
           {options.map((item) => (
             <SelectItem
               key={item.value}

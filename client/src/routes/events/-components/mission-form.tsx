@@ -10,6 +10,7 @@ import {
   DialogMain,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { FieldColumns } from '@/components/ui/field'
 import trpc, { trpcClient } from '@/trpc'
 import {
   useMutation,
@@ -35,14 +36,14 @@ export type MissionFormProps = {
   mode: 'create' | 'edit'
   toEditId?: number
   initialFormData?: MissionFormData
-  onOpenChange: (open: boolean) => void
+  onClose: (open: boolean) => void
 }
 
 export default function MissionForm({
   mode,
   toEditId,
   initialFormData,
-  onOpenChange,
+  onClose,
 }: MissionFormProps) {
   const queryClient = useQueryClient()
   const aircraftQ = useSuspenseQuery(trpc.aircraft.getAll.queryOptions())
@@ -77,7 +78,7 @@ export default function MissionForm({
     onSuccess: () => {
       queryClient.resetQueries(trpc.missions.pathFilter())
       toast.success('Event saved successfully')
-      onOpenChange(false)
+      onClose(false)
     },
     onError: (error) => {
       toast.error(error.message)
@@ -99,70 +100,72 @@ export default function MissionForm({
       open
       onOpenChange={(nextOpen) => {
         if (mutation.isPending) return
-        onOpenChange(nextOpen)
+        onClose(nextOpen)
       }}
     >
-      <DialogContent className="sm:max-w-lg">
+      <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle className="uppercase">
             {mode === 'create' ? 'New Event' : 'Edit Event'}
           </DialogTitle>
         </DialogHeader>
-        <DialogMain className="grid gap-4">
-          <form.AppField
-            name="name"
-            children={(f) => (
-              <f.CTextField
-                required
-                label="Name"
-                placeholder="e.g. Chopper Fly"
-              />
-            )}
-          />
-          <form.AppField
-            name="missionType"
-            children={(f) => (
-              <f.CBasicSelect
-                required
-                label="Type"
-                placeholder="Select event type"
-                options={missionTypeOptions}
-              />
-            )}
-          />
-          <form.AppField
-            name="durationMinutes"
-            children={(f) => (
-              <f.CTextField
-                valueAsNumber
-                label="Duration (minutes)"
-                placeholder="Optional"
-                type="number"
-              />
-            )}
-          />
-          <form.AppField
-            name="aircraftId"
-            children={(f) => (
-              <f.CBasicSelect
-                valueAsNumber
-                label="Aircraft"
-                placeholder="Optional"
-                options={aircraftOptions}
-              />
-            )}
-          />
-          <form.AppField
-            name="gradingTemplateId"
-            children={(f) => (
-              <f.CBasicSelect
-                valueAsNumber
-                label="Grading Template"
-                placeholder="Optional"
-                options={gradingTemplateOptions}
-              />
-            )}
-          />
+        <DialogMain className="space-y-6">
+          <FieldColumns>
+            <form.AppField
+              name="name"
+              children={(f) => (
+                <f.CTextField
+                  required
+                  label="Name"
+                  placeholder="e.g. Chopper Fly"
+                />
+              )}
+            />
+            <form.AppField
+              name="missionType"
+              children={(f) => (
+                <f.CBasicSelect
+                  required
+                  label="Type"
+                  placeholder="Select event type"
+                  options={missionTypeOptions}
+                />
+              )}
+            />
+            <form.AppField
+              name="durationMinutes"
+              children={(f) => (
+                <f.CTextField
+                  valueAsNumber
+                  label="Duration (minutes)"
+                  placeholder="Optional"
+                  type="number"
+                />
+              )}
+            />
+            {/* <form.AppField
+              name="aircraftId"
+              children={(f) => (
+                <f.CBasicSelect
+                  valueAsNumber
+                  label="Aircraft"
+                  placeholder="Optional"
+                  options={aircraftOptions}
+                />
+              )}
+            /> */}
+            <form.AppField
+              name="gradingTemplateId"
+              children={(f) => (
+                <f.CBasicSelect
+                  valueAsNumber
+                  label="Grading Template"
+                  placeholder="Optional"
+                  options={gradingTemplateOptions}
+                />
+              )}
+            />
+          </FieldColumns>
           <form.AppField
             name="description"
             children={(f) => (
@@ -176,7 +179,7 @@ export default function MissionForm({
         <DialogFooter>
           <form.AppForm>
             <form.SubscribeButton
-              label={mode === 'create' ? 'Create' : 'Update'}
+              label={mode === 'create' ? 'Create' : 'Save'}
             />
           </form.AppForm>
         </DialogFooter>

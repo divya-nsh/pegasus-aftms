@@ -73,18 +73,19 @@ const columns: ColumnDef<TTableFeatures, TAreaListItem>[] = ch.columns([
     id: 'actions',
     meta: {
       align: 'center',
+      preventDefaultRowClick: true,
     },
     minSize: 70,
   }),
-  ch.display({
-    header: 'S.No',
-    cell: (info) => info.row.index + 1,
-    size: 70,
-    id: 'index',
-    meta: {
-      align: 'center',
-    },
-  }),
+  // ch.display({
+  //   header: 'S.No',
+  //   cell: (info) => info.row.index + 1,
+  //   size: 70,
+  //   id: 'index',
+  //   meta: {
+  //     align: 'center',
+  //   },
+  // }),
   ch.accessor('code', {
     header: 'Code',
     size: 150,
@@ -100,15 +101,15 @@ const columns: ColumnDef<TTableFeatures, TAreaListItem>[] = ch.columns([
     header: 'Description',
   }),
 
-  ch.accessor('createdAt', {
-    header: 'Created At',
-    cell: (info) => formatDate(info.getValue<Date>(), true),
-  }),
+  // ch.accessor('createdAt', {
+  //   header: 'Created At',
+  //   cell: (info) => formatDate(info.getValue<Date>(), true),
+  // }),
 
-  ch.accessor('updatedAt', {
-    header: 'Updated At',
-    cell: (info) => formatDate(info.getValue<Date>(), true),
-  }),
+  // ch.accessor('updatedAt', {
+  //   header: 'Updated At',
+  //   cell: (info) => formatDate(info.getValue<Date>(), true),
+  // }),
 ])
 
 function RouteComponent() {
@@ -124,6 +125,25 @@ function RouteComponent() {
   })
 
   const [columnFilters, setColumnFilters] = useState<string>('')
+
+  const openModal = (row?: TAreaListItem) => {
+    if (row) {
+      setFormModel({
+        open: true,
+        editItemId: row.id,
+        data: {
+          name: row.name,
+          code: row.code,
+          address: row.address ?? '',
+          description: row.description ?? '',
+        },
+      })
+    } else {
+      setFormModel({
+        open: true,
+      })
+    }
+  }
 
   const deleteMutation = useMutation({
     mutationFn: ({ toDeleteId }: { toDeleteId: number }) => {
@@ -160,16 +180,7 @@ function RouteComponent() {
       onRowAction: (action, rowId) => {
         const row = table.getRow(rowId).original
         if (action === 'edit') {
-          setFormModel({
-            open: true,
-            editItemId: row.id,
-            data: {
-              name: row.name,
-              code: row.code,
-              address: row.address ?? '',
-              description: row.description ?? '',
-            },
-          })
+          openModal(row)
         } else if (action === 'delete') {
           const confirm = window.confirm(
             'Are you sure you want to delete this area?',
@@ -178,6 +189,11 @@ function RouteComponent() {
             deleteMutation.mutate({ toDeleteId: Number(rowId) })
           }
         }
+      },
+      onRowDoubleClick: (rowId) => {
+        const row = table.getRow(rowId).original
+        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
+        if (row) openModal(row)
       },
     },
     state: {
@@ -193,7 +209,7 @@ function RouteComponent() {
         <h1 className="text-xl font-bold">Areas</h1>
         <div className="flex items-center gap-4">
           <RefreshButton query={areasQ} />
-          <Button onClick={() => setFormModel({ open: true })}>
+          <Button onClick={() => openModal()}>
             <PlusIcon />
             New
           </Button>
@@ -219,7 +235,7 @@ function RouteComponent() {
           mode={formModel.editItemId ? 'edit' : 'create'}
           initialFormData={formModel.data}
           toEditId={formModel.editItemId}
-          onOpenChange={(open) => setFormModel({ ...formModel, open })}
+          onClose={() => setFormModel({ open: false })}
         />
       )}
       <BlockingLoaderOverlay show={deleteMutation.isPending} />

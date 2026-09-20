@@ -22,7 +22,7 @@ import PageCard from '@/components/layout/PageCard'
 import RefreshButton from '@/components/table/refresh-button'
 import NewButton from '@/components/buttons/new-button'
 import columns from './-components/columns'
-import { z } from 'zod'
+import z from 'zod'
 
 export const Route = createFileRoute('/events/')({
   component: RouteComponent,
@@ -30,6 +30,10 @@ export const Route = createFileRoute('/events/')({
   errorComponent: ({ error }) => (
     <ErrorAlert error={error} title="Failed to Load Events" />
   ),
+  validateSearch: z.object({
+    modal: z.enum(['create', 'edit']).optional().catch(undefined),
+    docId: z.number().optional().catch(undefined),
+  }),
 })
 
 type TMissionListItem = TrpcRouterOutputs['missions']['getAll']['items'][number]
@@ -68,6 +72,24 @@ function RouteComponent() {
     },
   })
 
+  const openModal = (rowId?: string) => {
+    if (rowId) {
+      const row = table.getRow(rowId).original
+      setFormModel({
+        open: true,
+        editItemId: row.id,
+        data: {
+          ...row,
+          description: row.description ?? '',
+        },
+      })
+    } else {
+      setFormModel({
+        open: true,
+      })
+    }
+  }
+
   const table = useTable({
     ...baseTableOptions<TMissionListItem>(),
     data: missionsQ.data.items,
@@ -81,16 +103,8 @@ function RouteComponent() {
     },
     meta: {
       onRowAction: (action, rowId) => {
-        const row = table.getRow(rowId).original
         if (action === 'edit') {
-          setFormModel({
-            open: true,
-            editItemId: row.id,
-            data: {
-              ...row,
-              description: row.description ?? '',
-            },
-          })
+          openModal(rowId)
         } else if (action === 'delete') {
           const confirm = window.confirm(
             'Are you sure you want to delete this event?',
@@ -100,6 +114,7 @@ function RouteComponent() {
           }
         }
       },
+      onRowDoubleClick: openModal,
     },
     state: {
       globalFilter: columnFilters,
@@ -119,7 +134,7 @@ function RouteComponent() {
         </div>
         <div className="flex items-center gap-4">
           <RefreshButton query={missionsQ} />
-          <NewButton onClick={() => setFormModel({ open: true })} />
+          <NewButton onClick={() => openModal()} />
         </div>
       </div>
       <ErrorAlert error={missionsQ.error} />
@@ -142,7 +157,7 @@ function RouteComponent() {
           mode={formModel.editItemId ? 'edit' : 'create'}
           initialFormData={formModel.data}
           toEditId={formModel.editItemId}
-          onOpenChange={(open) => setFormModel({ ...formModel, open })}
+          onClose={() => setFormModel({ open: false })}
         />
       )}
       <BlockingLoaderOverlay show={deleteMutation.isPending} />

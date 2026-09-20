@@ -6,6 +6,7 @@ import AppCombobox from '@/components/inputs/combox2'
 import { Button } from '@/components/ui/button'
 import { CirclePlusIcon, XIcon } from 'lucide-react'
 import { wait } from '@/lib/utils'
+import { Badge } from '@/components/ui/badge'
 
 export function TemplateAttributesLine({
   attributes,
@@ -52,8 +53,9 @@ export function TemplateAttributesLine({
 
   return (
     <div>
-      <h3 className="text-sm font-semibold border-b pb-2 mb-3 mt-3">
-        Evaluation Attributes
+      <h3 className="text-sm font-semibold border-b pb-2 mb-3 mt-3 flex items-center gap-2">
+        Evaluation Categories{' '}
+        <Badge variant="secondary">{attributes.length}</Badge>
       </h3>
 
       <ul className="grid gap-2 mt-3">
@@ -73,6 +75,7 @@ export function TemplateAttributesLine({
             <p className="text-sm font-semibold ">
               {attribute.attributeId.label}
             </p>
+            <span className="ml-auto text-xs text-muted-foreground">0–100</span>
           </li>
         ))}
         <li>
@@ -86,6 +89,10 @@ export function TemplateAttributesLine({
           />
         </li>
       </ul>
+      <p className="mt-3 flex items-center justify-end gap-2 border-t pt-2 text-sm">
+        <span className="text-muted-foreground">Total Marks</span>
+        <span className="font-semibold">{attributes.length * 100}</span>
+      </p>
     </div>
   )
 }

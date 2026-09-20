@@ -52,6 +52,7 @@ const columns: ColumnDef<TTableFeatures, TMissionListItem>[] = ch.columns([
     id: 'actions',
     meta: {
       align: 'center',
+      preventDefaultRowClick: true,
     },
     minSize: 70,
   }),

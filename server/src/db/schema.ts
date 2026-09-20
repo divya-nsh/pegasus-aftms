@@ -136,6 +136,11 @@ export const missionScheduleTable = snakeCase.table("mission_schedule", {
   ...timeStampts,
 });
 
+export const missionAssignmentGradingStatusEnum = pgEnum(
+  "mission_assignment_grading_status",
+  ["pending", "scored", "exempt"],
+);
+
 // Mission Assigned to whom and there stats
 export const missionAssignmentTable = snakeCase.table(
   "mission_schedule_assignment",
@@ -168,6 +173,10 @@ export const missionAssignmentTable = snakeCase.table(
       precision: 5, // up to 999.99
       scale: 2,
     }),
+    // This is used to check if the assignment is scored or not
+    scoredStatus: missionAssignmentGradingStatusEnum()
+      .notNull()
+      .default("pending"),
     result: missionScheduleStatusEnum(),
     lineNumber: integer(),
     ...timeStampts,
@@ -194,15 +203,17 @@ export const missionAssignmentGradingTable = snakeCase.table(
       .references(() => gradingTemplateAttributeTable.id)
       .notNull(),
     // Can be null if the attribute is not graded on a scale
+    // Label of Score Value
     gradingScaleOptionId: integer().references(
       () => gradingScaleOptionTable.id,
     ),
     weightAtGrading: integer().notNull(), //// frozen copy of templateAttribute.weight
-    // denormalized copy of the grading scale option value for faster lookup
-    scaleOptionValue: numeric({
+    // Final Numberic Score Value When Grading is Completed
+    obtainedScoreValue: numeric({
       precision: 5, // up to 999.99
       scale: 2,
-    }).notNull(),
+    }),
+    status: missionAssignmentGradingStatusEnum().notNull().default("pending"),
     ...timeStampts,
   },
 );

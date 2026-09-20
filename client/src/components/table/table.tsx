@@ -30,6 +30,7 @@ import { ArrowDownIcon, ArrowUpDownIcon, ArrowUpIcon } from 'lucide-react'
 
 type MyColumnMeta = {
   align?: 'left' | 'center' | 'right'
+  preventDefaultRowClick?: boolean
 }
 
 type MyTableMeta = {
@@ -37,6 +38,7 @@ type MyTableMeta = {
     actionType: 'edit' | 'delete' | 'view' | 'print',
     rowId: string,
   ) => void
+  onRowDoubleClick?: (rowId: string) => void
 }
 
 const features = tableFeatures({
@@ -73,6 +75,12 @@ export function baseTableOptions<TData extends RowData>() {
       minSize: 50, // enforced during column resizing
       maxSize: 600, // enforced during column resizing
     },
+    initialState: {
+      pagination: {
+        pageIndex: 0,
+        pageSize: 50,
+      },
+    },
     globalFilterFn: 'includesString',
     // renderFallbackValue: <span>---</span>,
   })
@@ -82,7 +90,7 @@ export function AppTable<TData extends RowData>({
   table,
   className,
   rounded = true,
-  coverFullWidth = false,
+  coverFullWidth = true,
 }: {
   table: ReactTable<typeof features, TData>
   className?: string
@@ -217,6 +225,9 @@ export function AppTable<TData extends RowData>({
           )}
           {table.getRowModel().rows.map((row, i) => (
             <TableRow
+              onDoubleClick={() =>
+                row.table.options.meta?.onRowDoubleClick?.(row.id)
+              }
               key={row.id}
               className={''}
               data-state={row.getIsSelected() && 'selected'}
@@ -238,6 +249,11 @@ export function AppTable<TData extends RowData>({
                       cell.column.getIsResizing() &&
                         'z-20 overflow-visible border-r border-dotted border-ring/60',
                     )}
+                    onClick={(e) => {
+                      if (cell.column.columnDef.meta?.preventDefaultRowClick) {
+                        e.preventDefault()
+                      }
+                    }}
                   >
                     {<table.FlexRender cell={cell} />}
                     {isEmpty && (

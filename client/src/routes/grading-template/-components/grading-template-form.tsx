@@ -135,7 +135,7 @@ export default function GradingTemplateDialog({
                       items={scaleOptions}
                       description={
                         selectedScale
-                          ? `Options: ${selectedScale.options.map((o) => `${o.label} (${+o.upperBound} - ${+o.lowerBound})`).join(', ')}`
+                          ? `Grades: ${selectedScale.options.map((o) => `${o.label} (${+o.upperBound} - ${+o.lowerBound})`).join(', ')}`
                           : `This will be used to grade the attributes.`
                       }
                     />
