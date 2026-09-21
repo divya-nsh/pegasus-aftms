@@ -34,7 +34,7 @@ app.use(
   }),
 );
 
-app.use(serveClient(path.join(process.cwd(), "client-dist")));
+app.use("/", serveClient(path.join(process.cwd(), "client-dist")));
 app.use(morgan("dev"));
 
 app.get("/api", async (req, res) => res.send("Hello World!"));

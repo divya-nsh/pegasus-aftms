@@ -49,28 +49,60 @@ export function EditScheduleRouteComponent({
         mode={viewOnly ? 'view' : 'edit'}
         defaultValues={{
           id: schedule.id,
+          mission: {
+            label: schedule.mission!.name,
+            value: schedule.mission!.id,
+            gradingTemplateId: schedule.mission!.gradingTemplateId!,
+            durationMinutes: schedule.mission!.durationMinutes!,
+          },
           name: schedule.name,
           description: schedule.description || '',
           startDateTime: schedule.startDateTime || '',
           endDateTime: schedule.endDateTime || '',
-          areaId: schedule.areaId as number,
-          missionId: schedule.missionId,
+          area: {
+            label: schedule.area!.name,
+            value: schedule.area!.id,
+          },
           status: schedule.status,
           scheduleNumber: schedule.scheduleNumber,
           remarks: schedule.remarks || '',
           assignments: schedule.assignments.map((assignment) => ({
-            personnelId: assignment.personnelId,
-            aircraftId: assignment.aircraftId,
+            personnel: {
+              label: `${assignment.personnel!.firstName} ${assignment.personnel!.lastName}`,
+              value: assignment.personnel!.id,
+              type: assignment.personnel!.personnelType,
+              qualification: assignment.personnel!.qualification,
+            },
+            aircraft: assignment.aircraft
+              ? {
+                  label: assignment.aircraft.name,
+                  value: assignment.aircraft.id,
+                }
+              : null,
             remarks: assignment.remarks || '',
             attendanceStatus: assignment.attendanceStatus,
-            // score: assignment.score,
-            result: assignment.result,
             takeoffTime: assignment.takeoffTime,
             landingTime: assignment.landingTime,
             aircraftTime: assignment.aircraftTime,
+            briefingTime: null,
+            obtainedGrade: assignment.obtainedGrade
+              ? {
+                  label: assignment.obtainedGrade.label,
+                  value: assignment.obtainedGrade.id,
+                }
+              : null,
+            obtainedScoreValue: toNumber(assignment.obtainedScoreValue),
+            obtainedScorePercentage: toNumber(
+              assignment.obtainedScorePercentage,
+            ),
+            gradingAttributes: [],
           })),
         }}
       />
     </PageCard>
   )
+}
+
+function toNumber(value: string | null) {
+  return value != null ? Number(value) : null
 }

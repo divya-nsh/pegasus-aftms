@@ -207,7 +207,7 @@ export const missionAssignmentGradingTable = snakeCase.table(
     gradingScaleOptionId: integer().references(
       () => gradingScaleOptionTable.id,
     ),
-    weightAtGrading: integer().notNull(), //// frozen copy of templateAttribute.weight
+    weightAtGrading: integer(), //// frozen copy of templateAttribute.weight
     // Final Numberic Score Value When Grading is Completed
     obtainedScoreValue: numeric({
       precision: 5, // up to 999.99

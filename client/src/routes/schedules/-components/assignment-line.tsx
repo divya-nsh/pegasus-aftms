@@ -47,7 +47,6 @@ const defaultAssignmentFormData: ScheduleFormAssignment = {
   attendanceStatus: null,
   aircraft: null,
   // score: null,
-  result: null,
   remarks: '',
   takeoffTime: null,
   landingTime: null,
@@ -312,7 +311,6 @@ export default function AssignmentLine({
           key={gradeIndex}
           gradingTemplateId={gradingTemplateId}
           assignment={values[gradeIndex]}
-          readOnly={mode === 'view'}
           onClose={() => setGradeIndex(null)}
           onSave={(payload) => {
             onChange(

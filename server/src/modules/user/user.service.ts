@@ -1,6 +1,6 @@
 import db, { type DBTransaction } from "#/db/db.js";
 import { userTable } from "#/db/schema.js";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 import roleService from "../role/role.service.js";
 import { TRPCError } from "@trpc/server";

@@ -1,7 +1,7 @@
 import db from "#/db/db.js";
 import { userTable } from "#/db/schema.js";
 import { DEFAULT_ADMIN_ROLE } from "#/config/roles.js";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 
 export async function ensureDefaultAdmin() {

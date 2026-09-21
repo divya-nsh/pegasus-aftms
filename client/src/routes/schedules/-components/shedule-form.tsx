@@ -41,14 +41,45 @@ export default function ScheduleForm3({
   const queryClient = useQueryClient()
 
   const mutation = useMutation({
-    mutationFn: async () => {
+    mutationFn: async (formData: ScheduleFormData) => {
       // const data = schema.parse(unProcessedData)
-      // if (mode === 'view') return
-      // if (mode === 'create') {
-      //   await trpcClient.schedules.create.mutate(data)
-      // } else {
-      //   await trpcClient.schedules.update.mutate({ ...data, id: data.id! })
-      // }
+      if (mode === 'view') return
+      const actionFn =
+        mode === 'create'
+          ? trpcClient.schedules.create
+          : trpcClient.schedules.update
+      await actionFn.mutate({
+        id: formData.id!,
+        missionId: formData.mission.value,
+        name: formData.name,
+        description: formData.description,
+        scheduleNumber: formData.scheduleNumber,
+        startDateTime: formData.startDateTime,
+        endDateTime: formData.endDateTime,
+        aircraftId: formData.mission.value,
+        areaId: formData.area!.value,
+        remarks: formData.remarks,
+        status: 'draft',
+        assignments: formData.assignments.map((assignment) => ({
+          personnelId: assignment.personnel!.value,
+          aircraftId: assignment.aircraft?.value ?? null,
+          attendanceStatus: assignment.attendanceStatus,
+          aircraftTime: assignment.aircraftTime,
+          takeoffTime: assignment.takeoffTime,
+          landingTime: assignment.landingTime,
+          result: null,
+          remarks: assignment.remarks,
+          obtainedGradeId: null,
+          obtainedScoreValue: null,
+          obtainedScorePercentage: null,
+          grades: assignment.gradingAttributes.map((grade) => ({
+            gradingTemplateAttributeId: grade.templateAttribute.value,
+            gradingScaleOptionId: grade.gradingScaleOption?.value ?? null,
+            obtainedScoreValue: grade.obtainedScoreValue,
+            status: grade.status,
+          })),
+        })),
+      })
     },
     onSuccess: () => {
       toast.success('Schedule saved successfully')
@@ -77,9 +108,7 @@ export default function ScheduleForm3({
   const form = useAppForm({
     defaultValues: defaultValues,
     validationLogic: revalidateLogic(),
-    onSubmit: ({ value }) => {
-      // mutation.mutate(value)
-    },
+    onSubmit: ({ value }) => mutation.mutate(value),
     onSubmitInvalid: handleSubmitInvalid,
   })
 
@@ -184,6 +213,7 @@ export default function ScheduleForm3({
             <f.CTextField disabled placeholder="Select Event" label="Event" />
           )}
         />
+
         <FieldColumns>
           <form.AppField
             name="name"

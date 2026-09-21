@@ -35,16 +35,6 @@ export type AircraftFormProps = {
   onClose: () => void
 }
 
-const defaultFormData: AircraftFormData = {
-  name: '',
-  tailNumber: '',
-  serialNumber: '',
-  aircraftType: '',
-  inductionDate: '',
-  remarks: '',
-  status: '',
-}
-
 const aircraftTypeOptions = [
   { label: 'Trainer', value: 'trainer' },
   { label: 'Fighter', value: 'fighter' },
@@ -62,7 +52,7 @@ const statusOptions = [
 export default function AircraftForm({
   mode,
   toEditId,
-  initialFormData = defaultFormData,
+  initialFormData,
   onClose,
 }: AircraftFormProps) {
   const queryClient = useQueryClient()

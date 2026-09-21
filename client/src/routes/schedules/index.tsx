@@ -330,9 +330,9 @@ function RouteComponent() {
           case 'edit':
             navigate({ to: '/schedules/$id/edit', params: { id: rowId } })
             break
-          case 'view':
-            navigate({ to: '/schedules/$id/view', params: { id: rowId } })
-            break
+          // case 'view':
+          //   navigate({ to: '/schedules/$id/view', params: { id: rowId } })
+          //   break
           case 'print':
             void handlePrint(Number(rowId))
             break

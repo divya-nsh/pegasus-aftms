@@ -1,14 +1,14 @@
-import db from "#/db/db.js";
+import db, { type DBTransaction } from "#/db/db.js";
 import { SCHEDULE_NUMBER_PREFIX } from "#/config/constants.js";
 import {
+  missionAssignmentGradingTable,
   missionAssignmentTable,
   missionScheduleTable,
   missionTable,
 } from "#/db/schema.js";
 import { protectedProcedure, router } from "#/trpc.js";
-import userService from "../user/user.service.js";
 import { TRPCError } from "@trpc/server";
-import { eq, type SQL } from "drizzle-orm";
+import { eq } from "drizzle-orm";
 import { z } from "zod";
 import roleService from "../role/role.service.js";
 import {
@@ -33,28 +33,78 @@ async function getScheduleOrThrow(id: number) {
   return row;
 }
 
-async function getTraineeScope(userId: number) {
-  const user = await userService.getById(userId);
-  const personnelId = user?.personnel[0]?.id ?? null;
-  return {
-    isTrainee: user?.role === "trainee",
-    personnelId,
-  };
-}
+const reinsertLineItems = async (
+  tx: DBTransaction,
+  scheduleId: number,
+  payload: z.infer<typeof createSchema>["assignments"],
+) => {
+  const personnelSet = new Set<number>();
 
-async function getMissionOrThrow(id: number) {
-  const [row] = await db
-    .select()
-    .from(missionTable)
-    .where(eq(missionTable.id, id));
-  if (!row) {
-    throw new TRPCError({
-      code: "NOT_FOUND",
-      message: "Event not found",
-    });
+  // Delete all line Items for the schedule
+  await tx
+    .delete(missionAssignmentTable)
+    .where(eq(missionAssignmentTable.scheduleId, scheduleId));
+
+  let i = 0;
+
+  for (const assignment of payload) {
+    if (personnelSet.has(assignment.personnelId)) {
+      throw new TRPCError({
+        code: "BAD_REQUEST",
+        message: "Duplicate personnel in assignments list",
+      });
+    }
+    personnelSet.add(assignment.personnelId);
+
+    const values: typeof missionAssignmentTable.$inferInsert = {
+      scheduleId,
+      lineNumber: i++,
+      personnelId: assignment.personnelId,
+      aircraftId: assignment.aircraftId,
+      attendanceStatus: assignment.attendanceStatus,
+      aircraftTime: assignment.aircraftTime,
+      takeoffTime: assignment.takeoffTime,
+      landingTime: assignment.landingTime,
+      remarks: assignment.remarks,
+      obtainedGradeId: assignment.obtainedGradeId,
+      obtainedScorePercentage: assignment.obtainedScorePercentage
+        ? assignment.obtainedScorePercentage.toString()
+        : null,
+      obtainedScoreValue: assignment.obtainedScoreValue
+        ? assignment.obtainedScoreValue.toString()
+        : null,
+    };
+
+    const [inserted] = await tx
+      .insert(missionAssignmentTable)
+      .values(values)
+      .returning({ id: missionAssignmentTable.id });
+
+    const gradeSet = new Set<number>();
+    for (const grade of assignment.grades) {
+      if (gradeSet.has(grade.gradingTemplateAttributeId)) {
+        throw new TRPCError({
+          code: "BAD_REQUEST",
+          message: "Duplicate grading template attribute in grades list",
+        });
+      }
+      gradeSet.add(grade.gradingTemplateAttributeId);
+    }
+
+    if (assignment.grades.length > 0) {
+      const gradeValues: (typeof missionAssignmentGradingTable.$inferInsert)[] =
+        assignment.grades.map((grade) => ({
+          missionAssignmentId: inserted!.id,
+          gradingTemplateAttributeId: grade.gradingTemplateAttributeId,
+          gradingScaleOptionId: grade.gradingScaleOptionId,
+          obtainedScoreValue: grade.obtainedScoreValue?.toString() ?? null,
+          status: grade.status,
+          weightAtGrading: 100,
+        }));
+      await tx.insert(missionAssignmentGradingTable).values(gradeValues);
+    }
   }
-  return row;
-}
+};
 
 const scheduleRouter = router({
   getAll: protectedProcedure
@@ -147,6 +197,7 @@ const scheduleRouter = router({
             with: {
               personnel: true,
               aircraft: true,
+              obtainedGrade: true,
             },
             where: {
               personnelId: personnelId,
@@ -172,12 +223,12 @@ const scheduleRouter = router({
     }),
 
   create: protectedProcedure.input(createSchema).mutation(async ({ input }) => {
-    const { assignments, missionId, ...data } = input;
+    const { assignments, ...data } = input;
 
     const res = await db.transaction(async (tx) => {
       const values: typeof missionScheduleTable.$inferInsert = {
         scheduleNumber: data.scheduleNumber || crypto.randomUUID().slice(0, 8),
-        missionId: missionId,
+        missionId: data.missionId,
         name: data.name,
         description: data.description,
         startDateTime: data.startDateTime,
@@ -206,15 +257,7 @@ const scheduleRouter = router({
           .set({ scheduleNumber })
           .where(eq(missionScheduleTable.id, created.id));
       }
-      let i = 0;
-      for (const assignment of assignments) {
-        await tx.insert(missionAssignmentTable).values({
-          scheduleId: created.id,
-          lineNumber: i++,
-          ...assignment,
-        });
-      }
-
+      await reinsertLineItems(tx, created.id, assignments);
       return created;
     });
 
@@ -252,26 +295,7 @@ const scheduleRouter = router({
         .delete(missionAssignmentTable)
         .where(eq(missionAssignmentTable.scheduleId, id));
 
-      const personnelSet = new Set<number>();
-
-      let i = 0;
-
-      for (const assignment of assignments) {
-        if (personnelSet.has(assignment.personnelId)) {
-          throw new TRPCError({
-            code: "BAD_REQUEST",
-            message: "Duplicate personnel in assignments list",
-          });
-        }
-
-        personnelSet.add(assignment.personnelId);
-
-        await db.insert(missionAssignmentTable).values({
-          ...assignment,
-          lineNumber: i++,
-          scheduleId: id,
-        });
-      }
+      await reinsertLineItems(tx, id, assignments);
     });
   }),
 

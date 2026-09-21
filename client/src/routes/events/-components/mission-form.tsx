@@ -24,7 +24,7 @@ import { z } from 'zod'
 const schema = z.object({
   name: z.string().min(1, 'Required').min(3),
   description: z.string(),
-  aircraftId: z.number().nullable(),
+  // aircraftId: z.number().nullable(),
   gradingTemplateId: z.number().nullable(),
   durationMinutes: z.number().nullable(),
   missionType: z.string().min(1, 'Required'),
@@ -46,13 +46,13 @@ export default function MissionForm({
   onClose,
 }: MissionFormProps) {
   const queryClient = useQueryClient()
-  const aircraftQ = useSuspenseQuery(trpc.aircraft.getAll.queryOptions())
+  // const aircraftQ = useSuspenseQuery(trpc.aircraft.getAll.queryOptions())
   const gradingTemplateQ = useSuspenseQuery(
     trpc.gradingTemplate.getAll.queryOptions(),
   )
 
   const form = useAppForm({
-    defaultValues: initialFormData ?? defaultValues,
+    defaultValues: initialFormData,
     validators: { onSubmit: schema },
     onSubmit: ({ value }) => mutation.mutateAsync(value),
     onSubmitInvalid: handleSubmitInvalid,
@@ -63,7 +63,7 @@ export default function MissionForm({
       const payload = {
         name: data.name,
         description: data.description,
-        aircraftId: data.aircraftId ? Number(data.aircraftId) : undefined,
+        // aircraftId: data.aircraftId ? Number(data.aircraftId) : undefined,
         gradingTemplateId: data.gradingTemplateId
           ? Number(data.gradingTemplateId)
           : null,
@@ -85,10 +85,10 @@ export default function MissionForm({
     },
   })
 
-  const aircraftOptions = aircraftQ.data.items.map((item) => ({
-    value: item.id,
-    label: item.tailNumber ? `${item.name} (${item.tailNumber})` : item.name,
-  }))
+  // const aircraftOptions = aircraftQ.data.items.map((item) => ({
+  //   value: item.id,
+  //   label: item.tailNumber ? `${item.name} (${item.tailNumber})` : item.name,
+  // }))
 
   const gradingTemplateOptions = gradingTemplateQ.data.items.map((item) => ({
     value: item.id,
@@ -188,11 +188,11 @@ export default function MissionForm({
   )
 }
 
-const defaultValues: MissionFormData = {
-  name: '',
-  description: '',
-  aircraftId: null,
-  gradingTemplateId: null,
-  durationMinutes: null,
-  missionType: defaultMissionTypeId,
-}
+// const defaultValues: MissionFormData = {
+//   name: '',
+//   description: '',
+//   // aircraftId: null,
+//   gradingTemplateId: null,
+//   durationMinutes: null,
+//   missionType: defaultMissionTypeId,
+// }

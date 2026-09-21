@@ -98,11 +98,13 @@ function TableRow({ className, ...props }: React.ComponentProps<'tr'>) {
 }
 
 function TableHead({ className, ...props }: React.ComponentProps<'th'>) {
+  const { fullGridLine } = React.useContext(tableContext)
   return (
     <th
       data-slot="table-head"
       className={cn(
         'h-10 px-4 text-left align-middle font-medium whitespace-nowrap text-foreground [&:has([role=checkbox])]:pr-0',
+        fullGridLine && 'border',
         className,
       )}
       {...props}

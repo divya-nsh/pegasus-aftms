@@ -3,10 +3,16 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
+  "bin": "./dist/index.js",
   "imports": {
     "#/*": "./dist/*"
   },
   "private": true,
+  "pkg": {
+    "assets": [
+      "node_modules/drizzle-orm/**/*"
+    ]
+  },
   "scripts": {
     "start": "node ./dist/index.js",
     "dev": "tsx watch ./src/index.ts",
@@ -23,7 +29,6 @@
   "license": "ISC",
   "type": "module",
   "devDependencies": {
-    "@types/bcrypt": "^6.0.0",
     "@types/cookie-parser": "^1.4.10",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
@@ -42,7 +47,7 @@
     "@repo/shared": "workspace:*",
     "@trpc/server": "^11.18.0",
     "@types/pg": "^8.21.0",
-    "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",

@@ -34,7 +34,12 @@ export const relations = defineRelations({ ...schema }, (r) => ({
       from: r.missionAssignmentTable.aircraftId,
       to: r.aircraftTable.id,
     }),
+    obtainedGrade: r.one.gradingScaleOptionTable({
+      from: r.missionAssignmentTable.obtainedGradeId,
+      to: r.gradingScaleOptionTable.id,
+    }),
   },
+  missionAssignmentGradingTable: {},
   missionScheduleTable: {
     mission: r.one.missionTable({
       from: r.missionScheduleTable.missionId,

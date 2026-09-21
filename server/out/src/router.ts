@@ -12,7 +12,7 @@ import userRouter from "./modules/user/user.router.js";
 import db from "./db/db.js";
 import { userTable } from "./db/schema.js";
 import { eq } from "drizzle-orm";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import mediaRouter from "./modules/media/media.router.js";
 
 export const appRouter = router({

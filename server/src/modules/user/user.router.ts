@@ -2,7 +2,7 @@ import db from "#/db/db.js";
 import { userTable } from "#/db/schema.js";
 import { protectedProcedure, router } from "#/trpc.js";
 import { TRPCError } from "@trpc/server";
-import bcrypt from "bcrypt";
+import bcrypt from "bcryptjs";
 import { and, eq, ne, sql } from "drizzle-orm";
 import { z } from "zod";
 import userService from "./user.service.js";
