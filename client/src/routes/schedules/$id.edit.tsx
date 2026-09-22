@@ -53,7 +53,7 @@ export function EditScheduleRouteComponent({
             label: schedule.mission!.name,
             value: schedule.mission!.id,
             gradingTemplateId: schedule.mission!.gradingTemplateId!,
-            durationMinutes: schedule.mission!.durationMinutes!,
+            durationMinutes: schedule.mission!.durationMinutes,
           },
           name: schedule.name,
           description: schedule.description || '',
@@ -95,7 +95,20 @@ export function EditScheduleRouteComponent({
             obtainedScorePercentage: toNumber(
               assignment.obtainedScorePercentage,
             ),
-            gradingAttributes: [],
+            participantGradings: assignment.participantGradings.map((item) => ({
+              templateAttribute: {
+                label: item.gradingTemplateAttribute!.gradingAttribute!.name!,
+                value: item.gradingTemplateAttribute!.gradingAttribute!.id,
+              },
+              gradingScaleOption: item.gradingScaleOption
+                ? {
+                    label: item.gradingScaleOption!.label,
+                    value: item.gradingScaleOption!.id,
+                  }
+                : null,
+              obtainedScoreValue: toNumber(item.obtainedScoreValue),
+              status: item.status,
+            })),
           })),
         }}
       />

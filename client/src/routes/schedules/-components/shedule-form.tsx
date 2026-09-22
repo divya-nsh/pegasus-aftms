@@ -60,6 +60,7 @@ export default function ScheduleForm3({
         areaId: formData.area!.value,
         remarks: formData.remarks,
         status: 'draft',
+
         assignments: formData.assignments.map((assignment) => ({
           personnelId: assignment.personnel!.value,
           aircraftId: assignment.aircraft?.value ?? null,
@@ -69,10 +70,10 @@ export default function ScheduleForm3({
           landingTime: assignment.landingTime,
           result: null,
           remarks: assignment.remarks,
-          obtainedGradeId: null,
-          obtainedScoreValue: null,
-          obtainedScorePercentage: null,
-          grades: assignment.gradingAttributes.map((grade) => ({
+          obtainedGradeId: assignment.obtainedGrade?.value ?? null,
+          obtainedScoreValue: assignment.obtainedScoreValue ?? null,
+          obtainedScorePercentage: assignment.obtainedScorePercentage ?? null,
+          grades: assignment.participantGradings.map((grade) => ({
             gradingTemplateAttributeId: grade.templateAttribute.value,
             gradingScaleOptionId: grade.gradingScaleOption?.value ?? null,
             obtainedScoreValue: grade.obtainedScoreValue,

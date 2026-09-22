@@ -21,16 +21,15 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Badge } from '@/components/ui/badge'
 import BasicSelect from '@/components/inputs/basic-select'
 import { cn } from '@/lib/utils'
 import type { AssignmentGradingAttribute, ScheduleFormAssignment } from './type'
 
-type GradeRow = ScheduleFormAssignment['gradingAttributes'][number]
+type GradeRow = ScheduleFormAssignment['participantGradings'][number]
 
 type GradeSavePayload = Pick<
   ScheduleFormAssignment,
-  | 'gradingAttributes'
+  | 'participantGradings'
   | 'obtainedGrade'
   | 'obtainedScoreValue'
   | 'obtainedScorePercentage'
@@ -56,8 +55,8 @@ export default function GradeModal({
 
   const [rows, setRows] = useState<Record<number, GradeRow>>(() => {
     const record: Record<number, GradeRow> = {}
-    if (assignment.gradingAttributes.length > 0) {
-      assignment.gradingAttributes.forEach((attribute) => {
+    if (assignment.participantGradings.length > 0) {
+      assignment.participantGradings.forEach((attribute) => {
         record[attribute.templateAttribute.value] = attribute
       })
     } else {
@@ -176,10 +175,10 @@ export default function GradeModal({
       return
     }
 
-    const gradingAttributes: AssignmentGradingAttribute[] = Object.values(rows)
+    const participantGradings: GradeRow[] = Object.values(rows)
 
     onSave({
-      gradingAttributes,
+      participantGradings,
       obtainedGrade:
         totals.gradeId != null
           ? { label: totals.gradeLabel, value: totals.gradeId }

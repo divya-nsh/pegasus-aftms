@@ -15,45 +15,55 @@ export const relations = defineRelations({ ...schema }, (r) => ({
       to: r.userTable.id,
     }),
   },
-  // missionTable: {
-  //   missionSchedule: r.many.missionScheduleTable({
-  //     from: r.missionTable.id,
-  //     to: r.missionScheduleTable.missionId,
-  //   }),
-  // },
-  missionAssignmentTable: {
-    missionSchedule: r.one.missionScheduleTable({
-      from: r.missionAssignmentTable.scheduleId,
-      to: r.missionScheduleTable.id,
-    }),
-    personnel: r.one.personnelTable({
-      from: r.missionAssignmentTable.personnelId,
-      to: r.personnelTable.id,
-    }),
-    aircraft: r.one.aircraftTable({
-      from: r.missionAssignmentTable.aircraftId,
-      to: r.aircraftTable.id,
-    }),
-    obtainedGrade: r.one.gradingScaleOptionTable({
-      from: r.missionAssignmentTable.obtainedGradeId,
-      to: r.gradingScaleOptionTable.id,
-    }),
-  },
-  missionAssignmentGradingTable: {},
+
   missionScheduleTable: {
     mission: r.one.missionTable({
       from: r.missionScheduleTable.missionId,
       to: r.missionTable.id,
     }),
-    assignments: r.many.missionAssignmentTable({
+    assignments: r.many.missionScheduleParticipantTable({
       from: r.missionScheduleTable.id,
-      to: r.missionAssignmentTable.scheduleId,
+      to: r.missionScheduleParticipantTable.missionScheduleId,
     }),
     area: r.one.areaTable({
       from: r.missionScheduleTable.areaId,
       to: r.areaTable.id,
     }),
   },
+
+  missionScheduleParticipantTable: {
+    missionSchedule: r.one.missionScheduleTable({
+      from: r.missionScheduleParticipantTable.missionScheduleId,
+      to: r.missionScheduleTable.id,
+    }),
+    personnel: r.one.personnelTable({
+      from: r.missionScheduleParticipantTable.personnelId,
+      to: r.personnelTable.id,
+    }),
+    aircraft: r.one.aircraftTable({
+      from: r.missionScheduleParticipantTable.aircraftId,
+      to: r.aircraftTable.id,
+    }),
+    obtainedGrade: r.one.gradingScaleOptionTable({
+      from: r.missionScheduleParticipantTable.obtainedGradeId,
+      to: r.gradingScaleOptionTable.id,
+    }),
+    participantGradings: r.many.missionScheduleParticipantGradingTable({
+      from: r.missionScheduleParticipantTable.id,
+      to: r.missionScheduleParticipantGradingTable.missionScheduleParticipantId,
+    }),
+  },
+  missionScheduleParticipantGradingTable: {
+    gradingScaleOption: r.one.gradingScaleOptionTable({
+      from: r.missionScheduleParticipantGradingTable.gradingScaleOptionId,
+      to: r.gradingScaleOptionTable.id,
+    }),
+    gradingTemplateAttribute: r.one.gradingTemplateAttributeTable({
+      from: r.missionScheduleParticipantGradingTable.gradingTemplateAttributeId,
+      to: r.gradingTemplateAttributeTable.id,
+    }),
+  },
+
   gradingScaleTable: {
     options: r.many.gradingScaleOptionTable({
       from: r.gradingScaleTable.id,

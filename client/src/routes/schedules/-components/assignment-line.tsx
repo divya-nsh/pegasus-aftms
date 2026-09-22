@@ -55,7 +55,7 @@ const defaultAssignmentFormData: ScheduleFormAssignment = {
   obtainedGrade: null,
   obtainedScoreValue: null,
   obtainedScorePercentage: null,
-  gradingAttributes: [],
+  participantGradings: [],
 }
 
 export default function AssignmentLine({
@@ -146,11 +146,15 @@ export default function AssignmentLine({
             <TableHeader>
               <TableRow className=" bg-muted/40">
                 <TableHead className="border text-center w-10 ">S.No</TableHead>
-                {['Pilot', 'Aircraft', 'Attendance', 'Grade', 'Remarks'].map(
-                  (header) => (
-                    <TableHead className="border">{header}</TableHead>
-                  ),
-                )}
+                {[
+                  'Personnel',
+                  'Aircraft',
+                  'Attendance',
+                  'Grade',
+                  'Remarks',
+                ].map((header) => (
+                  <TableHead className="border">{header}</TableHead>
+                ))}
                 <TableHead className="border text-center w-10">-</TableHead>
               </TableRow>
             </TableHeader>
@@ -358,7 +362,7 @@ function AssignmentsModal({
     onSubmit: ({ value, meta }) => {
       if (warning) {
         const isConfirm = confirm(
-          'Selected pilots have conflicting schedules. Are you sure you want to add him to line',
+          'Selected Personnel have conflicting schedules. Are you sure you want to add him to line',
         )
         if (!isConfirm) {
           return
@@ -401,7 +405,7 @@ function AssignmentsModal({
       <DialogContent className={'min-w-3xl'}>
         <DialogHeader>
           <DialogTitle>
-            {mode === 'edit' ? 'Edit Pilot' : 'Add Pilots'}
+            {mode === 'edit' ? 'Edit Personnel' : 'Add Personnel'}
           </DialogTitle>
           <DialogDescription className="flex items-center gap-2">
             <ClockIcon size={16} /> {formatDate(startDateTime!, true)} -{' '}
@@ -566,7 +570,7 @@ function AssignmentsModal({
                     onDynamic({ value }) {
                       if (
                         value &&
-                        new Date(value) > new Date(takeoffTime ?? '')
+                        new Date(takeoffTime ?? '') > new Date(value)
                       ) {
                         return 'Landing time must be after takeoff time'
                       }

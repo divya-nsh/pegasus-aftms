@@ -142,11 +142,11 @@ export const missionAssignmentGradingStatusEnum = pgEnum(
 );
 
 // Mission Assigned to whom and there stats
-export const missionAssignmentTable = snakeCase.table(
-  "mission_schedule_assignment",
+export const missionScheduleParticipantTable = snakeCase.table(
+  "mission_schedule_participant",
   {
     id: integer().primaryKey().generatedAlwaysAsIdentity().notNull(),
-    scheduleId: integer()
+    missionScheduleId: integer()
       .references(() => missionScheduleTable.id, {
         onDelete: "cascade",
       })
@@ -178,24 +178,24 @@ export const missionAssignmentTable = snakeCase.table(
       .notNull()
       .default("pending"),
     result: missionScheduleStatusEnum(),
-    lineNumber: integer(),
+    order: integer(),
     ...timeStampts,
   },
   (table) => [
-    uniqueIndex("unique_schedule_id_personnel_id_idx").on(
-      table.scheduleId,
+    uniqueIndex("unique_mission_schedule_id_personnel_id_idx").on(
+      table.missionScheduleId,
       table.personnelId,
     ),
   ],
 );
 
-export const missionAssignmentGradingTable = snakeCase.table(
-  "mission_assignment_grading",
+export const missionScheduleParticipantGradingTable = snakeCase.table(
+  "mission_schedule_participant_grading",
   {
     id: integer().primaryKey().generatedAlwaysAsIdentity(),
     // misison Assignment own the table so we use cascade
-    missionAssignmentId: integer()
-      .references(() => missionAssignmentTable.id, {
+    missionScheduleParticipantId: integer()
+      .references(() => missionScheduleParticipantTable.id, {
         onDelete: "cascade",
       })
       .notNull(),
@@ -216,6 +216,11 @@ export const missionAssignmentGradingTable = snakeCase.table(
     status: missionAssignmentGradingStatusEnum().notNull().default("pending"),
     ...timeStampts,
   },
+  (table) => [
+    uniqueIndex(
+      "unique_mission_schedule_participant_id_grading_template_attribute_id_idx",
+    ).on(table.missionScheduleParticipantId, table.gradingTemplateAttributeId),
+  ],
 );
 
 export const aircraftTable = snakeCase.table("aircraft", {

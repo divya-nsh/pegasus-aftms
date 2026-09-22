@@ -38,7 +38,8 @@ export type ScheduleFormAssignment = {
   } | null
   obtainedScoreValue: number | null
   obtainedScorePercentage: number | null
-  gradingAttributes: AssignmentGradingAttribute[]
+  // gradingAttributes: AssignmentGradingAttribute[]
+  participantGradings: AssignmentGradingAttribute[]
 }
 
 export type ScheduleFormData = {

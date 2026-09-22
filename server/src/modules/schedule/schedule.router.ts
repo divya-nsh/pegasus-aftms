@@ -1,8 +1,8 @@
 import db, { type DBTransaction } from "#/db/db.js";
 import { SCHEDULE_NUMBER_PREFIX } from "#/config/constants.js";
 import {
-  missionAssignmentGradingTable,
-  missionAssignmentTable,
+  missionScheduleParticipantGradingTable,
+  missionScheduleParticipantTable,
   missionScheduleTable,
   missionTable,
 } from "#/db/schema.js";
@@ -35,15 +35,17 @@ async function getScheduleOrThrow(id: number) {
 
 const reinsertLineItems = async (
   tx: DBTransaction,
-  scheduleId: number,
+  missionScheduleId: number,
   payload: z.infer<typeof createSchema>["assignments"],
 ) => {
   const personnelSet = new Set<number>();
 
   // Delete all line Items for the schedule
   await tx
-    .delete(missionAssignmentTable)
-    .where(eq(missionAssignmentTable.scheduleId, scheduleId));
+    .delete(missionScheduleParticipantTable)
+    .where(
+      eq(missionScheduleParticipantTable.missionScheduleId, missionScheduleId),
+    );
 
   let i = 0;
 
@@ -56,9 +58,9 @@ const reinsertLineItems = async (
     }
     personnelSet.add(assignment.personnelId);
 
-    const values: typeof missionAssignmentTable.$inferInsert = {
-      scheduleId,
-      lineNumber: i++,
+    const values: typeof missionScheduleParticipantTable.$inferInsert = {
+      missionScheduleId,
+      order: i++,
       personnelId: assignment.personnelId,
       aircraftId: assignment.aircraftId,
       attendanceStatus: assignment.attendanceStatus,
@@ -76,9 +78,9 @@ const reinsertLineItems = async (
     };
 
     const [inserted] = await tx
-      .insert(missionAssignmentTable)
+      .insert(missionScheduleParticipantTable)
       .values(values)
-      .returning({ id: missionAssignmentTable.id });
+      .returning({ id: missionScheduleParticipantTable.id });
 
     const gradeSet = new Set<number>();
     for (const grade of assignment.grades) {
@@ -92,16 +94,18 @@ const reinsertLineItems = async (
     }
 
     if (assignment.grades.length > 0) {
-      const gradeValues: (typeof missionAssignmentGradingTable.$inferInsert)[] =
+      const gradeValues: (typeof missionScheduleParticipantGradingTable.$inferInsert)[] =
         assignment.grades.map((grade) => ({
-          missionAssignmentId: inserted!.id,
+          missionScheduleParticipantId: inserted!.id,
           gradingTemplateAttributeId: grade.gradingTemplateAttributeId,
           gradingScaleOptionId: grade.gradingScaleOptionId,
           obtainedScoreValue: grade.obtainedScoreValue?.toString() ?? null,
           status: grade.status,
           weightAtGrading: 100,
         }));
-      await tx.insert(missionAssignmentGradingTable).values(gradeValues);
+      await tx
+        .insert(missionScheduleParticipantGradingTable)
+        .values(gradeValues);
     }
   }
 };
@@ -166,8 +170,11 @@ const scheduleRouter = router({
         extras: {
           assignmentsCount: (schedule) =>
             db.$count(
-              missionAssignmentTable,
-              eq(missionAssignmentTable.scheduleId, schedule.id),
+              missionScheduleParticipantTable,
+              eq(
+                missionScheduleParticipantTable.missionScheduleId,
+                schedule.id,
+              ),
             ),
         },
       });
@@ -198,12 +205,22 @@ const scheduleRouter = router({
               personnel: true,
               aircraft: true,
               obtainedGrade: true,
+              participantGradings: {
+                with: {
+                  gradingScaleOption: true,
+                  gradingTemplateAttribute: {
+                    with: {
+                      gradingAttribute: true,
+                    },
+                  },
+                },
+              },
             },
             where: {
               personnelId: personnelId,
             },
             orderBy: {
-              lineNumber: "asc",
+              order: "asc",
             },
           },
         },
@@ -292,8 +309,8 @@ const scheduleRouter = router({
         });
       }
       await db
-        .delete(missionAssignmentTable)
-        .where(eq(missionAssignmentTable.scheduleId, id));
+        .delete(missionScheduleParticipantTable)
+        .where(eq(missionScheduleParticipantTable.missionScheduleId, id));
 
       await reinsertLineItems(tx, id, assignments);
     });
@@ -305,8 +322,13 @@ const scheduleRouter = router({
       await getScheduleOrThrow(input.toDeleteId);
 
       await db
-        .delete(missionAssignmentTable)
-        .where(eq(missionAssignmentTable.scheduleId, input.toDeleteId));
+        .delete(missionScheduleParticipantTable)
+        .where(
+          eq(
+            missionScheduleParticipantTable.missionScheduleId,
+            input.toDeleteId,
+          ),
+        );
 
       const [deleted] = await db
         .delete(missionScheduleTable)
