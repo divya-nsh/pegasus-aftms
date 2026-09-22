@@ -11,7 +11,8 @@
     "dev:server": "pnpm --filter server dev",
     "typecheck": "pnpm -r --parallel typecheck",
     "start": "pnpm --filter server start",
-    "build": "pnpm -r run build"
+    "build": "pnpm -r run build",
+    "build-pkg": "pnpm run build && pnpm --filter server make:exe"
   },
   "keywords": [],
   "author": "",

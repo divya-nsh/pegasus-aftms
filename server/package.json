@@ -10,7 +10,11 @@
   "private": true,
   "pkg": {
     "assets": [
-      "node_modules/drizzle-orm/**/*"
+      "node_modules/drizzle-orm/**/*",
+      "client-dist/**/*"
+    ],
+    "targets": [
+      "node24-win-x64"
     ]
   },
   "scripts": {
@@ -22,7 +26,8 @@
     "db:migrate": "drizzle-kit migrate",
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
-    "db:studio": "drizzle-kit studio"
+    "db:studio": "drizzle-kit studio",
+    "make:exe": "pkg ."
   },
   "keywords": [],
   "author": "",

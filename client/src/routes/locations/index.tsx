@@ -22,7 +22,6 @@ import {
   useSuspenseQuery,
 } from '@tanstack/react-query'
 import type { TrpcRouterOutputs } from 'server/router'
-import { formatDate } from '@/lib/date'
 import FullPageSpinner from '@/components/loaders/page-loader'
 import { ActionMenu } from '@/components/table/action-menu'
 import { toast } from '@/components/ui/toast'
@@ -213,28 +212,30 @@ function RouteComponent() {
   })
 
   return (
-    <PageCard className="space-y-4">
-      <div className="items-center gap-4 border-b mb-4 pb-2 flex justify-between">
-        {/* <SidebarTrigger /> */}
-        {/* <Separator orientation="vertical" className="mx-2" /> */}
-        <h1 className="text-xl font-bold mr-auto">Locations</h1>
-        <RefreshButton query={locationsQ} />
-        <NewButton onClick={() => openModal()} />
-      </div>
-      <ErrorAlert error={locationsQ.error} />
-      <div className=" mb-3 flex items-center justify-between">
-        <SearchInput
-          value={table.state.globalFilter ?? ''}
-          onValueChange={(value) => table.setGlobalFilter(value)}
-          placeholder="Search..."
-          className="shadow-none max-w-75"
-        />
-        <div className="flex items-center gap-2">
-          <ColumnVisibility table={table} />
+    <PageCard className="space-y-4 bg-slate-100 px-2 m-0">
+      <div className="bg-card rounded-lg">
+        <div className="items-center gap-4 border-b px-5 pt-4 mb-4 pb-2 flex justify-between">
+          {/* <SidebarTrigger /> */}
+          {/* <Separator orientation="vertical" className="mx-2" /> */}
+          <h1 className="text-xl font-bold mr-auto">Locations</h1>
+          <RefreshButton query={locationsQ} />
+          <NewButton onClick={() => openModal()} />
         </div>
+        <ErrorAlert error={locationsQ.error} />
+        <div className=" mb-3 flex items-center justify-between px-5">
+          <SearchInput
+            value={table.state.globalFilter ?? ''}
+            onValueChange={(value) => table.setGlobalFilter(value)}
+            placeholder="Search..."
+            className="shadow-none max-w-75"
+          />
+          <div className="flex items-center gap-2">
+            <ColumnVisibility table={table} />
+          </div>
+        </div>
+        <AppTable table={table} className="mt-4 rounded-none" />
+        <TablePagination table={table} className="px-4 p-4" />
       </div>
-      <AppTable table={table} className="mt-4" />
-      <TablePagination table={table} />
 
       {/* Form Modal */}
       {formModel?.open && (

@@ -14,9 +14,9 @@ const db = drizzle({ client: pool, relations });
 export const testConnection = async () => {
   try {
     await db.execute("select 1");
-    console.log("Database connection is OK!!");
+    console.log("✔ Database connection is OK!!");
   } catch (error) {
-    console.error("Database connection failed:", error);
+    console.error("✘ Database connection failed:", error);
     process.exit(1);
   }
 };

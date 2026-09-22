@@ -14,6 +14,7 @@ import { Route as AreaRouteRouteImport } from './routes/area/route'
 import { Route as ComboxRouteImport } from './routes/combox'
 import { Route as DateRouteImport } from './routes/date'
 import { Route as FormGeneratorRouteImport } from './routes/form-generator'
+import { Route as GeneratorRouteImport } from './routes/generator'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as MulticheckRouteImport } from './routes/multicheck'
 import { Route as MyPersonnelRouteImport } from './routes/my-personnel'
@@ -68,6 +69,11 @@ const DateRoute = DateRouteImport.update({
 const FormGeneratorRoute = FormGeneratorRouteImport.update({
   id: '/form-generator',
   path: '/form-generator',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GeneratorRoute = GeneratorRouteImport.update({
+  id: '/generator',
+  path: '/generator',
   getParentRoute: () => rootRouteImport,
 } as any)
 const LoginRoute = LoginRouteImport.update({
@@ -228,6 +234,7 @@ export interface FileRoutesByFullPath {
   '/combox': typeof ComboxRoute
   '/date': typeof DateRoute
   '/form-generator': typeof FormGeneratorRoute
+  '/generator': typeof GeneratorRoute
   '/login': typeof LoginRoute
   '/multicheck': typeof MulticheckRoute
   '/my-personnel': typeof MyPersonnelRoute
@@ -264,6 +271,7 @@ export interface FileRoutesByTo {
   '/combox': typeof ComboxRoute
   '/date': typeof DateRoute
   '/form-generator': typeof FormGeneratorRoute
+  '/generator': typeof GeneratorRoute
   '/login': typeof LoginRoute
   '/multicheck': typeof MulticheckRoute
   '/my-personnel': typeof MyPersonnelRoute
@@ -302,6 +310,7 @@ export interface FileRoutesById {
   '/combox': typeof ComboxRoute
   '/date': typeof DateRoute
   '/form-generator': typeof FormGeneratorRoute
+  '/generator': typeof GeneratorRoute
   '/login': typeof LoginRoute
   '/multicheck': typeof MulticheckRoute
   '/my-personnel': typeof MyPersonnelRoute
@@ -341,6 +350,7 @@ export interface FileRouteTypes {
     | '/combox'
     | '/date'
     | '/form-generator'
+    | '/generator'
     | '/login'
     | '/multicheck'
     | '/my-personnel'
@@ -377,6 +387,7 @@ export interface FileRouteTypes {
     | '/combox'
     | '/date'
     | '/form-generator'
+    | '/generator'
     | '/login'
     | '/multicheck'
     | '/my-personnel'
@@ -414,6 +425,7 @@ export interface FileRouteTypes {
     | '/combox'
     | '/date'
     | '/form-generator'
+    | '/generator'
     | '/login'
     | '/multicheck'
     | '/my-personnel'
@@ -452,6 +464,7 @@ export interface RootRouteChildren {
   ComboxRoute: typeof ComboxRoute
   DateRoute: typeof DateRoute
   FormGeneratorRoute: typeof FormGeneratorRoute
+  GeneratorRoute: typeof GeneratorRoute
   LoginRoute: typeof LoginRoute
   MulticheckRoute: typeof MulticheckRoute
   MyPersonnelRoute: typeof MyPersonnelRoute
@@ -518,6 +531,13 @@ declare module '@tanstack/react-router' {
       path: '/form-generator'
       fullPath: '/form-generator'
       preLoaderRoute: typeof FormGeneratorRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/generator': {
+      id: '/generator'
+      path: '/generator'
+      fullPath: '/generator'
+      preLoaderRoute: typeof GeneratorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/login': {
@@ -751,6 +771,7 @@ const rootRouteChildren: RootRouteChildren = {
   ComboxRoute: ComboxRoute,
   DateRoute: DateRoute,
   FormGeneratorRoute: FormGeneratorRoute,
+  GeneratorRoute: GeneratorRoute,
   LoginRoute: LoginRoute,
   MulticheckRoute: MulticheckRoute,
   MyPersonnelRoute: MyPersonnelRoute,

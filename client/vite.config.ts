@@ -31,7 +31,7 @@ const config = defineConfig({
     },
   },
   build: {
-    outDir: '../server/client',
+    outDir: '../server/client-dist',
     emptyOutDir: true,
   },
 })

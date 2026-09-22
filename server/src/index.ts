@@ -8,16 +8,21 @@ import { SESSION_COOKIE_NAME } from "./config/constants.js";
 import db, { testConnection } from "./db/db.js";
 import { ensureDefaultAdmin } from "./modules/user/seed-admin.js";
 import morgan from "morgan";
-import path from "path";
+import path from "node:path";
 import {
   MEDIA_FOLDER_PATH,
   mediaService,
 } from "./modules/media/media.service.js";
 import { serveClient } from "./middleware/serveClient.js";
 import { DrizzleSessionStore } from "./lib/drizzle-session-store.js";
+import { fileURLToPath } from "node:url";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app = express();
 const port = 6001;
+
+const clientPath = path.join(__dirname, "client-dist");
 
 app.use(
   session({
@@ -34,7 +39,7 @@ app.use(
   }),
 );
 
-app.use("/", serveClient(path.join(process.cwd(), "client-dist")));
+app.use("/", serveClient(clientPath));
 app.use(morgan("dev"));
 
 app.get("/api", async (req, res) => res.send("Hello World!"));
@@ -64,6 +69,7 @@ app.use(
 
 app.listen(port, async () => {
   console.log(`Server is listening on port ${port}!`);
+  console.log(`URL: http://localhost:${port}`);
   await testConnection();
   await ensureDefaultAdmin();
 });
