@@ -7,7 +7,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '../ui/select'
-import { startTransition, useMemo, useState } from 'react'
+import { useMemo, useState } from 'react'
 
 const CLEAR_VALUE = '$$CLEAR_VALUE$$'
 
@@ -17,6 +17,7 @@ export type BasicSelectOption = {
   label: string
   value: number | string
   subLabel?: string
+  _style?: React.CSSProperties
 }
 
 export type BasicSelectProps = {
@@ -55,10 +56,6 @@ export default function BasicSelect({
       value: item.value.toString(),
     }))
   }, [options])
-
-  console.log({
-    value,
-  })
 
   return (
     <Select
@@ -115,6 +112,7 @@ export default function BasicSelect({
               key={item.value}
               value={item.value.toString()}
               className={cn(item.subLabel ? '' : '')}
+              style={item._style}
             >
               <span>{item.label}</span>
               {item.subLabel ? (

@@ -35,7 +35,7 @@ type MyColumnMeta = {
 
 type MyTableMeta = {
   onRowAction?: (
-    actionType: 'edit' | 'delete' | 'view' | 'print',
+    actionType: 'edit' | 'delete' | 'view' | 'print' | 'grade',
     rowId: string,
   ) => void
   onRowDoubleClick?: (rowId: string) => void

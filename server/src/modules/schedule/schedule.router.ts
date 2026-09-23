@@ -14,6 +14,7 @@ import roleService from "../role/role.service.js";
 import {
   createSchema,
   missionStatusSchema,
+  updateAssignmentGradesSchema,
   updateSchema,
 } from "./schedule.schema.js";
 import type { TMissionStatus } from "./schedule.schema.js";
@@ -315,6 +316,14 @@ const scheduleRouter = router({
       await reinsertLineItems(tx, id, assignments);
     });
   }),
+
+  updateAssignmentGrades: protectedProcedure
+    .input(updateAssignmentGradesSchema)
+    .mutation(async ({ input }) => {
+      await db.transaction(async (tx) => {
+        await reinsertLineItems(tx, input.scheduleId, input.assignments);
+      });
+    }),
 
   delete: protectedProcedure
     .input(z.object({ toDeleteId: z.number() }))

@@ -65,7 +65,7 @@ export function CBasicSelect({
   valueAsNumber = false,
   onCommited,
   ...props
-}: Omit<BasicSelectFieldProps, 'value' | 'errors' | 'onBlur'> & {
+}: Omit<BasicSelectFieldProps, 'errors' | 'onBlur'> & {
   emptyAsNull?: boolean
   valueAsNumber?: boolean
   /**
@@ -78,7 +78,6 @@ export function CBasicSelect({
 
   return (
     <BasicSelectField
-      {...props}
       value={field.state.value}
       onValueChange={(value) => {
         if (valueAsNumber) {
@@ -94,6 +93,7 @@ export function CBasicSelect({
       }}
       errors={isInvalid ? field.state.meta.errors : undefined}
       onBlur={() => field.handleBlur()}
+      {...props}
     />
   )
 }

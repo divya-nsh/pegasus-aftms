@@ -53,7 +53,7 @@ export default function TextField({
 }
 
 export type BasicSelectFieldProps = {
-  label: string
+  label?: string
   errors?: Array<{ message?: string } | undefined>
 } & BasicSelectProps
 
@@ -67,9 +67,11 @@ export function BasicSelectField({
 
   return (
     <Field className={cn(className)} data-invalid={!!errors}>
-      <FieldLabel htmlFor={id} required={rest.required}>
-        {label}
-      </FieldLabel>
+      {label && (
+        <FieldLabel htmlFor={id} required={rest.required}>
+          {label}
+        </FieldLabel>
+      )}
       <BasicSelect {...rest} aria-invalid={!!errors} />
       {errors && <FieldError errors={errors} />}
     </Field>

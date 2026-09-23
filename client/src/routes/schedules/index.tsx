@@ -23,13 +23,14 @@ import { createColumnHelper, useTable } from '@tanstack/react-table'
 import type { ColumnDef } from '@tanstack/react-table'
 import {
   CalendarClockIcon,
+  ClipboardCheckIcon,
   EyeIcon,
   PencilIcon,
   PrinterIcon,
   TrashIcon,
 } from 'lucide-react'
 import { endOfDay, parseISO, startOfDay } from 'date-fns'
-import { useMemo, useRef, useState } from 'react'
+import { Suspense, useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { useReactToPrint } from 'react-to-print'
 import { ActionMenu } from '@/components/table/action-menu'
@@ -56,6 +57,7 @@ import {
   fetchScheduleForPrint,
 } from './-components/print-schedule'
 import type { PrintableSchedule } from './-components/print-schedule'
+import { GraddingSheetModal } from './$id.grade'
 
 export const Route = createFileRoute('/schedules/')({
   component: RouteComponent,
@@ -84,7 +86,7 @@ const columns: ColumnDef<TTableFeatures, TScheduleListItem>[] = ch.columns([
     header: '-',
     cell: (info) => {
       const handleClick =
-        (action: 'edit' | 'view' | 'delete' | 'print') => () => {
+        (action: 'edit' | 'view' | 'delete' | 'print' | 'grade') => () => {
           info.table.options.meta?.onRowAction?.(action, info.row.id)
         }
       return (
@@ -101,6 +103,12 @@ const columns: ColumnDef<TTableFeatures, TScheduleListItem>[] = ch.columns([
               Print
             </DropdownMenuItem>
           </AccessControl>
+
+          <DropdownMenuItem onClick={handleClick('grade')}>
+            <ClipboardCheckIcon className="h-4 w-4" />
+            Grading sheet
+          </DropdownMenuItem>
+
           <AccessControl module="schedule" action="edit">
             <DropdownMenuItem onClick={handleClick('edit')}>
               <PencilIcon className="h-4 w-4" />
@@ -208,6 +216,9 @@ const columns: ColumnDef<TTableFeatures, TScheduleListItem>[] = ch.columns([
 ])
 
 function RouteComponent() {
+  const [gradingSheetScheduleId, setGradingSheetScheduleId] = useState<
+    number | null
+  >(null)
   const schedulesQ = useSuspenseQuery(trpc.schedules.getAll.queryOptions({}))
   const queryClient = useQueryClient()
   const navigate = useNavigate()
@@ -336,6 +347,9 @@ function RouteComponent() {
           case 'print':
             void handlePrint(Number(rowId))
             break
+          case 'grade':
+            setGradingSheetScheduleId(Number(rowId))
+            break
           case 'delete': {
             const confirm = window.confirm(
               'Are you sure you want to delete this event schedule?',
@@ -436,6 +450,12 @@ function RouteComponent() {
         </div>
       ) : null}
       <BlockingLoaderOverlay show={deleteMutation.isPending || isPrinting} />
+      {gradingSheetScheduleId && (
+        <GraddingSheetModal
+          scheduleId={gradingSheetScheduleId}
+          onClose={() => setGradingSheetScheduleId(null)}
+        />
+      )}
     </PageCard>
   )
 }

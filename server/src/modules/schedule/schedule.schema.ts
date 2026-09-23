@@ -69,3 +69,8 @@ export const createSchema = z.object({
 export const updateSchema = createSchema.extend({
   id: z.number(),
 });
+
+export const updateAssignmentGradesSchema = z.object({
+  scheduleId: z.number(),
+  assignments: createSchema.shape.assignments,
+});
