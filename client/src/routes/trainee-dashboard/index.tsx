@@ -371,7 +371,7 @@ const flyingHoursChartConfig = {
   },
 } satisfies ChartConfig
 
-function FlyingHoursChartCard() {
+export function FlyingHoursChartCard() {
   return (
     <Card className="min-w-[320px] flex-1">
       <CardHeader>

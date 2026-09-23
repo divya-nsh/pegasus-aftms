@@ -142,6 +142,29 @@ function RouteComponent() {
     },
   })
 
+  const openModal = (rowId?: string) => {
+    const row = rowId ? table.getRow(rowId).original : null
+    if (!row) {
+      setFormModel({ open: true })
+    } else {
+      setFormModel({
+        open: true,
+        editItemId: row.id,
+        data: {
+          name: row.name,
+          notes: row.notes ?? '',
+          options: row.options.map((option) => ({
+            id: option.id,
+            label: option.label,
+            point: Number(option.point),
+            lowerBound: Number(option.lowerBound),
+            upperBound: Number(option.upperBound),
+          })),
+        },
+      })
+    }
+  }
+
   const table = useTable({
     ...baseTableOptions<TGradingScaleListItem>(),
     data: gradingScaleQ.data.items,
@@ -155,17 +178,8 @@ function RouteComponent() {
     },
     meta: {
       onRowAction: (action, rowId) => {
-        const row = table.getRow(rowId).original
         if (action === 'edit') {
-          setFormModel({
-            open: true,
-            editItemId: row.id,
-            data: {
-              name: row.name,
-              notes: row.notes ?? '',
-              options: toFormOptions(row.options),
-            },
-          })
+          openModal(rowId)
         } else if (action === 'delete') {
           const confirm = window.confirm(
             'Are you sure you want to delete this grading scale?',
@@ -175,6 +189,7 @@ function RouteComponent() {
           }
         }
       },
+      onRowDoubleClick: (rowId) => openModal(rowId),
     },
     globalFilterFn: 'includesString',
   })

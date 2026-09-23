@@ -1,4 +1,4 @@
-import db from "#/db/db.js";
+import db, { type DBTransaction } from "#/db/db.js";
 import { gradingScaleOptionTable, gradingScaleTable } from "#/db/schema.js";
 import { diffIds } from "#/lib/diffIds.js";
 import { TRPCError } from "@trpc/server";
@@ -128,29 +128,20 @@ class GradingScaleService {
           message: "Grading scale not found",
         });
       }
-      const existingOptionsIds = await this.getOptionsIdSet(id);
+      const existingOptionsIds = await this.getOptionsIds(tx, id);
 
       const { toInsert, toUpdate, toDelete } = diffIds(
         values.options,
         existingOptionsIds,
       );
 
-      if (toInsert.length > 0) {
-        await tx.insert(gradingScaleOptionTable).values(
-          toInsert.map((option) => ({
-            gradingScaleId: id,
-            label: option.label,
-            point: String(option.point),
-            lowerBound: String(option.lowerBound),
-            upperBound: String(option.upperBound),
-          })),
-        );
-      }
+      console.log(toDelete, toUpdate, toInsert);
 
       if (toDelete.length > 0) {
-        await tx
+        const deleted = await tx
           .delete(gradingScaleOptionTable)
           .where(inArray(gradingScaleOptionTable.id, toDelete));
+        console.log(deleted);
       }
 
       for (const updateItem of toUpdate) {
@@ -165,34 +156,17 @@ class GradingScaleService {
           .where(eq(gradingScaleOptionTable.id, id));
       }
 
-      // for (const newOption of values.options) {
-      //   if (existingOptionsIdSet.has(newOption.id)) {
-      //     await tx
-      //       .update(gradingScaleOptionTable)
-      //       .set({
-      //         label: newOption.label,
-      //         point: String(newOption.point),
-      //         lowerBound: String(newOption.lowerBound),
-      //         upperBound: String(newOption.upperBound),
-      //       })
-      //       .where(eq(gradingScaleOptionTable.id, newOption.id));
-      //   }
-      // }
-
-      // // Delete and Re-insert the options again
-      // await tx
-      //   .delete(gradingScaleOptionTable)
-      //   .where(eq(gradingScaleOptionTable.gradingScaleId, id));
-
-      await tx.insert(gradingScaleOptionTable).values(
-        values.options.map((option) => ({
-          gradingScaleId: id,
-          label: option.label,
-          point: String(option.point),
-          lowerBound: String(option.lowerBound),
-          upperBound: String(option.upperBound),
-        })),
-      );
+      if (toInsert.length > 0) {
+        await tx.insert(gradingScaleOptionTable).values(
+          toInsert.map((option) => ({
+            gradingScaleId: id,
+            label: option.label,
+            point: String(option.point),
+            lowerBound: String(option.lowerBound),
+            upperBound: String(option.upperBound),
+          })),
+        );
+      }
 
       return scale;
     });
@@ -214,8 +188,8 @@ class GradingScaleService {
     return scale;
   }
 
-  async getOptionsIdSet(gradingScaleId: number) {
-    const options = await db.query.gradingScaleOptionTable.findMany({
+  async getOptionsIds(tx: DBTransaction, gradingScaleId: number) {
+    const options = await tx.query.gradingScaleOptionTable.findMany({
       columns: {
         id: true,
       },

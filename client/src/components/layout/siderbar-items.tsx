@@ -19,6 +19,11 @@ export const navItems: NavItems[] = [
     title: 'Operations',
     items: [
       {
+        title: 'Instructor Dashboard',
+        url: '/instructor-dashboard',
+        icon: ShieldCheckIcon,
+      },
+      {
         title: 'Event Schedule',
         url: '/schedules',
         icon: CalendarClockIcon,
@@ -27,11 +32,6 @@ export const navItems: NavItems[] = [
         title: 'Trainee Dashboard',
         url: '/trainee-dashboard',
         icon: GraduationCapIcon,
-      },
-      {
-        title: 'Instructor Dashboard',
-        url: '/instructor-dashboard',
-        icon: ShieldCheckIcon,
       },
     ],
   },

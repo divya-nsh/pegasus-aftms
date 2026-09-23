@@ -23,6 +23,7 @@ import { ScaleOptionsLine } from './options-line'
 const scoreValue = z.number().min(0, 'Min 0').max(100, 'Max 100')
 
 const optionSchema = z.object({
+  id: z.number().optional().nullable(),
   label: z.string().trim().min(1, 'Required'),
   point: scoreValue,
   lowerBound: scoreValue,

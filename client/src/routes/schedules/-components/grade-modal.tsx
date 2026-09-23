@@ -23,7 +23,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox'
 import BasicSelect from '@/components/inputs/basic-select'
 import { cn } from '@/lib/utils'
-import type { AssignmentGradingAttribute, ScheduleFormAssignment } from './type'
+import type { ScheduleFormAssignment } from './type'
 
 type GradeRow = ScheduleFormAssignment['participantGradings'][number]
 

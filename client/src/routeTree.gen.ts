@@ -27,6 +27,7 @@ import { Route as GradingAttributeIndexRouteImport } from './routes/grading-attr
 import { Route as GradingScaleIndexRouteImport } from './routes/grading-scale/index'
 import { Route as GradingTemplateIndexRouteImport } from './routes/grading-template/index'
 import { Route as InstructorDashboardIndexRouteImport } from './routes/instructor-dashboard/index'
+import { Route as InstructorDashboardDummyRouteImport } from './routes/instructor-dashboard/dummy'
 import { Route as LocationsIndexRouteImport } from './routes/locations/index'
 import { Route as PersonnelIndexRouteImport } from './routes/personnel/index'
 import { Route as PersonnelCreateRouteImport } from './routes/personnel/create'
@@ -44,6 +45,7 @@ import { Route as UsersCreateRouteImport } from './routes/users/create'
 import { Route as PersonnelIdEditRouteImport } from './routes/personnel/$id.edit'
 import { Route as RolesIdEditRouteImport } from './routes/roles/$id.edit'
 import { Route as SchedulesIdEditRouteImport } from './routes/schedules/$id.edit'
+import { Route as SchedulesIdGradeRouteImport } from './routes/schedules/$id.grade'
 import { Route as UsersIdEditRouteImport } from './routes/users/$id.edit'
 
 const IndexRoute = IndexRouteImport.update({
@@ -137,6 +139,12 @@ const InstructorDashboardIndexRoute =
     path: '/instructor-dashboard/',
     getParentRoute: () => rootRouteImport,
   } as any)
+const InstructorDashboardDummyRoute =
+  InstructorDashboardDummyRouteImport.update({
+    id: '/instructor-dashboard/dummy',
+    path: '/instructor-dashboard/dummy',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const LocationsIndexRoute = LocationsIndexRouteImport.update({
   id: '/locations/',
   path: '/locations/',
@@ -222,6 +230,11 @@ const SchedulesIdEditRoute = SchedulesIdEditRouteImport.update({
   path: '/schedules/$id/edit',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SchedulesIdGradeRoute = SchedulesIdGradeRouteImport.update({
+  id: '/schedules/$id/grade',
+  path: '/schedules/$id/grade',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const UsersIdEditRoute = UsersIdEditRouteImport.update({
   id: '/users/$id/edit',
   path: '/users/$id/edit',
@@ -240,6 +253,7 @@ export interface FileRoutesByFullPath {
   '/my-personnel': typeof MyPersonnelRoute
   '/test': typeof TestRoute
   '/upload': typeof UploadRoute
+  '/instructor-dashboard/dummy': typeof InstructorDashboardDummyRoute
   '/personnel/create': typeof PersonnelCreateRoute
   '/reports/print-schedule': typeof ReportsPrintScheduleRoute
   '/roles/create': typeof RolesCreateRoute
@@ -264,6 +278,7 @@ export interface FileRoutesByFullPath {
   '/personnel/$id/edit': typeof PersonnelIdEditRoute
   '/roles/$id/edit': typeof RolesIdEditRoute
   '/schedules/$id/edit': typeof SchedulesIdEditRoute
+  '/schedules/$id/grade': typeof SchedulesIdGradeRoute
   '/users/$id/edit': typeof UsersIdEditRoute
 }
 export interface FileRoutesByTo {
@@ -277,6 +292,7 @@ export interface FileRoutesByTo {
   '/my-personnel': typeof MyPersonnelRoute
   '/test': typeof TestRoute
   '/upload': typeof UploadRoute
+  '/instructor-dashboard/dummy': typeof InstructorDashboardDummyRoute
   '/personnel/create': typeof PersonnelCreateRoute
   '/reports/print-schedule': typeof ReportsPrintScheduleRoute
   '/roles/create': typeof RolesCreateRoute
@@ -301,6 +317,7 @@ export interface FileRoutesByTo {
   '/personnel/$id/edit': typeof PersonnelIdEditRoute
   '/roles/$id/edit': typeof RolesIdEditRoute
   '/schedules/$id/edit': typeof SchedulesIdEditRoute
+  '/schedules/$id/grade': typeof SchedulesIdGradeRoute
   '/users/$id/edit': typeof UsersIdEditRoute
 }
 export interface FileRoutesById {
@@ -316,6 +333,7 @@ export interface FileRoutesById {
   '/my-personnel': typeof MyPersonnelRoute
   '/test': typeof TestRoute
   '/upload': typeof UploadRoute
+  '/instructor-dashboard/dummy': typeof InstructorDashboardDummyRoute
   '/personnel/create': typeof PersonnelCreateRoute
   '/reports/print-schedule': typeof ReportsPrintScheduleRoute
   '/roles/create': typeof RolesCreateRoute
@@ -340,6 +358,7 @@ export interface FileRoutesById {
   '/personnel/$id/edit': typeof PersonnelIdEditRoute
   '/roles/$id/edit': typeof RolesIdEditRoute
   '/schedules/$id/edit': typeof SchedulesIdEditRoute
+  '/schedules/$id/grade': typeof SchedulesIdGradeRoute
   '/users/$id/edit': typeof UsersIdEditRoute
 }
 export interface FileRouteTypes {
@@ -356,6 +375,7 @@ export interface FileRouteTypes {
     | '/my-personnel'
     | '/test'
     | '/upload'
+    | '/instructor-dashboard/dummy'
     | '/personnel/create'
     | '/reports/print-schedule'
     | '/roles/create'
@@ -380,6 +400,7 @@ export interface FileRouteTypes {
     | '/personnel/$id/edit'
     | '/roles/$id/edit'
     | '/schedules/$id/edit'
+    | '/schedules/$id/grade'
     | '/users/$id/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -393,6 +414,7 @@ export interface FileRouteTypes {
     | '/my-personnel'
     | '/test'
     | '/upload'
+    | '/instructor-dashboard/dummy'
     | '/personnel/create'
     | '/reports/print-schedule'
     | '/roles/create'
@@ -417,6 +439,7 @@ export interface FileRouteTypes {
     | '/personnel/$id/edit'
     | '/roles/$id/edit'
     | '/schedules/$id/edit'
+    | '/schedules/$id/grade'
     | '/users/$id/edit'
   id:
     | '__root__'
@@ -431,6 +454,7 @@ export interface FileRouteTypes {
     | '/my-personnel'
     | '/test'
     | '/upload'
+    | '/instructor-dashboard/dummy'
     | '/personnel/create'
     | '/reports/print-schedule'
     | '/roles/create'
@@ -455,6 +479,7 @@ export interface FileRouteTypes {
     | '/personnel/$id/edit'
     | '/roles/$id/edit'
     | '/schedules/$id/edit'
+    | '/schedules/$id/grade'
     | '/users/$id/edit'
   fileRoutesById: FileRoutesById
 }
@@ -470,6 +495,7 @@ export interface RootRouteChildren {
   MyPersonnelRoute: typeof MyPersonnelRoute
   TestRoute: typeof TestRoute
   UploadRoute: typeof UploadRoute
+  InstructorDashboardDummyRoute: typeof InstructorDashboardDummyRoute
   PersonnelCreateRoute: typeof PersonnelCreateRoute
   ReportsPrintScheduleRoute: typeof ReportsPrintScheduleRoute
   RolesCreateRoute: typeof RolesCreateRoute
@@ -493,6 +519,7 @@ export interface RootRouteChildren {
   PersonnelIdEditRoute: typeof PersonnelIdEditRoute
   RolesIdEditRoute: typeof RolesIdEditRoute
   SchedulesIdEditRoute: typeof SchedulesIdEditRoute
+  SchedulesIdGradeRoute: typeof SchedulesIdGradeRoute
   UsersIdEditRoute: typeof UsersIdEditRoute
 }
 
@@ -624,6 +651,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof InstructorDashboardIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/instructor-dashboard/dummy': {
+      id: '/instructor-dashboard/dummy'
+      path: '/instructor-dashboard/dummy'
+      fullPath: '/instructor-dashboard/dummy'
+      preLoaderRoute: typeof InstructorDashboardDummyRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/locations/': {
       id: '/locations/'
       path: '/locations'
@@ -743,6 +777,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SchedulesIdEditRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/schedules/$id/grade': {
+      id: '/schedules/$id/grade'
+      path: '/schedules/$id/grade'
+      fullPath: '/schedules/$id/grade'
+      preLoaderRoute: typeof SchedulesIdGradeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/users/$id/edit': {
       id: '/users/$id/edit'
       path: '/users/$id/edit'
@@ -777,6 +818,7 @@ const rootRouteChildren: RootRouteChildren = {
   MyPersonnelRoute: MyPersonnelRoute,
   TestRoute: TestRoute,
   UploadRoute: UploadRoute,
+  InstructorDashboardDummyRoute: InstructorDashboardDummyRoute,
   PersonnelCreateRoute: PersonnelCreateRoute,
   ReportsPrintScheduleRoute: ReportsPrintScheduleRoute,
   RolesCreateRoute: RolesCreateRoute,
@@ -800,6 +842,7 @@ const rootRouteChildren: RootRouteChildren = {
   PersonnelIdEditRoute: PersonnelIdEditRoute,
   RolesIdEditRoute: RolesIdEditRoute,
   SchedulesIdEditRoute: SchedulesIdEditRoute,
+  SchedulesIdGradeRoute: SchedulesIdGradeRoute,
   UsersIdEditRoute: UsersIdEditRoute,
 }
 export const routeTree = rootRouteImport

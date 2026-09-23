@@ -92,3 +92,14 @@ export const calcAge = (birthDate: Date | string) => {
 
 export const wait = async (ms: number) =>
   new Promise((resolve) => setTimeout(resolve, ms))
+
+export const makeFullName = (
+  p: {
+    firstName?: string | null
+    lastName?: string | null
+  } | null,
+) => {
+  if (!p) return ''
+  const { firstName, lastName } = p
+  return [firstName, lastName].filter(Boolean).join(' ')
+}

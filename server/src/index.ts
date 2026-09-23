@@ -64,6 +64,20 @@ app.use(
   createExpressMiddleware({
     router: appRouter,
     createContext: createContext,
+    onError: ({ error, ctx, path, input }) => {
+      if (error.code === "INTERNAL_SERVER_ERROR") {
+        console.error("Server Error Occured in API");
+        console.dir(
+          {
+            reqUrl: path,
+            error,
+            reqBody: input,
+            userId: ctx?.user?.id,
+          },
+          { depth: 10 },
+        );
+      }
+    },
   }),
 );
 
