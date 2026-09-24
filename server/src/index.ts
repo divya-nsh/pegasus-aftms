@@ -16,13 +16,14 @@ import {
 import { serveClient } from "./middleware/serveClient.js";
 import { DrizzleSessionStore } from "./lib/drizzle-session-store.js";
 import { fileURLToPath } from "node:url";
+import fs from "node:fs";
 
-const __dirname = path.dirname(fileURLToPath(import.meta.url));
+const appDirname = path.dirname(fileURLToPath(import.meta.url));
 
 const app = express();
 const port = 6001;
 
-const clientPath = path.join(__dirname, "client-dist");
+const clientPath = resolveClientPath(appDirname);
 
 app.use(
   session({
@@ -84,6 +85,26 @@ app.use(
 app.listen(port, async () => {
   console.log(`Server is listening on port ${port}!`);
   console.log(`URL: http://localhost:${port}`);
+  const indexHtml = path.join(clientPath, "index.html");
+  if (fs.existsSync(indexHtml)) {
+    console.log(`Serving client from ${clientPath}`);
+  } else {
+    console.error(`Client build not found at ${clientPath}`);
+  }
   await testConnection();
   await ensureDefaultAdmin();
 });
+
+function resolveClientPath(entryDir: string) {
+  const besideEntry = path.join(entryDir, "client-dist");
+  const packageRoot = path.join(entryDir, "..", "client-dist");
+
+  // `node dist/index.js` serves a client build copied next to the entry.
+  // The executable mounts `pkg.assets` at the snapshot package root, so
+  // `client-dist/**/*` is `../client-dist` from `dist/index.js`.
+  if (fs.existsSync(path.join(besideEntry, "index.html"))) {
+    return besideEntry;
+  }
+
+  return packageRoot;
+}

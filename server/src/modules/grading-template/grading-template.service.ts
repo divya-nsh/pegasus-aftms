@@ -3,14 +3,16 @@ import {
   gradingTemplateAttributeTable,
   gradingTemplateTable,
 } from "#/db/schema.js";
+import { diffIds } from "#/lib/diffIds.js";
 import { TRPCError } from "@trpc/server";
-import { and, eq, ne, sql } from "drizzle-orm";
+import { and, eq, inArray, ne, sql } from "drizzle-orm";
 
 type TCreateGradingTemplate = {
   name: string;
   notes: string;
   gradingScaleId: number;
   attributes: {
+    id?: number | null;
     attributeId: number;
     weight: number;
   }[];
@@ -140,18 +142,49 @@ class GradingTemplateService {
         });
       }
 
-      await tx
-        .delete(gradingTemplateAttributeTable)
+      const existingAttributesIds = await db
+        .select({ id: gradingTemplateAttributeTable.id })
+        .from(gradingTemplateAttributeTable)
         .where(eq(gradingTemplateAttributeTable.gradingTemplateId, id));
 
-      await tx.insert(gradingTemplateAttributeTable).values(
-        values.attributes.map((attr, index) => ({
-          gradingTemplateId: id,
-          attributeId: attr.attributeId,
-          weight: attr.weight,
-          sortOrder: index,
-        })),
+      const { toInsert, toUpdate, toDelete } = diffIds(
+        values.attributes.map((v, i) => ({ ...v, sortOrder: i })),
+        existingAttributesIds.map((attr) => attr.id),
       );
+
+      if (toDelete.length > 0) {
+        await tx
+          .delete(gradingTemplateAttributeTable)
+          .where(inArray(gradingTemplateAttributeTable.id, toDelete));
+      }
+
+      for (const updateItem of toUpdate) {
+        if (!updateItem.id) continue;
+        await tx
+          .update(gradingTemplateAttributeTable)
+          .set({
+            attributeId: updateItem.attributeId,
+            weight: updateItem.weight,
+            sortOrder: updateItem.sortOrder,
+          })
+          .where(
+            and(
+              eq(gradingTemplateAttributeTable.gradingTemplateId, id),
+              eq(gradingTemplateAttributeTable.id, updateItem.id),
+            ),
+          );
+      }
+
+      if (toInsert.length > 0) {
+        await tx.insert(gradingTemplateAttributeTable).values(
+          toInsert.map((attr) => ({
+            gradingTemplateId: id,
+            attributeId: attr.attributeId,
+            weight: attr.weight,
+            sortOrder: attr.sortOrder,
+          })),
+        );
+      }
 
       return template;
     });

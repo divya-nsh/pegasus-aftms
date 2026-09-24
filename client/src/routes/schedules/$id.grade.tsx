@@ -34,6 +34,7 @@ import {
 import MissionStatusBadge from './-components/mission-stage-bar'
 import toast from 'react-hot-toast'
 import { BlockingLoaderOverlay } from '@/components/loaders/BlockingLoader'
+import { ATTENDANCE_STATUS_OPTIONS } from '@/config/attendance'
 
 export const Route = createFileRoute('/schedules/$id/grade')({
   component: RouteComponent,
@@ -53,6 +54,7 @@ type TRowData = {
   personnel: {
     fullName: string
   }
+  attendanceStatus: 'present' | 'absent' | 'excused' | null
 
   gradingAttributes: {
     gradingAttributeId: number
@@ -75,8 +77,6 @@ type TGradingScaleOption = {
 }
 
 function RouteComponent() {
-  const parmas = Route.useParams()
-
   return (
     <PageCard>
       <div className="px-3 pb-2 border-b">
@@ -158,7 +158,7 @@ function formatStartEndTime(start: string | null, end: string | null) {
   if (!end && start) return formatDate(start, true)
   if (isSameDay(start!, end!)) {
     // Compact Format if same day
-    return `${format(start!, 'dd MMM YYY')} , ${format(start!, 'hh:mm')} - ${format(end!, 'hh:mm')}`
+    return `${format(start!, 'dd MMM yyy')} , ${format(start!, 'hh:mm')} - ${format(end!, 'hh:mm')}`
   }
   return `${formatDate(start!, true)} - ${formatDate(end!, true)}`
 }
@@ -238,6 +238,7 @@ export function GraddingSheetModal({
         personnel: {
           fullName: makeFullName(assignment.personnel),
         },
+        attendanceStatus: assignment.attendanceStatus ?? null,
         gradingAttributes: templateQ.data.gradingTemplateAttributes.map(
           (attribute) => {
             const existingGrading = existingGradingMap.get(
@@ -265,6 +266,7 @@ export function GraddingSheetModal({
       return rowData
     }),
     onSubmit: async ({ value }) => {
+      console.log(value)
       const scale = templateQ.data.gradingScale?.options ?? []
       const incompleteNames: string[] = []
 
@@ -307,7 +309,7 @@ export function GraddingSheetModal({
           return {
             personnelId: assignment.personnelId,
             aircraftId: assignment.aircraftId ?? null,
-            attendanceStatus: assignment.attendanceStatus,
+            attendanceStatus: row.attendanceStatus,
             aircraftTime: assignment.aircraftTime,
             takeoffTime: assignment.takeoffTime,
             landingTime: assignment.landingTime,
@@ -421,14 +423,14 @@ export function GraddingSheetModal({
                 <TableRow className="bg-muted/80">
                   <TableHead>S.No</TableHead>
                   <TableHead>Name</TableHead>
+                  <TableHead className="text-center ">Attendance</TableHead>
+                  <TableHead className="text-center ">Total Score</TableHead>
+                  <TableHead className="text-center ">Overall Grade</TableHead>
                   {templateQ.data.gradingTemplateAttributes.map((attribute) => (
                     <TableHead key={attribute.id} className="min-w-25 max-w-52">
                       {attribute.gradingAttribute!.name}
                     </TableHead>
                   ))}
-
-                  <TableHead className="text-center ">Total Score</TableHead>
-                  <TableHead className="text-center ">Overall Grade</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -450,9 +452,64 @@ export function GraddingSheetModal({
                       </div>
                     </TableHead>
 
+                    <TableCell className="px-2">
+                      <form.AppField
+                        validators={{
+                          onChange: ({ value }) => {
+                            if (!value) return 'Required'
+                          },
+                        }}
+                        name={`[${rowIndex}].attendanceStatus`}
+                        children={(f) => {
+                          return (
+                            <f.CBasicSelect
+                              options={ATTENDANCE_STATUS_OPTIONS}
+                            />
+                          )
+                        }}
+                      />
+                    </TableCell>
+
+                    <form.Subscribe
+                      selector={(f) => f.values[rowIndex]}
+                      children={(s) => {
+                        const stats = calcPersonGrades(
+                          s.gradingAttributes,
+                          templateQ.data.gradingScale?.options ?? [],
+                        )
+
+                        return (
+                          <>
+                            <TableHead className="text-center">
+                              {stats.isAllGraded ? (
+                                <>
+                                  {stats.totalScore}{' '}
+                                  <span className="text-muted-foreground">
+                                    / {stats.maxMarks}
+                                  </span>
+                                </>
+                              ) : (
+                                '-'
+                              )}
+                            </TableHead>
+                            <TableHead className="text-center font-semibold">
+                              {stats.isAllGraded ? (
+                                <>
+                                  {stats.percentage}%.{' '}
+                                  {stats.overallGrade?.label}
+                                </>
+                              ) : (
+                                '-'
+                              )}
+                            </TableHead>
+                          </>
+                        )
+                      }}
+                    />
+
                     {templateQ.data.gradingTemplateAttributes.map(
                       (attribute, attributeIndex) => (
-                        <TableCell key={attribute.id}>
+                        <TableCell key={attribute.id} className="px-2">
                           <form.AppField
                             validators={{
                               onChange: ({ value }) => {
@@ -476,65 +533,33 @@ export function GraddingSheetModal({
                                 `[${rowIndex}].gradingAttributes[${attributeIndex}]`,
                               )
                               return (
-                                <f.CBasicSelect
-                                  className={
-                                    gridAttribute.status === 'exempt'
-                                      ? ' text-orange-700'
-                                      : ''
-                                  }
-                                  options={gradesOptions}
-                                  value={gridAttribute.gradingOptionId}
-                                  onValueChange={(value) => {
-                                    handleGradeChange(
-                                      rowIndex,
-                                      attributeIndex,
-                                      value ? Number(value) : null,
-                                    )
-                                  }}
-                                />
+                                <>
+                                  <f.CBasicSelect
+                                    className={
+                                      gridAttribute.status === 'exempt'
+                                        ? ' text-orange-700'
+                                        : ''
+                                    }
+                                    options={gradesOptions}
+                                    value={gridAttribute.gradingOptionId}
+                                    onValueChange={(value) => {
+                                      handleGradeChange(
+                                        rowIndex,
+                                        attributeIndex,
+                                        value ? Number(value) : null,
+                                      )
+                                    }}
+                                  />
+                                  <span className="text-muted-foreground text-sm px-1 w-full block">
+                                    {gridAttribute.obtainedScoreValue ?? ''}
+                                  </span>
+                                </>
                               )
                             }}
                           />
                         </TableCell>
                       ),
                     )}
-
-                    <form.Subscribe
-                      selector={(f) => f.values[rowIndex]}
-                      children={(s) => {
-                        const stats = calcPersonGrades(
-                          s.gradingAttributes,
-                          templateQ.data.gradingScale?.options ?? [],
-                        )
-
-                        return (
-                          <>
-                            <TableHead className="text-center ">
-                              {stats.isAllGraded ? (
-                                <>
-                                  {stats.totalScore}{' '}
-                                  <span className="text-muted-foreground">
-                                    / {stats.maxMarks}
-                                  </span>
-                                </>
-                              ) : (
-                                '-'
-                              )}
-                            </TableHead>
-                            <TableHead className="text-center ">
-                              {stats.isAllGraded ? (
-                                <>
-                                  {stats.percentage}%.{' '}
-                                  {stats.overallGrade?.label}
-                                </>
-                              ) : (
-                                '-'
-                              )}
-                            </TableHead>
-                          </>
-                        )
-                      }}
-                    />
                   </TableRow>
                 ))}
               </TableBody>

@@ -135,8 +135,6 @@ class GradingScaleService {
         existingOptionsIds,
       );
 
-      console.log(toDelete, toUpdate, toInsert);
-
       if (toDelete.length > 0) {
         const deleted = await tx
           .delete(gradingScaleOptionTable)
@@ -211,14 +209,14 @@ function validateOptions(options: TGradingScaleOption[]) {
     });
   }
 
-  const sorted = [...options].sort((a, b) => a.lowerBound - b.lowerBound);
+  // const sorted = [...options].sort((a, b) => a.lowerBound - b.lowerBound);
 
-  if (sorted[0]!.lowerBound !== 0) {
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message: "Range must start at 0",
-    });
-  }
+  // if (sorted[0]!.lowerBound !== 0) {
+  //   throw new TRPCError({
+  //     code: "BAD_REQUEST",
+  //     message: "Range must start at 0",
+  //   });
+  // }
 
   const nameSet = new Set<string>();
 
@@ -254,19 +252,19 @@ function validateOptions(options: TGradingScaleOption[]) {
     }
   });
 
-  for (let i = 0; i < sorted.length - 1; i++) {
-    if (sorted[i]!.upperBound + 1 !== sorted[i + 1]!.lowerBound) {
-      throw new TRPCError({
-        code: "BAD_REQUEST",
-        message: `Ranges have a gap or overlap missing range from ${sorted[i]!.upperBound + 1} to ${sorted[i + 1]!.lowerBound - 1}`,
-      });
-    }
-  }
+  // for (let i = 0; i < sorted.length - 1; i++) {
+  //   if (sorted[i]!.upperBound + 1 !== sorted[i + 1]!.lowerBound) {
+  //     throw new TRPCError({
+  //       code: "BAD_REQUEST",
+  //       message: `Ranges have a gap or overlap missing range from ${sorted[i]!.upperBound + 1} to ${sorted[i + 1]!.lowerBound - 1}`,
+  //     });
+  //   }
+  // }
 
-  if (sorted.at(-1)!.upperBound !== 100) {
-    throw new TRPCError({
-      code: "BAD_REQUEST",
-      message: "Range must end at 100",
-    });
-  }
+  // if (sorted.at(-1)!.upperBound !== 100) {
+  //   throw new TRPCError({
+  //     code: "BAD_REQUEST",
+  //     message: "Range must end at 100",
+  //   });
+  // }
 }

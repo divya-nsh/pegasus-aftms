@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 export const attributeSchema = z.object({
+  id: z.int().optional().nullable(),
   attributeId: z
     .object({
       label: z.string(),

@@ -30,7 +30,7 @@ import {
   TrashIcon,
 } from 'lucide-react'
 import { endOfDay, parseISO, startOfDay } from 'date-fns'
-import { Suspense, useMemo, useRef, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { flushSync } from 'react-dom'
 import { useReactToPrint } from 'react-to-print'
 import { ActionMenu } from '@/components/table/action-menu'
@@ -86,7 +86,8 @@ const columns: ColumnDef<TTableFeatures, TScheduleListItem>[] = ch.columns([
     header: '-',
     cell: (info) => {
       const handleClick =
-        (action: 'edit' | 'view' | 'delete' | 'print' | 'grade') => () => {
+        (action: 'edit' | 'view' | 'delete' | 'print' | 'grade' | 'evaluate') =>
+        () => {
           info.table.options.meta?.onRowAction?.(action, info.row.id)
         }
       return (
@@ -107,6 +108,10 @@ const columns: ColumnDef<TTableFeatures, TScheduleListItem>[] = ch.columns([
           <DropdownMenuItem onClick={handleClick('grade')}>
             <ClipboardCheckIcon className="h-4 w-4" />
             Grading sheet
+          </DropdownMenuItem>
+          <DropdownMenuItem onClick={handleClick('evaluate')}>
+            <CalendarClockIcon className="h-4 w-4" />
+            Evaluate
           </DropdownMenuItem>
 
           <AccessControl module="schedule" action="edit">
@@ -347,8 +352,14 @@ function RouteComponent() {
           case 'print':
             void handlePrint(Number(rowId))
             break
-          case 'grade':
-            setGradingSheetScheduleId(Number(rowId))
+          // case 'grade':
+          //   setGradingSheetScheduleId(Number(rowId))
+          //   break
+          case 'evaluate':
+            navigate({
+              to: '/schedules/$id/evaluate',
+              params: { id: rowId },
+            })
             break
           case 'delete': {
             const confirm = window.confirm(

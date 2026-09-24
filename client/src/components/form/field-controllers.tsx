@@ -78,7 +78,7 @@ export function CBasicSelect({
 
   return (
     <BasicSelectField
-      value={field.state.value}
+      value={field.state.value ?? null}
       onValueChange={(value) => {
         if (valueAsNumber) {
           if (!value) {

@@ -51,6 +51,10 @@ export function TemplateAttributesLine({
     inputRef.current?.scrollIntoView({ behavior: 'smooth' })
   }
 
+  const removeItem = (idx: number) => {
+    setAttributes(attributes.filter((_, i) => i !== idx))
+  }
+
   return (
     <div>
       <h3 className="text-sm font-semibold border-b pb-2 mb-3 mt-3 flex items-center gap-2">
@@ -68,6 +72,7 @@ export function TemplateAttributesLine({
               variant="ghost-destructive"
               size="icon-sm"
               className="text-destructive"
+              onClick={() => removeItem(index)}
             >
               <XIcon className="size-4 " />
             </Button>

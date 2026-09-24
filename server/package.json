@@ -11,11 +11,14 @@
   "pkg": {
     "assets": [
       "node_modules/drizzle-orm/**/*",
-      "client-dist/**/*"
+      "client-dist/**/*",
+      "dist/client-dist/**/*"
     ],
     "targets": [
       "node24-win-x64"
-    ]
+    ],
+    "public": true,
+    "bytecode": false
   },
   "scripts": {
     "start": "node ./dist/index.js",
@@ -27,7 +30,7 @@
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
     "db:studio": "drizzle-kit studio",
-    "make:exe": "pkg ."
+    "make:exe": "pnpm build && pkg ."
   },
   "keywords": [],
   "author": "",

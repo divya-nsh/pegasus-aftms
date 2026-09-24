@@ -1,12 +1,14 @@
-import express, {
-  type Request,
-  type Response,
-  type NextFunction,
-} from "express";
-import path from "path";
+import fs from "node:fs";
+import path from "node:path";
+import type { NextFunction, Request, Response } from "express";
+import mime from "mime-types";
 
 /**
  *  !!!!! Must be Carefull with Middleware don't Cache index.html but cache static assets for better performance. This is crucial for SPA routing to work correctly without serving stale content.
+ *
+ * Reads with `fs` instead of `res.sendFile` / `express.static`. Those use the
+ * `send` package, which cannot read files inside a pkg snapshot. `fs.readFile`
+ * can.
  */
 
 export const serveClient = (
@@ -15,35 +17,64 @@ export const serveClient = (
 ) => {
   const indexPath = path.join(clientPath, "index.html");
 
-  const staticMiddleware = express.static(clientPath, {
-    // maxAge: "8h",
-    etag: true,
-    index: false,
-  });
+  const sendDiskFile = (
+    res: Response,
+    filePath: string,
+    noCache: boolean,
+    next: NextFunction,
+  ) => {
+    fs.readFile(filePath, (err, data) => {
+      if (err) {
+        next(err);
+        return;
+      }
+
+      const contentType = mime.lookup(filePath) || "application/octet-stream";
+      res.setHeader("Content-Type", contentType);
+      res.setHeader(
+        "Cache-Control",
+        noCache
+          ? "no-cache, no-store, must-revalidate"
+          : "public, max-age=28800",
+      );
+      res.send(data);
+    });
+  };
 
   return (req: Request, res: Response, next: NextFunction) => {
     const reqPath = req.path;
 
-    // 🔴 Ignore API or custom backend routes
-    if (ignorePaths.some((p) => reqPath.startsWith(p))) {
-      return next();
+    if (ignorePaths.some((prefix) => reqPath.startsWith(prefix))) {
+      next();
+      return;
     }
 
-    // 🟡 Never cache index.html
+    if (req.method !== "GET" && req.method !== "HEAD") {
+      next();
+      return;
+    }
+
     if (reqPath === "/" || reqPath === "/index.html") {
-      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-      return res.sendFile(indexPath, (err) => {
-        if (err) next(err);
-      });
+      sendDiskFile(res, indexPath, true, next);
+      return;
     }
 
-    // 🟢 Serve static assets
-    staticMiddleware(req, res, () => {
-      // 🔁 SPA fallback
-      res.setHeader("Cache-Control", "no-cache, no-store, must-revalidate");
-      res.sendFile(indexPath, (err) => {
-        if (err) next(err);
-      });
+    const relativePath = reqPath.replace(/^[/\\]+/, "");
+    const filePath = path.normalize(path.join(clientPath, relativePath));
+    const relativeToRoot = path.relative(clientPath, filePath);
+
+    if (relativeToRoot.startsWith("..") || path.isAbsolute(relativeToRoot)) {
+      next();
+      return;
+    }
+
+    fs.stat(filePath, (err, stat) => {
+      if (!err && stat.isFile()) {
+        sendDiskFile(res, filePath, path.extname(filePath) === ".html", next);
+        return;
+      }
+
+      sendDiskFile(res, indexPath, true, next);
     });
   };
 };

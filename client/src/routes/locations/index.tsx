@@ -212,7 +212,7 @@ function RouteComponent() {
   })
 
   return (
-    <PageCard className="space-y-4 bg-slate-100 px-2 m-0">
+    <PageCard className="space-y-4 bg-gray-100 px-2 m-0 border">
       <div className="bg-card rounded-lg">
         <div className="items-center gap-4 border-b px-5 pt-4 mb-4 pb-2 flex justify-between">
           {/* <SidebarTrigger /> */}
@@ -233,7 +233,10 @@ function RouteComponent() {
             <ColumnVisibility table={table} />
           </div>
         </div>
-        <AppTable table={table} className="mt-4 rounded-none" />
+        <AppTable
+          table={table}
+          className="mt-4 rounded-none border-l-0 border-r-0"
+        />
         <TablePagination table={table} className="px-4 p-4" />
       </div>
 

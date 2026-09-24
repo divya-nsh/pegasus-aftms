@@ -74,3 +74,25 @@ export const updateAssignmentGradesSchema = z.object({
   scheduleId: z.number(),
   assignments: createSchema.shape.assignments,
 });
+
+const optionalDate = z.preprocess(
+  (value) => (value === "" ? null : value),
+  z.coerce.date().nullable().optional(),
+);
+
+export const updateAssignmentSchema = z.object({
+  scheduleId: z.number(),
+  assignmentId: z.number(),
+  aircraftId: z.int().nullable(),
+  attendanceStatus: z
+    .enum(["present", "absent", "excused"])
+    .nullable(),
+  aircraftTime: optionalDate,
+  takeoffTime: optionalDate,
+  landingTime: optionalDate,
+  remarks: optionalText,
+  obtainedGradeId: z.int().nullable(),
+  obtainedScoreValue: z.number().nullable(),
+  obtainedScorePercentage: z.number().min(0).max(100).nullable(),
+  grades: z.array(assignmentGradeSchema).default([]),
+});

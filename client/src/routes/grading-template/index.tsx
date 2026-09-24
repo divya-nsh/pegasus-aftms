@@ -162,6 +162,7 @@ function RouteComponent() {
                 value: row.gradingScaleId,
               },
               attributes: row.gradingTemplateAttributes.map((attribute) => ({
+                id: attribute.id,
                 attributeId: {
                   label: attribute.gradingAttribute!.name,
                   value: attribute.attributeId,

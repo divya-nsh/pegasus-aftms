@@ -45,6 +45,7 @@ import { Route as UsersCreateRouteImport } from './routes/users/create'
 import { Route as PersonnelIdEditRouteImport } from './routes/personnel/$id.edit'
 import { Route as RolesIdEditRouteImport } from './routes/roles/$id.edit'
 import { Route as SchedulesIdEditRouteImport } from './routes/schedules/$id.edit'
+import { Route as SchedulesIdEvaluateRouteImport } from './routes/schedules/$id.evaluate'
 import { Route as SchedulesIdGradeRouteImport } from './routes/schedules/$id.grade'
 import { Route as UsersIdEditRouteImport } from './routes/users/$id.edit'
 
@@ -230,6 +231,11 @@ const SchedulesIdEditRoute = SchedulesIdEditRouteImport.update({
   path: '/schedules/$id/edit',
   getParentRoute: () => rootRouteImport,
 } as any)
+const SchedulesIdEvaluateRoute = SchedulesIdEvaluateRouteImport.update({
+  id: '/schedules/$id/evaluate',
+  path: '/schedules/$id/evaluate',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SchedulesIdGradeRoute = SchedulesIdGradeRouteImport.update({
   id: '/schedules/$id/grade',
   path: '/schedules/$id/grade',
@@ -278,6 +284,7 @@ export interface FileRoutesByFullPath {
   '/personnel/$id/edit': typeof PersonnelIdEditRoute
   '/roles/$id/edit': typeof RolesIdEditRoute
   '/schedules/$id/edit': typeof SchedulesIdEditRoute
+  '/schedules/$id/evaluate': typeof SchedulesIdEvaluateRoute
   '/schedules/$id/grade': typeof SchedulesIdGradeRoute
   '/users/$id/edit': typeof UsersIdEditRoute
 }
@@ -317,6 +324,7 @@ export interface FileRoutesByTo {
   '/personnel/$id/edit': typeof PersonnelIdEditRoute
   '/roles/$id/edit': typeof RolesIdEditRoute
   '/schedules/$id/edit': typeof SchedulesIdEditRoute
+  '/schedules/$id/evaluate': typeof SchedulesIdEvaluateRoute
   '/schedules/$id/grade': typeof SchedulesIdGradeRoute
   '/users/$id/edit': typeof UsersIdEditRoute
 }
@@ -358,6 +366,7 @@ export interface FileRoutesById {
   '/personnel/$id/edit': typeof PersonnelIdEditRoute
   '/roles/$id/edit': typeof RolesIdEditRoute
   '/schedules/$id/edit': typeof SchedulesIdEditRoute
+  '/schedules/$id/evaluate': typeof SchedulesIdEvaluateRoute
   '/schedules/$id/grade': typeof SchedulesIdGradeRoute
   '/users/$id/edit': typeof UsersIdEditRoute
 }
@@ -400,6 +409,7 @@ export interface FileRouteTypes {
     | '/personnel/$id/edit'
     | '/roles/$id/edit'
     | '/schedules/$id/edit'
+    | '/schedules/$id/evaluate'
     | '/schedules/$id/grade'
     | '/users/$id/edit'
   fileRoutesByTo: FileRoutesByTo
@@ -439,6 +449,7 @@ export interface FileRouteTypes {
     | '/personnel/$id/edit'
     | '/roles/$id/edit'
     | '/schedules/$id/edit'
+    | '/schedules/$id/evaluate'
     | '/schedules/$id/grade'
     | '/users/$id/edit'
   id:
@@ -479,6 +490,7 @@ export interface FileRouteTypes {
     | '/personnel/$id/edit'
     | '/roles/$id/edit'
     | '/schedules/$id/edit'
+    | '/schedules/$id/evaluate'
     | '/schedules/$id/grade'
     | '/users/$id/edit'
   fileRoutesById: FileRoutesById
@@ -519,6 +531,7 @@ export interface RootRouteChildren {
   PersonnelIdEditRoute: typeof PersonnelIdEditRoute
   RolesIdEditRoute: typeof RolesIdEditRoute
   SchedulesIdEditRoute: typeof SchedulesIdEditRoute
+  SchedulesIdEvaluateRoute: typeof SchedulesIdEvaluateRoute
   SchedulesIdGradeRoute: typeof SchedulesIdGradeRoute
   UsersIdEditRoute: typeof UsersIdEditRoute
 }
@@ -777,6 +790,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SchedulesIdEditRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/schedules/$id/evaluate': {
+      id: '/schedules/$id/evaluate'
+      path: '/schedules/$id/evaluate'
+      fullPath: '/schedules/$id/evaluate'
+      preLoaderRoute: typeof SchedulesIdEvaluateRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/schedules/$id/grade': {
       id: '/schedules/$id/grade'
       path: '/schedules/$id/grade'
@@ -842,6 +862,7 @@ const rootRouteChildren: RootRouteChildren = {
   PersonnelIdEditRoute: PersonnelIdEditRoute,
   RolesIdEditRoute: RolesIdEditRoute,
   SchedulesIdEditRoute: SchedulesIdEditRoute,
+  SchedulesIdEvaluateRoute: SchedulesIdEvaluateRoute,
   SchedulesIdGradeRoute: SchedulesIdGradeRoute,
   UsersIdEditRoute: UsersIdEditRoute,
 }

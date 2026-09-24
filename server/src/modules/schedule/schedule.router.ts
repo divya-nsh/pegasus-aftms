@@ -4,17 +4,17 @@ import {
   missionScheduleParticipantGradingTable,
   missionScheduleParticipantTable,
   missionScheduleTable,
-  missionTable,
 } from "#/db/schema.js";
 import { protectedProcedure, router } from "#/trpc.js";
 import { TRPCError } from "@trpc/server";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { z } from "zod";
 import roleService from "../role/role.service.js";
 import {
   createSchema,
   missionStatusSchema,
   updateAssignmentGradesSchema,
+  updateAssignmentSchema,
   updateSchema,
 } from "./schedule.schema.js";
 import type { TMissionStatus } from "./schedule.schema.js";
@@ -325,6 +325,90 @@ const scheduleRouter = router({
       });
     }),
 
+  updateAssignment: protectedProcedure
+    .input(updateAssignmentSchema)
+    .mutation(async ({ input }) => {
+      const [participant] = await db
+        .select()
+        .from(missionScheduleParticipantTable)
+        .where(
+          and(
+            eq(missionScheduleParticipantTable.id, input.assignmentId),
+            eq(
+              missionScheduleParticipantTable.missionScheduleId,
+              input.scheduleId,
+            ),
+          ),
+        );
+
+      if (!participant) {
+        throw new TRPCError({
+          code: "NOT_FOUND",
+          message: "Personnel assignment not found on this schedule",
+        });
+      }
+
+      const gradeSet = new Set<number>();
+      for (const grade of input.grades) {
+        if (gradeSet.has(grade.gradingTemplateAttributeId)) {
+          throw new TRPCError({
+            code: "BAD_REQUEST",
+            message: "Duplicate grading template attribute in grades list",
+          });
+        }
+        gradeSet.add(grade.gradingTemplateAttributeId);
+      }
+
+      const hasAircraft = input.aircraftId != null;
+      const scoredStatus = deriveScoredStatus(input.grades);
+
+      await db.transaction(async (tx) => {
+        await tx
+          .update(missionScheduleParticipantTable)
+          .set({
+            aircraftId: input.aircraftId,
+            attendanceStatus: input.attendanceStatus,
+            aircraftTime: hasAircraft ? (input.aircraftTime ?? null) : null,
+            takeoffTime: hasAircraft ? (input.takeoffTime ?? null) : null,
+            landingTime: hasAircraft ? (input.landingTime ?? null) : null,
+            remarks: input.remarks,
+            obtainedGradeId: input.obtainedGradeId,
+            obtainedScoreValue:
+              input.obtainedScoreValue != null
+                ? input.obtainedScoreValue.toString()
+                : null,
+            obtainedScorePercentage:
+              input.obtainedScorePercentage != null
+                ? input.obtainedScorePercentage.toString()
+                : null,
+            scoredStatus,
+          })
+          .where(eq(missionScheduleParticipantTable.id, input.assignmentId));
+
+        await tx
+          .delete(missionScheduleParticipantGradingTable)
+          .where(
+            eq(
+              missionScheduleParticipantGradingTable.missionScheduleParticipantId,
+              input.assignmentId,
+            ),
+          );
+
+        if (input.grades.length > 0) {
+          await tx.insert(missionScheduleParticipantGradingTable).values(
+            input.grades.map((grade) => ({
+              missionScheduleParticipantId: input.assignmentId,
+              gradingTemplateAttributeId: grade.gradingTemplateAttributeId,
+              gradingScaleOptionId: grade.gradingScaleOptionId,
+              obtainedScoreValue: grade.obtainedScoreValue?.toString() ?? null,
+              status: grade.status,
+              weightAtGrading: 100,
+            })),
+          );
+        }
+      });
+    }),
+
   delete: protectedProcedure
     .input(z.object({ toDeleteId: z.number() }))
     .mutation(async ({ input }) => {
@@ -440,4 +524,21 @@ const ALLOWED_STATUS_TRANSITIONS: Record<TMissionStatus, string[]> = {
 
 function isStatusChangeAllowed(from: TMissionStatus, to: TMissionStatus) {
   return ALLOWED_STATUS_TRANSITIONS[from].includes(to);
+}
+
+function deriveScoredStatus(
+  grades: { status: "pending" | "scored" | "exempt" }[],
+) {
+  if (grades.length === 0) return "pending" as const;
+  if (grades.every((grade) => grade.status === "exempt")) {
+    return "exempt" as const;
+  }
+  if (
+    grades.every(
+      (grade) => grade.status === "scored" || grade.status === "exempt",
+    )
+  ) {
+    return "scored" as const;
+  }
+  return "pending" as const;
 }
