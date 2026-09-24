@@ -1,6 +1,8 @@
-import { DATE_FORMAT, TIME_FORMAT } from '@/config/constants'
+import { DATE_FORMAT, TIME_FORMAT, WEEKDAY_FORMAT } from '@/config/constants'
 import { formatDate } from '@/lib/date'
+import { getMissionType } from '@repo/shared'
 import { format, isSameDay, startOfDay } from 'date-fns'
+import type { ReactNode } from 'react'
 import { Fragment } from 'react'
 import type { TrpcRouterOutputs } from 'server/router'
 
@@ -14,15 +16,46 @@ export type PrintScheduleReportMeta = {
   pilotLabel: string
 }
 
+const TABLE_COLUMNS = 7
+
 function dash(value: string | number | null | undefined) {
   if (value == null || value === '') return '—'
   return String(value)
 }
 
+function personName(person: {
+  firstName: string
+  lastName?: string | null
+  code?: string | null
+}) {
+  const name = [person.firstName, person.lastName].filter(Boolean).join(' ')
+  if (name && person.code) return `${name} (${person.code})`
+  return name || person.code || 'Personnel'
+}
+
+function eventTypeLabel(item: PrintScheduleListItem) {
+  const typeId = item.mission?.missionType ?? ''
+  return getMissionType(typeId)?.name ?? typeId
+}
+
+function participantNames(item: PrintScheduleListItem) {
+  if (!('assignments' in item) || !Array.isArray(item.assignments)) return []
+  return item.assignments.flatMap((assignment) => {
+    if (
+      !assignment ||
+      typeof assignment !== 'object' ||
+      !('personnel' in assignment) ||
+      !assignment.personnel
+    ) {
+      return []
+    }
+    return [personName(assignment.personnel)]
+  })
+}
+
 function formatTimeRange(
   start: Date | string | null | undefined,
   end: Date | string | null | undefined,
-  timesOnly: boolean,
 ) {
   if (!start && !end) return '—'
 
@@ -32,21 +65,13 @@ function formatTimeRange(
   const endValid = endDate && !Number.isNaN(endDate.getTime())
   const sameDay = startValid && endValid && isSameDay(startDate, endDate)
 
-  if (timesOnly) {
-    const startLabel = startValid ? format(startDate, TIME_FORMAT) : '—'
-    const endLabel = endValid
-      ? sameDay
-        ? format(endDate, TIME_FORMAT)
-        : formatDate(endDate, true)
-      : '—'
-    return `${startLabel} – ${endLabel}`
-  }
-
-  if (startValid && endValid && sameDay) {
-    return `${formatDate(startDate, true)} – ${format(endDate, TIME_FORMAT)}`
-  }
-
-  return `${formatDate(start ?? null, true) || '—'} – ${formatDate(end ?? null, true) || '—'}`
+  const startLabel = startValid ? format(startDate, TIME_FORMAT) : '—'
+  const endLabel = endValid
+    ? sameDay
+      ? format(endDate, TIME_FORMAT)
+      : formatDate(endDate, true)
+    : '—'
+  return `${startLabel} – ${endLabel}`
 }
 
 function groupKey(item: PrintScheduleListItem) {
@@ -58,36 +83,37 @@ function groupKey(item: PrintScheduleListItem) {
 
 function groupLabel(key: string) {
   if (key === 'no-date') return 'No date'
-  return format(new Date(`${key}T00:00:00`), DATE_FORMAT)
+  return format(
+    new Date(`${key}T00:00:00`),
+    `${WEEKDAY_FORMAT}, ${DATE_FORMAT}`,
+  )
 }
 
 function Head({ children }: { children: string }) {
   return (
-    <th className="border border-border bg-muted px-2 py-1.5 text-left font-semibold">
+    <th className="border border-[#1f2f27] bg-[#1f2f27] px-2 py-1.5 text-left font-semibold text-white print:bg-[#1f2f27] print:text-white">
       {children}
     </th>
   )
 }
 
-function Cell({ children }: { children: string | number }) {
-  return (
-    <td className="border border-border px-2 py-1.5 align-top">{children}</td>
-  )
+function Cell({ children }: { children: ReactNode }) {
+  return <td className="border-border px-2 py-2 align-top">{children}</td>
 }
 
 function ScheduleRows({
   items,
-  timesOnly,
+  includeParticipants,
 }: {
   items: PrintScheduleListItem[]
-  timesOnly: boolean
+  includeParticipants: boolean
 }) {
   if (items.length === 0) {
     return (
       <tr>
         <td
           className="border border-border px-2 py-6 text-center text-muted-foreground"
-          colSpan={6}
+          colSpan={TABLE_COLUMNS}
         >
           No schedules match the selected filters.
         </td>
@@ -97,29 +123,56 @@ function ScheduleRows({
 
   return (
     <>
-      {items.map((item) => (
-        <tr key={item.id}>
-          <Cell>
-            {formatTimeRange(item.startDateTime, item.endDateTime, timesOnly)}
-          </Cell>
-          <Cell>{dash(item.scheduleNumber)}</Cell>
-          <Cell>{dash(item.name)}</Cell>
-          <Cell>{dash(item.mission?.name)}</Cell>
-          <Cell>{dash(item.area?.name)}</Cell>
-          <Cell>{item.assignmentsCount || 0}</Cell>
-        </tr>
-      ))}
+      {items.map((item) => {
+        const names = includeParticipants ? participantNames(item) : []
+        return (
+          <Fragment key={item.id}>
+            <tr>
+              <Cell>{dash(item.scheduleNumber)}</Cell>
+              <Cell>
+                {formatTimeRange(item.startDateTime, item.endDateTime)}
+              </Cell>
+              <Cell>{dash(item.name)}</Cell>
+              <Cell>{dash(item.mission?.name)}</Cell>
+              <Cell>{dash(eventTypeLabel(item))}</Cell>
+              <Cell>{dash(item.area?.name)}</Cell>
+              <Cell>{item.assignmentsCount || 0}</Cell>
+            </tr>
+            {includeParticipants ? (
+              <tr>
+                <td
+                  className="border border-border bg-muted/30 px-2 py-1.5 align-top text-[11px] leading-relaxed"
+                  colSpan={TABLE_COLUMNS}
+                >
+                  <p className="mb-1 font-semibold">Participants</p>
+                  {names.length > 0 ? (
+                    <ol className="grid grid-cols-3 gap-x-4 gap-y-0.5">
+                      {names.map((name, index) => (
+                        <li key={`${name}-${index}`}>
+                          {index + 1}. {name}
+                        </li>
+                      ))}
+                    </ol>
+                  ) : (
+                    '—'
+                  )}
+                </td>
+              </tr>
+            ) : null}
+          </Fragment>
+        )
+      })}
     </>
   )
 }
 
 export function SchedulePrintReportDocument({
   items,
-  groupByDate,
+  includeParticipants,
   meta,
 }: {
   items: PrintScheduleListItem[]
-  groupByDate: boolean
+  includeParticipants: boolean
   meta: PrintScheduleReportMeta
 }) {
   const sorted = [...items].sort((a, b) => {
@@ -128,58 +181,69 @@ export function SchedulePrintReportDocument({
     return aTime - bTime || a.id - b.id
   })
 
-  const groups = groupByDate
-    ? Object.entries(
-        sorted.reduce<Record<string, PrintScheduleListItem[]>>((acc, item) => {
-          const key = groupKey(item)
-          acc[key] ??= []
-          acc[key].push(item)
-          return acc
-        }, {}),
-      ).sort(([a], [b]) => {
-        if (a === 'no-date') return 1
-        if (b === 'no-date') return -1
-        return a.localeCompare(b)
-      })
-    : null
+  const groups = Object.entries(
+    sorted.reduce<Record<string, PrintScheduleListItem[]>>((acc, item) => {
+      const key = groupKey(item)
+      acc[key] ??= []
+      acc[key].push(item)
+      return acc
+    }, {}),
+  ).sort(([a], [b]) => {
+    if (a === 'no-date') return 1
+    if (b === 'no-date') return -1
+    return a.localeCompare(b)
+  })
 
   return (
-    <div className="bg-background p-2 text-xs leading-snug text-foreground print:text-black">
-      <h1 className="mb-1 text-lg font-bold">Event Schedule Print</h1>
-      <p className="mb-4 text-muted-foreground">
-        {meta.endDate
-          ? `${meta.startDate} – ${meta.endDate}`
-          : `From ${meta.startDate}`}{' '}
-        · {meta.statusLabel} · {meta.pilotLabel}
-      </p>
-      <table className="w-full border-collapse">
+    <div className="bg-background p-6 text-xs leading-snug text-foreground print:bg-white print:p-0 print:text-black [print-color-adjust:exact] [-webkit-print-color-adjust:exact]">
+      <div className="mb-4 border-b pb-3">
+        <h1 className="text-lg font-bold tracking-tight">Event Schedule</h1>
+        <p className="mt-1 text-muted-foreground">
+          {meta.endDate
+            ? `${meta.startDate} – ${meta.endDate}`
+            : `From ${meta.startDate}`}
+          {' · '}
+          {meta.statusLabel}
+          {' · '}
+          {meta.pilotLabel}
+          {includeParticipants ? ' · Participants included' : ''}
+        </p>
+      </div>
+      <table className="w-full border-collapse border">
         <thead>
           <tr>
-            <Head>Start time – End time</Head>
             <Head>Number</Head>
-            <Head>Schedule name</Head>
+            <Head>Time</Head>
+            <Head>Schedule</Head>
             <Head>Event</Head>
+            <Head>Event type</Head>
             <Head>Area</Head>
-            <Head>Total pilots</Head>
+            <Head>Pilots</Head>
           </tr>
         </thead>
         <tbody>
-          {groups && groups.length > 0 ? (
+          {groups.length > 0 ? (
             groups.map(([key, groupItems]) => (
               <Fragment key={key}>
                 <tr>
                   <td
-                    className="border border-border bg-muted px-2 py-1.5 font-semibold"
-                    colSpan={6}
+                    className="bg-[#1f2f27]/15 px-2 py-1.5 font-semibold print:bg-[#d8ddd9]"
+                    colSpan={TABLE_COLUMNS}
                   >
                     {groupLabel(key)}
                   </td>
                 </tr>
-                <ScheduleRows items={groupItems} timesOnly />
+                <ScheduleRows
+                  items={groupItems}
+                  includeParticipants={includeParticipants}
+                />
               </Fragment>
             ))
           ) : (
-            <ScheduleRows items={sorted} timesOnly={false} />
+            <ScheduleRows
+              items={sorted}
+              includeParticipants={includeParticipants}
+            />
           )}
         </tbody>
       </table>

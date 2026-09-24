@@ -1,7 +1,17 @@
 import {
+  baseFormOptions,
   handleSubmitInvalid,
   useAppForm,
 } from '@/components/form/tanstack-form'
+import {
+  Dialog,
+  DialogContent,
+  DialogFooter,
+  DialogHeader,
+  DialogMain,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import { FieldColumns } from '@/components/ui/field'
 import { getErrorMessage } from '@/lib/utils'
 import trpc, { trpcClient } from '@/trpc'
 import { revalidateLogic } from '@tanstack/react-form'
@@ -10,7 +20,7 @@ import {
   useQueryClient,
   useSuspenseQuery,
 } from '@tanstack/react-query'
-import { Link, useNavigate } from '@tanstack/react-router'
+import { Link } from '@tanstack/react-router'
 import { useMemo } from 'react'
 import toast from 'react-hot-toast'
 import { z } from 'zod'
@@ -55,30 +65,32 @@ export const defaultUserFormData: UserFormData = {
   name: '',
 }
 
+export type UserFormProps = {
+  mode: 'create' | 'edit'
+  toEditId?: number
+  initialFormData?: UserFormData
+  linkedPersonnel?: LinkedPersonnel | null
+  onClose: (open: boolean) => void
+}
+
 export default function UserForm({
   mode,
   toEditId,
   initialFormData = defaultUserFormData,
   linkedPersonnel,
-}: {
-  mode: 'create' | 'edit'
-  toEditId?: number
-  initialFormData?: UserFormData
-  linkedPersonnel?: LinkedPersonnel | null
-}) {
+  onClose,
+}: UserFormProps) {
   const queryClient = useQueryClient()
-  const navigate = useNavigate()
   const schema = useMemo(() => createSchema(mode), [mode])
   const rolesQuery = useSuspenseQuery(trpc.roles.getOptions.queryOptions())
 
   const form = useAppForm({
+    ...baseFormOptions,
     defaultValues: initialFormData,
-    validationLogic: revalidateLogic(),
     validators: {
       onDynamic: schema,
     },
     onSubmit: ({ value }) => mutation.mutateAsync(value),
-    onSubmitInvalid: handleSubmitInvalid,
   })
 
   const mutation = useMutation({
@@ -96,7 +108,7 @@ export default function UserForm({
     onSuccess: () => {
       queryClient.resetQueries(trpc.users.pathFilter())
       toast.success(mode === 'create' ? 'New user created' : 'User updated')
-      navigate({ to: '/users' })
+      onClose(false)
     },
     onError: (error) => {
       toast.error(error.message)
@@ -116,69 +128,91 @@ export default function UserForm({
   }
 
   return (
-    <div className="grid grid-cols-2 gap-6">
-      <form.AppField
-        name="username"
-        validators={{
-          onBlurAsync: validateUsernameUnique,
-        }}
-        children={(f) => (
-          <f.CTextField required label="Username" autoComplete="username" />
-        )}
-      />
-      <form.AppField
-        name="password"
-        children={(f) => (
-          <f.CTextField
-            required={mode === 'create'}
-            label="Password"
-            type="password"
-            autoComplete="new-password"
-            placeholder={
-              mode === 'edit'
-                ? 'Leave blank to keep current password'
-                : undefined
-            }
+    <Dialog
+      open
+      onOpenChange={(nextOpen) => {
+        if (mutation.isPending) return
+        onClose(nextOpen)
+      }}
+    >
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle className="uppercase">
+            {mode === 'create' ? 'New User' : 'Edit User'}
+          </DialogTitle>
+        </DialogHeader>
+        <DialogMain className="space-y-6">
+          <FieldColumns cols={1}>
+            <form.AppField
+              name="username"
+              validators={{
+                onBlurAsync: validateUsernameUnique,
+              }}
+              children={(f) => (
+                <f.CTextField
+                  required
+                  label="Username / UserId"
+                  placeholder="Used to login to the system"
+                  autoComplete="username"
+                />
+              )}
+            />
+            <form.AppField
+              name="name"
+              children={(f) => <f.CTextField label="Name" required />}
+            />
+
+            <form.AppField
+              name="password"
+              children={(f) => (
+                <f.CTextField
+                  required={mode === 'create'}
+                  label="Password"
+                  type="password"
+                  autoComplete="new-password"
+                  placeholder={
+                    mode === 'edit'
+                      ? 'Leave blank to keep current password'
+                      : undefined
+                  }
+                />
+              )}
+            />
+
+            <form.AppField
+              name="role"
+              children={(f) => (
+                <f.CBasicSelect
+                  label="Role"
+                  placeholder="Select role"
+                  options={rolesQuery.data}
+                  emptyAsNull
+                />
+              )}
+            />
+          </FieldColumns>
+          {linkedPersonnel && (
+            <Link
+              to="/personnel/$id/edit"
+              params={{ id: String(linkedPersonnel.id) }}
+              className="text-sm text-blue-500"
+            >
+              View linked personnel: {personnelLabel(linkedPersonnel)}
+            </Link>
+          )}
+          <form.AppField
+            name="isActive"
+            children={(f) => <f.CCheckbox label="Active" />}
           />
-        )}
-      />
-      <form.AppField
-        name="name"
-        children={(f) => <f.CTextField label="Name" />}
-      />
-      <form.AppField
-        name="role"
-        children={(f) => (
-          <f.CBasicSelect
-            label="Role"
-            placeholder="Select role"
-            options={rolesQuery.data}
-            emptyAsNull
-          />
-        )}
-      />
-      {linkedPersonnel && (
-        <div className="col-span-2">
-          <Link
-            to="/personnel/$id/edit"
-            params={{ id: String(linkedPersonnel.id) }}
-            className="text-sm text-blue-500"
-          >
-            View linked personnel: {personnelLabel(linkedPersonnel)}
-          </Link>
-        </div>
-      )}
-      <form.AppField
-        name="isActive"
-        children={(f) => <f.CCheckbox label="Active" />}
-      />
-      <div className="col-span-2 flex justify-end pt-2">
-        <form.AppForm>
-          <form.SubscribeButton
-            label={mode === 'create' ? 'Create' : 'Update'}
-          />
-        </form.AppForm>
-      </div>
-    </div>
+        </DialogMain>
+        <DialogFooter>
+          <form.AppForm>
+            <form.SubscribeButton
+              label={mode === 'create' ? 'Create' : 'Save'}
+            />
+          </form.AppForm>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }

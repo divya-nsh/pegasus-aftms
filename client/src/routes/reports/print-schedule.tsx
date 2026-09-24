@@ -1,31 +1,26 @@
 import ErrorAlert from '@/components/errors/ErrorAlert'
-import {
-  BasicSelectField,
-  DateField,
-} from '@/components/inputs/TextField'
+import { BasicSelectField, DateField } from '@/components/inputs/TextField'
 import PageCard from '@/components/layout/PageCard'
 import { BlockingLoaderOverlay } from '@/components/loaders/BlockingLoader'
 import FullPageSpinner from '@/components/loaders/page-loader'
 import { Button } from '@/components/ui/button'
 import { Checkbox } from '@/components/ui/checkbox'
-import { Field, FieldLabel } from '@/components/ui/field'
+import { Field, FieldDescription, FieldLabel } from '@/components/ui/field'
 import { toast } from '@/components/ui/toast'
 import { formatDate } from '@/lib/date'
 import trpc from '@/trpc'
 import { useQuery, useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import { endOfDay, parseISO, startOfDay } from 'date-fns'
-import { PrinterIcon } from 'lucide-react'
+import { CalendarDaysIcon, PrinterIcon } from 'lucide-react'
 import { useId, useMemo, useRef, useState } from 'react'
 import { useReactToPrint } from 'react-to-print'
-import {
-  MISSION_STATUS_LABELS,
-  type MissionStatus,
-} from '../schedules/-components/mission-stage-bar'
-import {
-  SchedulePrintReportDocument,
-  type PrintScheduleListItem,
-  type PrintScheduleReportMeta,
+import { MISSION_STATUS_LABELS } from '../schedules/-components/mission-stage-bar'
+import type { MissionStatus } from '../schedules/-components/mission-stage-bar'
+import { SchedulePrintReportDocument } from './-components/print-schedule-report'
+import type {
+  PrintScheduleListItem,
+  PrintScheduleReportMeta,
 } from './-components/print-schedule-report'
 
 export const Route = createFileRoute('/reports/print-schedule')({
@@ -71,15 +66,14 @@ function personnelLabel(person: {
 
 function RouteComponent() {
   const personnelQ = useSuspenseQuery(trpc.personnel.getAll.queryOptions())
-  const groupByDateId = useId()
+  const includeParticipantsId = useId()
   const printRef = useRef<HTMLDivElement>(null)
 
   const [startDate, setStartDate] = useState<string | null>(null)
   const [endDate, setEndDate] = useState<string | null>(null)
-  const [statusFilter, setStatusFilter] =
-    useState<PrintableStatusFilter>('all')
+  const [statusFilter, setStatusFilter] = useState<PrintableStatusFilter>('all')
   const [personnelId, setPersonnelId] = useState<number | null>(null)
-  const [groupByDate, setGroupByDate] = useState(false)
+  const [includeParticipants, setIncludeParticipants] = useState(false)
   const [applied, setApplied] = useState<AppliedFilters | null>(null)
 
   const queryInput = useMemo(
@@ -95,11 +89,12 @@ function RouteComponent() {
                 ? [...PRINTABLE_STATUSES]
                 : [applied.status],
             personnelId: applied.personnelId ?? undefined,
+            includeParticipants,
           }
         : {
             status: [...PRINTABLE_STATUSES],
           },
-    [applied],
+    [applied, includeParticipants],
   )
 
   const schedulesQ = useQuery(
@@ -122,7 +117,9 @@ function RouteComponent() {
   const items: PrintScheduleListItem[] = useMemo(
     () =>
       (schedulesQ.data?.items ?? []).filter((item) =>
-        PRINTABLE_STATUSES.includes(item.status as (typeof PRINTABLE_STATUSES)[number]),
+        PRINTABLE_STATUSES.includes(
+          item.status as (typeof PRINTABLE_STATUSES)[number],
+        ),
       ),
     [schedulesQ.data?.items],
   )
@@ -134,9 +131,7 @@ function RouteComponent() {
     )
     return {
       startDate: formatDate(parseISO(applied.startDate)),
-      endDate: applied.endDate
-        ? formatDate(parseISO(applied.endDate))
-        : null,
+      endDate: applied.endDate ? formatDate(parseISO(applied.endDate)) : null,
       statusLabel:
         applied.status === 'all'
           ? 'All statuses'
@@ -150,7 +145,17 @@ function RouteComponent() {
   const printFn = useReactToPrint({
     contentRef: printRef,
     documentTitle: 'Event Schedule Print',
-    pageStyle: `@page { margin: 12mm; } body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }`,
+    pageStyle: `
+      @page {
+        size: A4;
+      }
+      html, body {
+        margin: 0;
+        padding: 10px;
+        -webkit-print-color-adjust: exact;
+        print-color-adjust: exact;
+      }
+    `,
   })
 
   const handleGenerate = () => {
@@ -182,9 +187,15 @@ function RouteComponent() {
   }
 
   return (
-    <PageCard className="space-y-4 max-w-6xl">
-      <div className="items-center gap-1 border-b mb-4 pb-1 flex justify-between">
-        <h1 className="text-xl font-bold">Print Schedule</h1>
+    <PageCard className="max-w-6xl space-y-5">
+      <div className="flex items-start justify-between gap-4 border-b pb-4">
+        <div className="space-y-1">
+          <h1 className="text-xl font-bold">Print Schedule</h1>
+          <p className="max-w-xl text-sm text-muted-foreground">
+            Preview and print events grouped by start date, including weekday
+            and event type.
+          </p>
+        </div>
         <Button
           type="button"
           variant="outline"
@@ -196,82 +207,94 @@ function RouteComponent() {
         </Button>
       </div>
 
-      <div className="flex flex-wrap items-end gap-3 rounded-lg border bg-muted/30 px-3 py-3">
-        <DateField
-          label="Start date"
-          className="w-52"
-          required
-          value={startDate}
-          onChange={(value) => {
-            setStartDate(value)
-            if (value && endDate && value > endDate) {
-              setEndDate(value)
-            }
-          }}
-          placeholder="Start date"
-        />
-        <DateField
-          label="End date"
-          className="w-52"
-          value={endDate}
-          onChange={(value) => {
-            setEndDate(value)
-            if (value && startDate && value < startDate) {
+      <div className="space-y-4 rounded-xl border bg-muted/20 p-4">
+        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+          <DateField
+            label="Start date"
+            required
+            value={startDate}
+            onChange={(value) => {
               setStartDate(value)
-            }
-          }}
-          placeholder="End date"
-        />
-        <BasicSelectField
-          label="Pilot"
-          className="min-w-64 max-w-96 flex-1"
-          placeholder="All"
-          allowClear={false}
-          options={personnelOptions}
-          value={personnelId?.toString() ?? 'all'}
-          onValueChange={(value) => {
-            setPersonnelId(
-              value && value !== 'all' ? Number(value) : null,
-            )
-          }}
-        />
-        <BasicSelectField
-          label="Status"
-          className="w-48"
-          allowClear={false}
-          options={statusFilterOptions}
-          value={statusFilter}
-          onValueChange={(value) => {
-            if (!value) return
-            setStatusFilter(value as PrintableStatusFilter)
-          }}
-        />
-        <Field className="flex items-center gap-2 pb-2" orientation="horizontal">
-          <Checkbox
-            id={groupByDateId}
-            checked={groupByDate}
-            onCheckedChange={(checked) => setGroupByDate(checked === true)}
+              if (value && endDate && value > endDate) {
+                setEndDate(value)
+              }
+            }}
+            placeholder="Start date"
           />
-          <FieldLabel htmlFor={groupByDateId}>Group by date</FieldLabel>
-        </Field>
-        <Button type="button" className="mb-px" onClick={handleGenerate}>
-          Generate
-        </Button>
+          <DateField
+            label="End date"
+            value={endDate}
+            onChange={(value) => {
+              setEndDate(value)
+              if (value && startDate && value < startDate) {
+                setStartDate(value)
+              }
+            }}
+            placeholder="End date"
+          />
+          <BasicSelectField
+            label="Pilot"
+            placeholder="All"
+            allowClear={false}
+            options={personnelOptions}
+            value={personnelId?.toString() ?? 'all'}
+            onValueChange={(value) => {
+              setPersonnelId(value && value !== 'all' ? Number(value) : null)
+            }}
+          />
+          <BasicSelectField
+            label="Status"
+            allowClear={false}
+            options={statusFilterOptions}
+            value={statusFilter}
+            onValueChange={(value) => {
+              if (!value) return
+              setStatusFilter(value as PrintableStatusFilter)
+            }}
+          />
+        </div>
+        <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-3">
+          <Field className="max-w-md gap-2" orientation="horizontal">
+            <Checkbox
+              id={includeParticipantsId}
+              checked={includeParticipants}
+              onCheckedChange={(checked) =>
+                setIncludeParticipants(checked === true)
+              }
+            />
+            <div className="space-y-0.5">
+              <FieldLabel htmlFor={includeParticipantsId}>
+                Include participants
+              </FieldLabel>
+              <FieldDescription>
+                Print assigned names under each event
+              </FieldDescription>
+            </div>
+          </Field>
+          <Button type="button" onClick={handleGenerate}>
+            Generate
+          </Button>
+        </div>
       </div>
 
       <ErrorAlert error={schedulesQ.error} />
 
       {!applied ? (
-        <div className="rounded-lg border px-6 py-16 text-center text-sm text-muted-foreground">
-          Select filters and generate to preview the print report.
+        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed px-6 py-16 text-center">
+          <CalendarDaysIcon className="mb-3 size-8 text-muted-foreground" />
+          <p className="text-sm font-medium">No preview yet</p>
+          <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+            Choose a start date and generate the report to preview the printed
+            schedule.
+          </p>
         </div>
       ) : schedulesQ.isFetching ? null : (
-        <div className="rounded-lg border bg-background">
+        <div className="overflow-hidden rounded-xl border bg-background shadow-sm">
           <div ref={printRef}>
             {reportMeta ? (
               <SchedulePrintReportDocument
                 items={items}
-                groupByDate={groupByDate}
+                includeParticipants={includeParticipants}
                 meta={reportMeta}
               />
             ) : null}

@@ -8,7 +8,6 @@ import {
   // eslint-disable-next-line import/consistent-type-specifier-style
   type TTableFeatures,
 } from '@/components/table/table.tsx'
-import LinkButton from '@/components/ui/link-button'
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { createColumnHelper, useTable } from '@tanstack/react-table'
 import type { ColumnDef } from '@tanstack/react-table'
@@ -28,6 +27,10 @@ import { toast } from '@/components/ui/toast'
 import { BlockingLoaderOverlay } from '@/components/loaders/BlockingLoader'
 import RefreshButton from '@/components/table/refresh-button'
 import PageCard from '@/components/layout/PageCard'
+import NewButton from '@/components/buttons/new-button'
+import UserForm from './-components/user-form'
+import type { UserFormData } from './-components/user-form'
+import z from 'zod'
 
 export const Route = createFileRoute('/users/')({
   component: RouteComponent,
@@ -35,6 +38,10 @@ export const Route = createFileRoute('/users/')({
   errorComponent: ({ error }) => (
     <ErrorAlert error={error} title="Failed to Load Users" />
   ),
+  validateSearch: z.object({
+    modal: z.enum(['create', 'edit']).optional().catch(undefined),
+    docId: z.number().optional().catch(undefined),
+  }),
 })
 
 type TUserListItem = TrpcRouterOutputs['users']['getAll']['items'][number]
@@ -104,10 +111,21 @@ const columns: ColumnDef<TTableFeatures, TUserListItem>[] = ch.columns([
   }),
 ])
 
+function toUserFormData(row: TUserListItem): UserFormData {
+  return {
+    username: row.username,
+    password: '',
+    isActive: row.isActive,
+    name: row.name ?? '',
+    role: row.role ?? '',
+  }
+}
+
 function RouteComponent() {
   const usersQ = useSuspenseQuery(trpc.users.getAll.queryOptions())
   const queryClient = useQueryClient()
-  const navigate = useNavigate()
+  const search = Route.useSearch()
+  const navigate = useNavigate({ from: '/users/' })
   const [searchText, setSearchText] = useState<string>('')
 
   const deleteMutation = useMutation({
@@ -130,6 +148,25 @@ function RouteComponent() {
     },
   })
 
+  const closeModal = () => {
+    void navigate({ search: {}, replace: true })
+  }
+
+  const openModal = (rowId?: string) => {
+    if (rowId) {
+      void navigate({
+        search: { modal: 'edit', docId: Number(rowId) },
+      })
+      return
+    }
+    void navigate({ search: { modal: 'create' } })
+  }
+
+  const editUser =
+    search.modal === 'edit' && search.docId != null
+      ? usersQ.data.items.find((item) => item.id === search.docId)
+      : undefined
+
   const table = useTable({
     ...baseTableOptions<TUserListItem>(),
     data: usersQ.data.items,
@@ -144,7 +181,7 @@ function RouteComponent() {
     meta: {
       onRowAction: (action, rowId) => {
         if (action === 'edit') {
-          navigate({ to: '/users/$id/edit', params: { id: rowId } })
+          openModal(rowId)
         } else if (action === 'delete') {
           const confirm = window.confirm(
             'Are you sure you want to delete this user?',
@@ -154,6 +191,7 @@ function RouteComponent() {
           }
         }
       },
+      onRowDoubleClick: openModal,
     },
     state: {
       globalFilter: searchText,
@@ -168,7 +206,7 @@ function RouteComponent() {
         <h1 className="text-xl font-bold">Users</h1>
         <div className="flex items-center gap-4">
           <RefreshButton query={usersQ} />
-          <LinkButton to="/users/create" newButton />
+          <NewButton onClick={() => openModal()} />
         </div>
       </div>
       <div className=" mb-3 flex items-center justify-between">
@@ -184,6 +222,19 @@ function RouteComponent() {
       </div>
       <AppTable table={table} />
       <TablePagination table={table} />
+
+      {search.modal === 'create' && (
+        <UserForm mode="create" onClose={closeModal} />
+      )}
+      {search.modal === 'edit' && editUser && (
+        <UserForm
+          mode="edit"
+          initialFormData={toUserFormData(editUser)}
+          toEditId={editUser.id}
+          linkedPersonnel={editUser.personnel[0] ?? null}
+          onClose={closeModal}
+        />
+      )}
       <BlockingLoaderOverlay show={deleteMutation.isPending} />
     </PageCard>
   )

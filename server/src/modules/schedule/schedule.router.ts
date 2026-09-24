@@ -121,6 +121,7 @@ const scheduleRouter = router({
         // In UTC
         endDateTime: z.coerce.date().optional(),
         personnelId: z.number().optional(),
+        includeParticipants: z.boolean().optional(),
       }),
     )
     .query(async ({ ctx, input }) => {
@@ -180,8 +181,55 @@ const scheduleRouter = router({
         },
       });
 
+      if (!input.includeParticipants || items.length === 0) {
+        return {
+          items,
+          totalCount: items.length,
+        };
+      }
+
+      const participants = await db.query.missionScheduleParticipantTable.findMany({
+        columns: {
+          id: true,
+          order: true,
+          missionScheduleId: true,
+        },
+        with: {
+          personnel: {
+            columns: {
+              id: true,
+              firstName: true,
+              lastName: true,
+              code: true,
+              personnelType: true,
+            },
+          },
+        },
+        where: {
+          missionScheduleId: {
+            in: items.map((item) => item.id),
+          },
+        },
+        orderBy: {
+          order: "asc",
+        },
+      });
+
+      const assignmentsBySchedule = new Map<number, typeof participants>();
+      for (const participant of participants) {
+        const current = assignmentsBySchedule.get(participant.missionScheduleId);
+        if (current) {
+          current.push(participant);
+        } else {
+          assignmentsBySchedule.set(participant.missionScheduleId, [participant]);
+        }
+      }
+
       return {
-        items: items,
+        items: items.map((item) => ({
+          ...item,
+          assignments: assignmentsBySchedule.get(item.id) ?? [],
+        })),
         totalCount: items.length,
       };
     }),
