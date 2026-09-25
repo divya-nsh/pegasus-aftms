@@ -149,17 +149,17 @@ function RouteComponent() {
   })
 
   const closeModal = () => {
-    void navigate({ search: {}, replace: true })
+    navigate({ search: {}, replace: true })
   }
 
   const openModal = (rowId?: string) => {
     if (rowId) {
-      void navigate({
+      navigate({
         search: { modal: 'edit', docId: Number(rowId) },
       })
       return
     }
-    void navigate({ search: { modal: 'create' } })
+    navigate({ search: { modal: 'create' } })
   }
 
   const editUser =

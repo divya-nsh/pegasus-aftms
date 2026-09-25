@@ -52,7 +52,7 @@ export default function MissionForm({
   )
 
   const form = useAppForm({
-    defaultValues: initialFormData,
+    defaultValues: initialFormData ?? defaultValues,
     validators: { onSubmit: schema },
     onSubmit: ({ value }) => mutation.mutateAsync(value),
     onSubmitInvalid: handleSubmitInvalid,
@@ -137,9 +137,15 @@ export default function MissionForm({
               children={(f) => (
                 <f.CTextField
                   valueAsNumber
-                  label="Duration (minutes)"
+                  label="Duration (Hours)"
                   placeholder="Optional"
                   type="number"
+                  value={f.state.value ? f.state.value / 60 + '' : ''}
+                  onValueChange={(value) => {
+                    f.handleChange(
+                      value ? Math.floor(Number(value) * 60) : null,
+                    )
+                  }}
                 />
               )}
             />
@@ -188,11 +194,11 @@ export default function MissionForm({
   )
 }
 
-// const defaultValues: MissionFormData = {
-//   name: '',
-//   description: '',
-//   // aircraftId: null,
-//   gradingTemplateId: null,
-//   durationMinutes: null,
-//   missionType: defaultMissionTypeId,
-// }
+const defaultValues: MissionFormData = {
+  name: '',
+  description: '',
+  // aircraftId: null,
+  gradingTemplateId: null,
+  durationMinutes: null,
+  missionType: '',
+}

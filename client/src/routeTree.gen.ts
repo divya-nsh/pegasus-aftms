@@ -41,7 +41,6 @@ import { Route as TraineeDashboardIndexRouteImport } from './routes/trainee-dash
 import { Route as TraineeDashboardIdRouteImport } from './routes/trainee-dashboard/$id'
 import { Route as TraineeDashboardCopyRouteImport } from './routes/trainee-dashboard/copy'
 import { Route as UsersIndexRouteImport } from './routes/users/index'
-import { Route as UsersCreateRouteImport } from './routes/users/create'
 import { Route as PersonnelIdEditRouteImport } from './routes/personnel/$id.edit'
 import { Route as RolesIdEditRouteImport } from './routes/roles/$id.edit'
 import { Route as SchedulesIdEditRouteImport } from './routes/schedules/$id.edit'
@@ -211,11 +210,6 @@ const UsersIndexRoute = UsersIndexRouteImport.update({
   path: '/users/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const UsersCreateRoute = UsersCreateRouteImport.update({
-  id: '/users/create',
-  path: '/users/create',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const PersonnelIdEditRoute = PersonnelIdEditRouteImport.update({
   id: '/personnel/$id/edit',
   path: '/personnel/$id/edit',
@@ -267,7 +261,6 @@ export interface FileRoutesByFullPath {
   '/schedules/timeline-view': typeof SchedulesTimelineViewRoute
   '/trainee-dashboard/$id': typeof TraineeDashboardIdRoute
   '/trainee-dashboard/copy': typeof TraineeDashboardCopyRoute
-  '/users/create': typeof UsersCreateRoute
   '/aircraft/': typeof AircraftIndexRoute
   '/area/': typeof AreaIndexRoute
   '/events/': typeof EventsIndexRoute
@@ -307,7 +300,6 @@ export interface FileRoutesByTo {
   '/schedules/timeline-view': typeof SchedulesTimelineViewRoute
   '/trainee-dashboard/$id': typeof TraineeDashboardIdRoute
   '/trainee-dashboard/copy': typeof TraineeDashboardCopyRoute
-  '/users/create': typeof UsersCreateRoute
   '/aircraft': typeof AircraftIndexRoute
   '/area': typeof AreaIndexRoute
   '/events': typeof EventsIndexRoute
@@ -349,7 +341,6 @@ export interface FileRoutesById {
   '/schedules/timeline-view': typeof SchedulesTimelineViewRoute
   '/trainee-dashboard/$id': typeof TraineeDashboardIdRoute
   '/trainee-dashboard/copy': typeof TraineeDashboardCopyRoute
-  '/users/create': typeof UsersCreateRoute
   '/aircraft/': typeof AircraftIndexRoute
   '/area/': typeof AreaIndexRoute
   '/events/': typeof EventsIndexRoute
@@ -392,7 +383,6 @@ export interface FileRouteTypes {
     | '/schedules/timeline-view'
     | '/trainee-dashboard/$id'
     | '/trainee-dashboard/copy'
-    | '/users/create'
     | '/aircraft/'
     | '/area/'
     | '/events/'
@@ -432,7 +422,6 @@ export interface FileRouteTypes {
     | '/schedules/timeline-view'
     | '/trainee-dashboard/$id'
     | '/trainee-dashboard/copy'
-    | '/users/create'
     | '/aircraft'
     | '/area'
     | '/events'
@@ -473,7 +462,6 @@ export interface FileRouteTypes {
     | '/schedules/timeline-view'
     | '/trainee-dashboard/$id'
     | '/trainee-dashboard/copy'
-    | '/users/create'
     | '/aircraft/'
     | '/area/'
     | '/events/'
@@ -515,7 +503,6 @@ export interface RootRouteChildren {
   SchedulesTimelineViewRoute: typeof SchedulesTimelineViewRoute
   TraineeDashboardIdRoute: typeof TraineeDashboardIdRoute
   TraineeDashboardCopyRoute: typeof TraineeDashboardCopyRoute
-  UsersCreateRoute: typeof UsersCreateRoute
   AircraftIndexRoute: typeof AircraftIndexRoute
   EventsIndexRoute: typeof EventsIndexRoute
   GradingAttributeIndexRoute: typeof GradingAttributeIndexRoute
@@ -762,13 +749,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof UsersIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/users/create': {
-      id: '/users/create'
-      path: '/users/create'
-      fullPath: '/users/create'
-      preLoaderRoute: typeof UsersCreateRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/personnel/$id/edit': {
       id: '/personnel/$id/edit'
       path: '/personnel/$id/edit'
@@ -846,7 +826,6 @@ const rootRouteChildren: RootRouteChildren = {
   SchedulesTimelineViewRoute: SchedulesTimelineViewRoute,
   TraineeDashboardIdRoute: TraineeDashboardIdRoute,
   TraineeDashboardCopyRoute: TraineeDashboardCopyRoute,
-  UsersCreateRoute: UsersCreateRoute,
   AircraftIndexRoute: AircraftIndexRoute,
   EventsIndexRoute: EventsIndexRoute,
   GradingAttributeIndexRoute: GradingAttributeIndexRoute,

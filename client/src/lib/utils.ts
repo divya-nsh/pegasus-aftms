@@ -103,3 +103,24 @@ export const makeFullName = (
   const { firstName, lastName } = p
   return [firstName, lastName].filter(Boolean).join(' ')
 }
+
+type Direction = 'up' | 'down'
+
+// move item in array up or down and return new array
+export function moveItem<T>(
+  array: T[],
+  index: number,
+  direction: Direction,
+): T[] {
+  const newArray = [...array]
+
+  const newIndex = direction === 'up' ? index - 1 : index + 1
+
+  if (newIndex < 0 || newIndex >= array.length) {
+    return newArray
+  }
+
+  ;[newArray[index], newArray[newIndex]] = [newArray[newIndex], newArray[index]]
+
+  return newArray
+}

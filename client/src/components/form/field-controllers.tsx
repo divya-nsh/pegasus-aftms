@@ -24,7 +24,7 @@ export function CTextField({
   valueAsNumber,
   onAfterCommit,
   ...props
-}: Omit<TextFieldProps, 'value' | 'onValueChange' | 'errors'> & {
+}: Omit<TextFieldProps, 'errors' | 'onBlur'> & {
   valueAsUppercase?: boolean
   valueAsNumber?: boolean
   /**
@@ -37,7 +37,6 @@ export function CTextField({
 
   return (
     <TextField
-      {...props}
       value={field.state.value?.toString() ?? ''}
       onValueChange={(value) => {
         let _value: string | number | null = value.toString()
@@ -54,6 +53,7 @@ export function CTextField({
         field.handleChange(_value)
         onAfterCommit?.(_value)
       }}
+      {...props}
       errors={isInvalid ? field.state.meta.errors : undefined}
       onBlur={() => field.handleBlur()}
     />

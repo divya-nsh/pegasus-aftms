@@ -125,7 +125,7 @@ export function AppTable<TData extends RowData>({
                     key={header.id}
                     colSpan={header.colSpan}
                     className={cn(
-                      'font-medium text-sm text-neutral-800 bg-muted/70 backdrop-blur-lg top-0 relative min-w-0 overflow-visible border-b first:border-l-0 border-l border-r last:border-r-0',
+                      'font-medium text-sm text-neutral-800 bg-muted/60 backdrop-blur-lg top-0 relative min-w-0 overflow-visible border-b first:border-l-0 border-l border-r last:border-r-0',
                     )}
                     style={{
                       width: header.getSize(),

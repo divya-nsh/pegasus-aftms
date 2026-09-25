@@ -131,7 +131,7 @@ function RouteComponent() {
       </div>
 
       <div className="py-4 pb-0 rounded-md bg-white mt-4 border shadow-xs">
-        <div className="flex items-center justify-between gap-3 border-b pb-2 mb-2 px-4">
+        <div className="flex items-center justify-between gap-3 border-b pb-2 px-4">
           <h3 className="text-sm font-semibold">
             {isSameDay(selectedDate, today) ? 'Today Schedules' : 'Schedules'}
           </h3>
@@ -140,8 +140,8 @@ function RouteComponent() {
         <Table>
           <TableHeader>
             <TableRow className="bg-muted/80">
-              <TableHead className="text-muted-foreground">Time</TableHead>
               <TableHead>Number</TableHead>
+              <TableHead>Time</TableHead>
               <TableHead>Status</TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Area</TableHead>
@@ -164,10 +164,10 @@ function RouteComponent() {
                 key={schedule.id}
                 className="hover:bg-muted/40 transition-colors"
               >
+                <TableCell>{schedule.scheduleNumber}</TableCell>
                 <TableCell className="py-4">
                   {formatStartEnd(schedule.startDateTime, schedule.endDateTime)}
                 </TableCell>
-                <TableCell>{schedule.scheduleNumber}</TableCell>
                 <TableCell>
                   <MissionStatusBadge status={schedule.status} size="sm" />
                 </TableCell>

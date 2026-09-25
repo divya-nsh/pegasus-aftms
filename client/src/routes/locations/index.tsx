@@ -212,8 +212,8 @@ function RouteComponent() {
   })
 
   return (
-    <PageCard className="space-y-4 bg-gray-100 px-2 m-0 border">
-      <div className="bg-card rounded-lg">
+    <PageCard className="space-y-4 bg-slate-100 px-0 m-0 border md:px-4">
+      <div className="bg-card rounded-lg border">
         <div className="items-center gap-4 border-b px-5 pt-4 mb-4 pb-2 flex justify-between">
           {/* <SidebarTrigger /> */}
           {/* <Separator orientation="vertical" className="mx-2" /> */}

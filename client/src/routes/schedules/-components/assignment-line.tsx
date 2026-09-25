@@ -30,6 +30,8 @@ import {
   AlertTriangleIcon,
   ClockIcon,
   ClipboardCheckIcon,
+  ArrowUpIcon,
+  ArrowDownIcon,
 } from 'lucide-react'
 import { ActionMenu } from '@/components/table/action-menu'
 import GradeModal, { GradeStatusCell } from './grade-modal'
@@ -41,6 +43,7 @@ import type { FormMode } from '@/types/general'
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert'
 import type { ScheduleFormAssignment } from './type'
 import { required } from './shedule-form'
+import { moveItem } from '@/lib/utils'
 
 const defaultAssignmentFormData: ScheduleFormAssignment = {
   personnel: null,
@@ -275,6 +278,19 @@ export default function AssignmentLine({
                             isDestructive: true,
                             onClick: () =>
                               onChange(values.filter((_, i) => i !== index)),
+                          },
+                          { type: 'separator' },
+                          {
+                            label: 'Move Up',
+                            icon: <ArrowUpIcon />,
+                            onClick: () =>
+                              onChange(moveItem(values, index, 'up')),
+                          },
+                          {
+                            label: 'Move Down',
+                            icon: <ArrowDownIcon />,
+                            onClick: () =>
+                              onChange(moveItem(values, index, 'down')),
                           },
                         ]}
                       />

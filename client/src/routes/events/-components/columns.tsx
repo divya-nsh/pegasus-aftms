@@ -66,9 +66,13 @@ const columns: ColumnDef<TTableFeatures, TMissionListItem>[] = ch.columns([
     cell: (info) => getMissionType(info.getValue())?.name ?? info.getValue(),
   }),
   ch.accessor('durationMinutes', {
-    header: 'Duration',
+    header: 'Duration Hours',
     size: 120,
-    cell: (info) => `${info.getValue()} min`,
+    cell: (info) => {
+      const hours = info.getValue() / 60
+
+      return `${hours} hr`
+    },
   }),
   ch.accessor('aircraftName', {
     header: 'Aircraft',
