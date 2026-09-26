@@ -56,6 +56,7 @@ export const createSchema = z.object({
       aircraftTime: z.coerce.date().optional().nullable(),
       takeoffTime: z.coerce.date().optional().nullable(),
       landingTime: z.coerce.date().optional().nullable(),
+      briefingTime: z.coerce.date().optional().nullable(),
       result: z.enum(["passed", "failed"]).nullable(),
       remarks: optionalText,
       obtainedGradeId: z.int().nullable(),
@@ -84,9 +85,8 @@ export const updateAssignmentSchema = z.object({
   scheduleId: z.number(),
   assignmentId: z.number(),
   aircraftId: z.int().nullable(),
-  attendanceStatus: z
-    .enum(["present", "absent", "excused"])
-    .nullable(),
+  attendanceStatus: z.enum(["present", "absent", "excused"]).nullable(),
+  briefingTime: optionalDate,
   aircraftTime: optionalDate,
   takeoffTime: optionalDate,
   landingTime: optionalDate,

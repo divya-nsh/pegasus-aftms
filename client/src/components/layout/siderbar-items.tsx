@@ -11,6 +11,7 @@ import {
   UserIcon,
   FileTextIcon,
   PrinterIcon,
+  ClipboardCheckIcon,
 } from 'lucide-react'
 import type { NavItems } from './sidebar.types'
 
@@ -27,6 +28,12 @@ export const navItems: NavItems[] = [
         title: 'Event Schedule',
         url: '/schedules',
         icon: CalendarClockIcon,
+        matchUrlMode: 'exact',
+      },
+      {
+        title: 'Evaluate Schedule',
+        url: '/schedules/evaluate-list',
+        icon: ClipboardCheckIcon,
       },
       {
         title: 'Trainee Dashboard',

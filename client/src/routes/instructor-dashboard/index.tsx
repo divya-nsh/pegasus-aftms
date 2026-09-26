@@ -2,14 +2,7 @@ import PageCard from '@/components/layout/PageCard'
 import { createFileRoute } from '@tanstack/react-router'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { trpc } from '@/trpc'
-import {
-  Table,
-  TableHeader,
-  TableRow,
-  TableHead,
-  TableBody,
-  TableCell,
-} from '@/components/ui/table'
+import type { TrpcRouterOutputs } from '@/trpc'
 import { Button } from '@/components/ui/button'
 import { Calendar } from '@/components/ui/calendar'
 import {
@@ -18,7 +11,7 @@ import {
   PopoverTrigger,
 } from '@/components/ui/popover'
 import { addDays, format, isSameDay, startOfToday } from 'date-fns'
-import MissionStatusBadge from '../schedules/-components/mission-stage-bar'
+// import MissionStatusBadge from '../schedules/-components/mission-stage-bar'
 import {
   Clock,
   CalendarClock,
@@ -32,6 +25,11 @@ import {
 } from 'lucide-react'
 import { useState } from 'react'
 import type { LucideIcon } from 'lucide-react'
+import { AppTableWrapper } from '@/components/table/table'
+import type { TTableFeatures } from '@/components/table/table'
+import { createColumnHelper } from '@tanstack/react-table'
+import { makeFullName } from '@/lib/utils'
+import { formatDate, appFormatTime } from '@/lib/date'
 
 export const Route = createFileRoute('/instructor-dashboard/')({
   component: RouteComponent,
@@ -39,12 +37,18 @@ export const Route = createFileRoute('/instructor-dashboard/')({
 
 const today = startOfToday()
 
+type ScheduleListItem =
+  TrpcRouterOutputs['schedules']['getAll']['items'][number]
+
+const ch = createColumnHelper<TTableFeatures, ScheduleListItem>()
+
 function RouteComponent() {
   const [selectedDate, setSelectedDate] = useState(today)
   const personelQ = useSuspenseQuery(trpc.personnel.getAll.queryOptions())
   const sheduleQ = useSuspenseQuery(
     trpc.schedules.getAll.queryOptions({
       status: ['completed', 'completed', 'in_progress', 'published'],
+      includeParticipants: true,
     }),
   )
 
@@ -137,15 +141,100 @@ function RouteComponent() {
           </h3>
           <ScheduleDateNav date={selectedDate} onChange={setSelectedDate} />
         </div>
-        <Table>
+        <AppTableWrapper
+          tableLayout="auto"
+          disableSorting={true}
+          data={todaySchedules}
+          columns={ch.columns([
+            ch.accessor('scheduleNumber', {
+              header: 'S.NO',
+              size: 150,
+            }),
+            ch.accessor('mission.name', {
+              header: 'EVENT',
+              size: 250,
+            }),
+            ch.accessor('area.name', {
+              header: 'AREA',
+            }),
+            ch.accessor('name', {
+              header: 'NAME OF MISSION',
+            }),
+            ch.display({
+              id: 'Pilot-1',
+              header: 'PILOT -1',
+              cell: ({ row }) => {
+                return (
+                  <div>
+                    {makeFullName(row.original.assignments[1]?.personnel)}
+                  </div>
+                )
+              },
+            }),
+            ch.display({
+              id: 'Pilot-2',
+              header: 'PILOT -2',
+              cell: ({ row }) => {
+                return (
+                  <div>
+                    {makeFullName(row.original.assignments[0]?.personnel)}
+                  </div>
+                )
+              },
+            }),
+            ch.display({
+              id: 'briffing-time',
+              header: 'BRIEF IN TIME',
+              cell: ({ row }) => {
+                const firstAssignment = row.original.assignments[0]
+                if (!firstAssignment) return '-'
+                return appFormatTime(firstAssignment.briefingTime) || '-'
+              },
+            }),
+            ch.display({
+              id: 'take-off-time',
+              header: 'TAKE OFF TIME',
+              cell: ({ row }) => {
+                const firstAssignment = row.original.assignments[0]
+                if (!firstAssignment) return '-'
+                return formatDate(firstAssignment.takeoffTime, true) || '-'
+              },
+            }),
+            ch.display({
+              id: 'landing-time',
+              header: 'LANDING TIME',
+              cell: ({ row }) => {
+                const firstAssignment = row.original.assignments[0]
+                if (!firstAssignment) return '-'
+                return formatDate(firstAssignment.landingTime, true) || '-'
+              },
+            }),
+            ch.display({
+              id: 'aircraft-time',
+              header: 'AIRCRAFT TIME',
+              cell: ({ row }) => {
+                const firstAssignment = row.original.assignments[0]
+                if (!firstAssignment) return '-'
+                return formatDate(firstAssignment.aircraftTime, true) || '-'
+              },
+            }),
+            ch.accessor('remarks', {
+              header: 'REMARKS',
+              cell: ({ row }) => {
+                return row.original.remarks ?? '-'
+              },
+            }),
+          ])}
+        />
+        {/* <Table>
           <TableHeader>
             <TableRow className="bg-muted/80">
               <TableHead>Number</TableHead>
               <TableHead>Time</TableHead>
-              <TableHead>Status</TableHead>
               <TableHead>Name</TableHead>
               <TableHead>Area</TableHead>
               <TableHead className="text-center">Personnels</TableHead>
+              <TableHead>Status</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -168,18 +257,19 @@ function RouteComponent() {
                 <TableCell className="py-4">
                   {formatStartEnd(schedule.startDateTime, schedule.endDateTime)}
                 </TableCell>
-                <TableCell>
-                  <MissionStatusBadge status={schedule.status} size="sm" />
-                </TableCell>
+
                 <TableCell>{schedule.name}</TableCell>
                 <TableCell>{schedule.area?.name}</TableCell>
                 <TableCell className="text-center">
                   {schedule.assignmentsCount}
                 </TableCell>
+                <TableCell>
+                  <MissionStatusBadge status={schedule.status} size="sm" />
+                </TableCell>
               </TableRow>
             ))}
           </TableBody>
-        </Table>
+        </Table> */}
       </div>
 
       {/* <div className="mt-4">

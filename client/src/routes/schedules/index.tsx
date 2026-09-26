@@ -51,7 +51,10 @@ import MissionStatusBadge, {
 import PageCard from '@/components/layout/PageCard'
 import RefetchButton from '@/components/table/refresh-button'
 import { AccessControl } from '@/context/auth-context'
-import { DropdownMenuItem } from '@/components/ui/dropdown-menu'
+import {
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+} from '@/components/ui/dropdown-menu'
 import {
   EventSchedulePrintDocument,
   fetchScheduleForPrint,
@@ -98,17 +101,11 @@ const columns: ColumnDef<TTableFeatures, TScheduleListItem>[] = ch.columns([
               View
             </DropdownMenuItem>
           </AccessControl>
-          <AccessControl module="schedule" action="view">
-            <DropdownMenuItem onClick={handleClick('print')}>
-              <PrinterIcon className="h-4 w-4" />
-              Print
-            </DropdownMenuItem>
-          </AccessControl>
 
-          <DropdownMenuItem onClick={handleClick('grade')}>
+          {/* <DropdownMenuItem onClick={handleClick('grade')}>
             <ClipboardCheckIcon className="h-4 w-4" />
             Grading sheet
-          </DropdownMenuItem>
+          </DropdownMenuItem> */}
           <DropdownMenuItem onClick={handleClick('evaluate')}>
             <CalendarClockIcon className="h-4 w-4" />
             Evaluate
@@ -120,6 +117,15 @@ const columns: ColumnDef<TTableFeatures, TScheduleListItem>[] = ch.columns([
               Edit
             </DropdownMenuItem>
           </AccessControl>
+
+          <AccessControl module="schedule" action="view">
+            <DropdownMenuItem onClick={handleClick('print')}>
+              <PrinterIcon className="h-4 w-4" />
+              Print
+            </DropdownMenuItem>
+          </AccessControl>
+
+          <DropdownMenuSeparator />
 
           <AccessControl module="schedule" action="delete">
             <DropdownMenuItem
@@ -148,7 +154,7 @@ const columns: ColumnDef<TTableFeatures, TScheduleListItem>[] = ch.columns([
       const value = info.getValue()
       return value ? (
         <Link
-          to={`/schedules/$id/edit`}
+          to={`/schedules/$id/evaluate`}
           params={{ id: original.id.toString() }}
           className="text-sm hover:text-primary hover:underline"
         >

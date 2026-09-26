@@ -84,7 +84,7 @@ export function EditScheduleRouteComponent({
             takeoffTime: assignment.takeoffTime,
             landingTime: assignment.landingTime,
             aircraftTime: assignment.aircraftTime,
-            briefingTime: null,
+            briefingTime: assignment.briefingTime,
             obtainedGrade: assignment.obtainedGrade
               ? {
                   label: assignment.obtainedGrade.label,
@@ -97,13 +97,13 @@ export function EditScheduleRouteComponent({
             ),
             participantGradings: assignment.participantGradings.map((item) => ({
               templateAttribute: {
-                label: item.gradingTemplateAttribute!.gradingAttribute!.name!,
+                label: item.gradingTemplateAttribute!.gradingAttribute!.name,
                 value: item.gradingTemplateAttribute!.gradingAttribute!.id,
               },
               gradingScaleOption: item.gradingScaleOption
                 ? {
-                    label: item.gradingScaleOption!.label,
-                    value: item.gradingScaleOption!.id,
+                    label: item.gradingScaleOption.label,
+                    value: item.gradingScaleOption.id,
                   }
                 : null,
               obtainedScoreValue: toNumber(item.obtainedScoreValue),

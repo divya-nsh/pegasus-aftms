@@ -15,8 +15,9 @@ import {
   filterFn_includesString,
   columnFilteringFeature,
   globalFilteringFeature,
+  useTable,
 } from '@tanstack/react-table'
-import type { ReactTable, RowData } from '@tanstack/react-table'
+import type { ColumnDef, ReactTable, RowData } from '@tanstack/react-table'
 import {
   Table,
   TableBody,
@@ -65,6 +66,11 @@ const features = tableFeatures({
 
 export type TTableFeatures = typeof features
 
+export type TAppColumnDef<TData extends RowData> = ColumnDef<
+  TTableFeatures,
+  TData
+>
+
 export function baseTableOptions<TData extends RowData>() {
   return tableOptions<typeof features, TData>({
     features,
@@ -91,11 +97,14 @@ export function AppTable<TData extends RowData>({
   className,
   rounded = true,
   coverFullWidth = true,
+  tableLayout = 'fixed',
 }: {
   table: ReactTable<typeof features, TData>
   className?: string
   rounded?: boolean
   coverFullWidth?: boolean
+  tableLayout?: 'fixed' | 'auto'
+  // This use to dis
 }) {
   return (
     <div
@@ -109,7 +118,7 @@ export function AppTable<TData extends RowData>({
         className="border-separate border-spacing-0"
         maxHeight={400}
         style={{
-          tableLayout: 'fixed',
+          tableLayout: tableLayout,
           width: coverFullWidth ? '100%' : table.getCenterTotalSize(),
         }}
       >
@@ -279,5 +288,30 @@ export function AppTable<TData extends RowData>({
         </TableBody>
       </Table>
     </div>
+  )
+}
+
+export function AppTableWrapper<TData extends Record<string, unknown>>({
+  columns,
+  data = [],
+  tableLayout = 'fixed',
+  className,
+  disableSorting = false,
+}: {
+  columns: TAppColumnDef<TData>[]
+  data?: TData[]
+  tableLayout?: 'fixed' | 'auto'
+  className?: string
+  disableSorting?: boolean
+}) {
+  const table = useTable({
+    ...baseTableOptions<TData>(),
+    data,
+    columns,
+    enableSorting: !disableSorting,
+  })
+
+  return (
+    <AppTable table={table} tableLayout={tableLayout} className={className} />
   )
 }

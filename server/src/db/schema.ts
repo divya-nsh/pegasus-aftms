@@ -156,6 +156,7 @@ export const missionScheduleParticipantTable = snakeCase.table(
       .notNull(),
     attendanceStatus: attendanceStatusEnum(),
     aircraftId: integer().references(() => aircraftTable.id),
+    briefingTime: timestamp(),
     /** Time will Be Stored with in UTC*/
     aircraftTime: timestamp(),
     takeoffTime: timestamp(),

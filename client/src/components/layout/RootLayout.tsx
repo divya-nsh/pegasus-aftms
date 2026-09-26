@@ -31,7 +31,10 @@ import {
 import { ChevronRight } from 'lucide-react'
 import type { FileRouteTypes } from '@/routeTree.gen'
 
-function isNavActive(pathname: string, url: string) {
+function isNavActive(pathname: string, url: string, mode?: 'exact' | 'prefix') {
+  if (mode === 'exact') {
+    return pathname === url
+  }
   return pathname === url || pathname.startsWith(`${url}/`)
 }
 
@@ -106,7 +109,7 @@ export function AppSidebar() {
 function RenderSidebarMenuItem({ item }: { item: NavMenuItem }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
 
-  const isActive = isNavActive(pathname, item.url)
+  const isActive = isNavActive(pathname, item.url, item.matchUrlMode)
 
   if (!item.items) {
     return (

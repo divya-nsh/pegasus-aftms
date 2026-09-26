@@ -5,6 +5,8 @@ import { clsx } from 'clsx'
 import type { ClassValue } from 'clsx'
 import type { ModuleAction, RoleModule } from 'server/types/role'
 import { twMerge } from 'tailwind-merge'
+import { appFormatTime, formatDate } from './date'
+import { isSameDay } from 'date-fns'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -123,4 +125,13 @@ export function moveItem<T>(
   ;[newArray[index], newArray[newIndex]] = [newArray[newIndex], newArray[index]]
 
   return newArray
+}
+
+export function formatStartEndTime(start: string | null, end: string | null) {
+  if (!start && !end) return 'N/A'
+  if (!end && start) return formatDate(start, true)
+  if (isSameDay(start!, end!)) {
+    return `${formatDate(start)} , ${appFormatTime(start)} - ${appFormatTime(end)}`
+  }
+  return `${formatDate(start, true)} - ${formatDate(end, true)}`
 }

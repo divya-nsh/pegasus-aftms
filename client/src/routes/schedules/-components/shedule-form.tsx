@@ -59,7 +59,7 @@ export default function ScheduleForm3({
         aircraftId: formData.mission.value,
         areaId: formData.area!.value,
         remarks: formData.remarks,
-        status: 'draft',
+        status: 'published',
 
         assignments: formData.assignments.map((assignment) => ({
           personnelId: assignment.personnel!.value,
@@ -68,6 +68,7 @@ export default function ScheduleForm3({
           aircraftTime: assignment.aircraftTime,
           takeoffTime: assignment.takeoffTime,
           landingTime: assignment.landingTime,
+          briefingTime: assignment.briefingTime,
           result: null,
           remarks: assignment.remarks,
           obtainedGradeId: assignment.obtainedGrade?.value ?? null,
@@ -361,7 +362,9 @@ export default function ScheduleForm3({
         {mode !== 'view' && (
           <div className="mt-6">
             <form.AppForm>
-              <form.SubscribeButton />
+              <form.SubscribeButton
+                label={mode === 'create' ? 'Create & Publish' : 'Save'}
+              />
             </form.AppForm>
           </div>
         )}

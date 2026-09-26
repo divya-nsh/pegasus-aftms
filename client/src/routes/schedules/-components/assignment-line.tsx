@@ -258,14 +258,14 @@ export default function AssignmentLine({
                     >
                       <ActionMenu
                         actions={[
-                          {
-                            label:
-                              assignment.obtainedScorePercentage != null
-                                ? 'Edit grade'
-                                : 'Grade',
-                            icon: <ClipboardCheckIcon />,
-                            onClick: () => setGradeIndex(index),
-                          },
+                          // {
+                          //   label:
+                          //     assignment.obtainedScorePercentage != null
+                          //       ? 'Edit grade'
+                          //       : 'Grade',
+                          //   icon: <ClipboardCheckIcon />,
+                          //   onClick: () => setGradeIndex(index),
+                          // },
                           mode !== 'view' && {
                             label: 'Edit',
                             icon: <PencilIcon />,

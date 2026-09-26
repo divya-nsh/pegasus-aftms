@@ -74,16 +74,16 @@ const columns: ColumnDef<TTableFeatures, TMissionListItem>[] = ch.columns([
       return `${hours} hr`
     },
   }),
-  ch.accessor('aircraftName', {
-    header: 'Aircraft',
-    cell: (info) => {
-      const row = info.row.original
-      if (!row.aircraftName) return '-'
-      return row.aircraftTailNumber
-        ? `${row.aircraftName} (${row.aircraftTailNumber})`
-        : row.aircraftName
-    },
-  }),
+  // ch.accessor('aircraftName', {
+  //   header: 'Aircraft',
+  //   cell: (info) => {
+  //     const row = info.row.original
+  //     if (!row.aircraftName) return '-'
+  //     return row.aircraftTailNumber
+  //       ? `${row.aircraftName} (${row.aircraftTailNumber})`
+  //       : row.aircraftName
+  //   },
+  // }),
   ch.accessor('description', {
     header: 'Description',
   }),

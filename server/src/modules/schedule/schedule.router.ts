@@ -68,6 +68,7 @@ const reinsertLineItems = async (
       aircraftTime: assignment.aircraftTime,
       takeoffTime: assignment.takeoffTime,
       landingTime: assignment.landingTime,
+      briefingTime: assignment.briefingTime,
       remarks: assignment.remarks,
       obtainedGradeId: assignment.obtainedGradeId,
       obtainedScorePercentage: assignment.obtainedScorePercentage
@@ -183,45 +184,48 @@ const scheduleRouter = router({
 
       if (!input.includeParticipants || items.length === 0) {
         return {
-          items,
+          items: items.map((item) => ({
+            ...item,
+            assignments: [],
+          })),
           totalCount: items.length,
         };
       }
 
-      const participants = await db.query.missionScheduleParticipantTable.findMany({
-        columns: {
-          id: true,
-          order: true,
-          missionScheduleId: true,
-        },
-        with: {
-          personnel: {
-            columns: {
-              id: true,
-              firstName: true,
-              lastName: true,
-              code: true,
-              personnelType: true,
+      const participants =
+        await db.query.missionScheduleParticipantTable.findMany({
+          with: {
+            personnel: {
+              columns: {
+                id: true,
+                firstName: true,
+                lastName: true,
+                code: true,
+                personnelType: true,
+              },
             },
           },
-        },
-        where: {
-          missionScheduleId: {
-            in: items.map((item) => item.id),
+          where: {
+            missionScheduleId: {
+              in: items.map((item) => item.id),
+            },
           },
-        },
-        orderBy: {
-          order: "asc",
-        },
-      });
+          orderBy: {
+            order: "asc",
+          },
+        });
 
       const assignmentsBySchedule = new Map<number, typeof participants>();
       for (const participant of participants) {
-        const current = assignmentsBySchedule.get(participant.missionScheduleId);
+        const current = assignmentsBySchedule.get(
+          participant.missionScheduleId,
+        );
         if (current) {
           current.push(participant);
         } else {
-          assignmentsBySchedule.set(participant.missionScheduleId, [participant]);
+          assignmentsBySchedule.set(participant.missionScheduleId, [
+            participant,
+          ]);
         }
       }
 
@@ -419,6 +423,7 @@ const scheduleRouter = router({
             aircraftTime: hasAircraft ? (input.aircraftTime ?? null) : null,
             takeoffTime: hasAircraft ? (input.takeoffTime ?? null) : null,
             landingTime: hasAircraft ? (input.landingTime ?? null) : null,
+            briefingTime: input.briefingTime,
             remarks: input.remarks,
             obtainedGradeId: input.obtainedGradeId,
             obtainedScoreValue:

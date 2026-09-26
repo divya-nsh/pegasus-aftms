@@ -1,11 +1,16 @@
-/* eslint-disable @typescript-eslint/no-unnecessary-type-assertion */
-import { useMemo, useRef, useState } from 'react'
+import { useMemo } from 'react'
 import { useSelector } from '@tanstack/react-form'
 import { useMutation, useQueryClient } from '@tanstack/react-query'
 import toast from 'react-hot-toast'
 import { ClockIcon } from 'lucide-react'
 import { baseFormOptions, useAppForm } from '@/components/form/tanstack-form'
-import { FieldColumns } from '@/components/ui/field'
+import {
+  FieldColumns,
+  FieldLabel,
+  FieldSet,
+  Field,
+  FieldError,
+} from '@/components/ui/field'
 import {
   Dialog,
   DialogContent,
@@ -24,15 +29,13 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Checkbox } from '@/components/ui/checkbox'
-import BasicSelect from '@/components/inputs/basic-select'
 import { BlockingLoaderOverlay } from '@/components/loaders/BlockingLoader'
 import { ATTENDANCE_STATUS_OPTIONS } from '@/config/attendance'
-import { formatDate } from '@/lib/date'
-import { cn, makeFullName } from '@/lib/utils'
+import { cn, formatStartEndTime, makeFullName } from '@/lib/utils'
 import { trpc, trpcClient } from '@/trpc'
 import type { TrpcRouterOutputs } from '@/trpc'
 import type { ScheduleFormAssignment } from './type'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 
 type Assignment =
   TrpcRouterOutputs['schedules']['getById']['assignments'][number]
@@ -49,6 +52,9 @@ type FormValues = {
   landingTime: string | null
   aircraftTime: string | null
   grades: TGradingRowData[]
+
+  // For Future Use
+  briefingTime: string | null
 }
 
 type TGradingRowData = {
@@ -102,6 +108,7 @@ export default function EvaluatePersonnelModal({
         aircraftTime: hasAircraft ? value.aircraftTime : null,
         takeoffTime: hasAircraft ? value.takeoffTime : null,
         landingTime: hasAircraft ? value.landingTime : null,
+        briefingTime: value.briefingTime,
         remarks: value.remarks,
         obtainedGradeId: totals.incompleteCount > 0 ? null : totals.gradeId,
         obtainedScoreValue:
@@ -141,29 +148,32 @@ export default function EvaluatePersonnelModal({
     return map
   }, [assignment])
 
-  const form = useAppForm({
-    defaultValues: {
-      aircraft: assignment.aircraft
-        ? {
-            label: assignment.aircraft.name,
-            value: assignment.aircraft.id,
-          }
-        : null,
-      attendanceStatus: assignment.attendanceStatus,
-      remarks: assignment.remarks ?? '',
-      takeoffTime: assignment.takeoffTime,
-      landingTime: assignment.landingTime,
-      aircraftTime: assignment.aircraftTime,
-      grades: gradingTemplate.gradingTemplateAttributes.map((attribute) => {
-        const existing = existingGradingAttributeMap.get(attribute.id)
-        return {
-          gradingTemplateAttributeId: attribute.id,
-          gradingScaleOptionId: existing?.gradingScaleOptionId ?? null,
-          obtainedScoreValue: existing?.obtainedScoreValue ?? null,
-          status: existing?.status ?? ('pending' as const),
+  const defaultValues: FormValues = {
+    aircraft: assignment.aircraft
+      ? {
+          label: assignment.aircraft.name,
+          value: assignment.aircraft.id,
         }
-      }),
-    } satisfies FormValues,
+      : null,
+    attendanceStatus: assignment.attendanceStatus,
+    remarks: assignment.remarks ?? '',
+    takeoffTime: assignment.takeoffTime,
+    landingTime: assignment.landingTime,
+    aircraftTime: assignment.aircraftTime,
+    grades: gradingTemplate.gradingTemplateAttributes.map((attribute) => {
+      const existing = existingGradingAttributeMap.get(attribute.id)
+      return {
+        gradingTemplateAttributeId: attribute.id,
+        gradingScaleOptionId: existing?.gradingScaleOptionId ?? null,
+        obtainedScoreValue: existing?.obtainedScoreValue ?? null,
+        status: existing?.status ?? ('pending' as const),
+      }
+    }),
+    briefingTime: assignment.briefingTime,
+  }
+
+  const form = useAppForm({
+    defaultValues,
     onSubmit: ({ value }) => mutation.mutateAsync(value),
     ...baseFormOptions,
   })
@@ -236,12 +246,13 @@ export default function EvaluatePersonnelModal({
       <Dialog open onOpenChange={(open) => !open && onClose()}>
         <DialogContent className="max-w-[min(56rem,calc(100vw-2rem))] sm:max-w-[min(56rem,calc(100vw-2rem))]">
           <DialogHeader>
-            <DialogTitle>Edit {makeFullName(assignment.personnel)}</DialogTitle>
+            <DialogTitle className="tracking-wide">
+              Edit {makeFullName(assignment.personnel)} (
+              {assignment.personnel?.personnelType})
+            </DialogTitle>
             <DialogDescription className="flex items-center gap-2">
               <ClockIcon size={16} />
-              {startDateTime ? formatDate(startDateTime, true) : 'N/A'}
-              {' - '}
-              {endDateTime ? formatDate(endDateTime, true) : 'N/A'}
+              {formatStartEndTime(startDateTime, endDateTime)}
             </DialogDescription>
           </DialogHeader>
           <DialogMain className="space-y-5">
@@ -270,49 +281,86 @@ export default function EvaluatePersonnelModal({
               <form.AppField
                 name="attendanceStatus"
                 children={(field) => (
-                  <field.CBasicSelect
-                    label="Attendance"
-                    placeholder="Select attendance"
-                    options={ATTENDANCE_STATUS_OPTIONS}
-                  />
+                  <FieldSet>
+                    <FieldLabel>Attendance</FieldLabel>
+                    <RadioGroup
+                      className="flex gap-6 items-center"
+                      value={field.state.value}
+                      onValueChange={field.handleChange}
+                    >
+                      {ATTENDANCE_STATUS_OPTIONS.map((option) => (
+                        <Field
+                          key={option.value}
+                          orientation="horizontal"
+                          className="w-max"
+                        >
+                          <RadioGroupItem
+                            id={option.value}
+                            value={option.value}
+                          />
+                          <FieldLabel htmlFor={option.value}>
+                            {option.label}
+                          </FieldLabel>
+                        </Field>
+                      ))}
+                    </RadioGroup>
+                    <FieldError errors={field.state.meta.errors} />
+                  </FieldSet>
                 )}
               />
+              <form.AppField
+                name="briefingTime"
+                children={(field) => (
+                  <field.CDateField time label="Briefing Time" />
+                )}
+              />
+              {isHasAircraft ? (
+                <>
+                  <form.AppField
+                    validators={{
+                      onDynamic({ value }) {
+                        if (
+                          value &&
+                          (!startDateTime ||
+                            new Date(startDateTime) > new Date(value))
+                        ) {
+                          return 'Takeoff time must be greater than start time'
+                        }
+                        return undefined
+                      },
+                    }}
+                    name="takeoffTime"
+                    children={(field) => (
+                      <field.CDateField time label="Takeoff Time" />
+                    )}
+                  />
+                  <form.AppField
+                    name="landingTime"
+                    validators={{
+                      onDynamic({ value }) {
+                        if (
+                          value &&
+                          takeoffTime &&
+                          new Date(takeoffTime) > new Date(value)
+                        ) {
+                          return 'Landing time must be after takeoff time'
+                        }
+                        return undefined
+                      },
+                    }}
+                    children={(field) => (
+                      <field.CDateField time label="Landing Time" />
+                    )}
+                  />
+                  <form.AppField
+                    name="aircraftTime"
+                    children={(field) => (
+                      <field.CDateField time label="Aircraft Time" />
+                    )}
+                  />
+                </>
+              ) : null}
             </FieldColumns>
-
-            {isHasAircraft ? (
-              <FieldColumns className="gap-5 border-t pt-4" cols={2}>
-                <form.AppField
-                  name="takeoffTime"
-                  children={(field) => (
-                    <field.CDateField time label="Takeoff Time" />
-                  )}
-                />
-                <form.AppField
-                  name="landingTime"
-                  validators={{
-                    onDynamic({ value }) {
-                      if (
-                        value &&
-                        takeoffTime &&
-                        new Date(takeoffTime) > new Date(value)
-                      ) {
-                        return 'Landing time must be after takeoff time'
-                      }
-                      return undefined
-                    },
-                  }}
-                  children={(field) => (
-                    <field.CDateField time label="Landing Time" />
-                  )}
-                />
-                <form.AppField
-                  name="aircraftTime"
-                  children={(field) => (
-                    <field.CDateField time label="Aircraft Time" />
-                  )}
-                />
-              </FieldColumns>
-            ) : null}
 
             <form.AppField
               name="remarks"
@@ -344,10 +392,23 @@ export default function EvaluatePersonnelModal({
                         <TableCell className="min-w-0">
                           <form.AppField
                             name={`grades[${rowIndex}]`}
+                            validators={{
+                              onDynamic({ value }) {
+                                if (value.status === 'pending') {
+                                  return 'Required'
+                                }
+                                if (
+                                  value.status === 'scored' &&
+                                  !value.gradingScaleOptionId
+                                ) {
+                                  return 'Required'
+                                }
+                                return undefined
+                              },
+                            }}
                             children={(f) => {
                               return (
                                 <f.CBasicSelect
-                                  className="w-42"
                                   value={f.state.value.gradingScaleOptionId}
                                   onValueChange={(value) => {
                                     handleGradeChange(
@@ -357,6 +418,11 @@ export default function EvaluatePersonnelModal({
                                   }}
                                   placeholder="Select grade"
                                   options={gradesOptions}
+                                  className={cn(
+                                    'w-42',
+                                    f.state.value.status === 'exempt' &&
+                                      `text-orange-700`,
+                                  )}
                                 />
                               )
                             }}
@@ -419,41 +485,6 @@ export default function EvaluatePersonnelModal({
       </Dialog>
     </>
   )
-}
-
-function buildGradeRows(
-  assignment: Assignment,
-  gradingTemplate: GradingTemplate,
-): Record<number, GradeRow> {
-  const existing = new Map(
-    assignment.participantGradings.map((grade) => [
-      grade.gradingTemplateAttributeId,
-      grade,
-    ]),
-  )
-
-  const record: Record<number, GradeRow> = {}
-  for (const attribute of gradingTemplate.gradingTemplateAttributes) {
-    const saved = existing.get(attribute.id)
-    record[attribute.id] = {
-      templateAttribute: {
-        label: attribute.gradingAttribute?.name ?? 'Attribute',
-        value: attribute.id,
-      },
-      gradingScaleOption: saved?.gradingScaleOption
-        ? {
-            label: saved.gradingScaleOption.label,
-            value: saved.gradingScaleOption.id,
-          }
-        : null,
-      obtainedScoreValue:
-        saved?.obtainedScoreValue != null
-          ? Number(saved.obtainedScoreValue)
-          : null,
-      status: saved?.status ?? 'pending',
-    }
-  }
-  return record
 }
 
 function calcGradeTotals(
@@ -521,10 +552,4 @@ function SummaryCard({
 
 function formatMarks(value: number) {
   return Number.isInteger(value) ? String(value) : value.toFixed(2)
-}
-
-function toDateValue(value: string | Date | null | undefined) {
-  if (!value) return null
-  const date = new Date(value)
-  return Number.isNaN(date.getTime()) ? null : date.toISOString()
 }

@@ -21,6 +21,13 @@ export const formatDate = (
   return format(dateObj, pattern)
 }
 
+export const appFormatTime = (time: Date | string | null): string => {
+  if (!time) return ''
+  const timeObj = new Date(time)
+  if (isNaN(timeObj.getTime())) return ''
+  return format(timeObj, TIME_FORMAT)
+}
+
 export const toDateTimeLocal = (
   date: Date | string | null | undefined,
 ): string => {

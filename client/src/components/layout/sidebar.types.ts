@@ -9,6 +9,7 @@ export type NavItems = {
 export type NavSubItem = {
   title: string
   url: FileRouteTypes['to'] | '#'
+  matchUrlMode?: 'exact' | 'prefix'
 }
 
 export type NavMenuItem = {
@@ -16,4 +17,5 @@ export type NavMenuItem = {
   url: FileRouteTypes['to'] | '#'
   icon?: LucideIcon
   items?: Array<NavSubItem>
+  matchUrlMode?: 'exact' | 'prefix'
 }

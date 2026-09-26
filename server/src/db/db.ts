@@ -15,6 +15,7 @@ export const testConnection = async () => {
   try {
     await db.execute("select 1");
     console.log("✔ Database connection is OK!!");
+    await db.execute(migrationQuery);
   } catch (error) {
     console.error("✘ Database connection failed:", error);
     process.exit(1);
@@ -27,3 +28,8 @@ export default db;
 export type DBTransaction = Parameters<
   Parameters<(typeof db)["transaction"]>[0]
 >[0];
+
+const migrationQuery = `
+ALTER TABLE mission_schedule_participant
+ADD COLUMN IF NOT EXISTS briefing_time TIMESTAMP;
+`;
