@@ -22,7 +22,8 @@ import {
 import { useAuth } from '@/context/auth-context'
 import { NavUser } from './nav-user'
 import { traineeNavItems, navItems } from './siderbar-items'
-import type { NavMenuItem } from './sidebar.types'
+import type { NavNode } from './sidebar.types'
+import type { TPermissionKeys } from 'server/types/shared'
 import {
   Collapsible,
   CollapsibleTrigger,
@@ -37,6 +38,30 @@ function isNavActive(pathname: string, url: string, mode?: 'exact' | 'prefix') {
     return pathname === url
   }
   return pathname === url || pathname.startsWith(`${url}/`)
+}
+
+function filterVisibleNav(
+  nodes: NavNode[],
+  can: (permissionKey: TPermissionKeys) => boolean,
+): NavNode[] {
+  const visible: NavNode[] = []
+
+  for (const node of nodes) {
+    // Not allowed skip this node
+    if (node.permissionKey && !can(node.permissionKey)) continue
+
+    if (!node.children) {
+      visible.push(node)
+      continue
+    }
+
+    const children = filterVisibleNav(node.children, can)
+    if (children.length === 0) continue
+
+    visible.push({ ...node, children })
+  }
+
+  return visible
 }
 
 export default function Layout({ children }: { children: React.ReactNode }) {
@@ -58,6 +83,11 @@ export function AppSidebar() {
   const { user, isUserCan } = useAuth()
 
   const isTrainee = user!.role?.name === 'Trainee'
+
+  const visibleNav = useMemo(
+    () => filterVisibleNav(isTrainee ? traineeNavItems : navItems, isUserCan),
+    [isTrainee, isUserCan],
+  )
 
   return (
     <Sidebar collapsible="icon">
@@ -85,13 +115,13 @@ export function AppSidebar() {
         </SidebarMenu>
       </SidebarHeader>
       <SidebarContent>
-        {(isTrainee ? traineeNavItems : navItems).map((group) => {
+        {visibleNav.map((group) => {
           return (
             <SidebarGroup key={group.title}>
               <SidebarGroupLabel>{group.title}</SidebarGroupLabel>
               <SidebarGroupContent>
                 <SidebarMenu>
-                  {group.items.map((item) => (
+                  {group.children?.map((item) => (
                     <RenderSidebarMenuItem key={item.title} item={item} />
                   ))}
                 </SidebarMenu>
@@ -109,37 +139,20 @@ export function AppSidebar() {
   )
 }
 
-function RenderSidebarMenuItem({ item }: { item: NavMenuItem }) {
-  const { isUserCan } = useAuth()
+function RenderSidebarMenuItem({ item }: { item: NavNode }) {
   const pathname = useRouterState({ select: (s) => s.location.pathname })
+  const url = item.url ?? '#'
 
-  const isActive = isNavActive(pathname, item.url, item.matchUrlMode)
+  const isActive = isNavActive(pathname, url, item.matchUrlMode)
 
-  const isVisible = item.permissionKey ? isUserCan(item.permissionKey) : true
-
-  const subItems = useMemo(
-    () =>
-      (item.items ?? []).filter((subItem) => {
-        return subItem.permissionKey ? isUserCan(subItem.permissionKey) : true
-      }),
-    [item.items, isUserCan],
-  )
-
-  console.log({
-    isVisible,
-    name: item.title,
-  })
-
-  if (!isVisible) return null
-
-  if (!item.items) {
+  if (!item.children) {
     return (
       <SidebarMenuItem>
         <SidebarMenuButton
           tooltip={item.title}
           isActive={isActive}
           render={
-            <Link to={item.url as FileRouteTypes['to']}>
+            <Link to={url as FileRouteTypes['to']}>
               {item.icon && <item.icon />}
               <span>{item.title}</span>
             </Link>
@@ -148,8 +161,6 @@ function RenderSidebarMenuItem({ item }: { item: NavMenuItem }) {
       </SidebarMenuItem>
     )
   }
-
-  if (subItems.length === 0) return null
 
   return (
     <Collapsible key={item.title} className="group/collapsible">
@@ -165,12 +176,12 @@ function RenderSidebarMenuItem({ item }: { item: NavMenuItem }) {
         />
         <CollapsibleContent>
           <SidebarMenuSub>
-            {subItems.map((subItem) => (
+            {item.children.map((subItem) => (
               <SidebarMenuSubItem key={subItem.title}>
                 <SidebarMenuSubButton
-                  isActive={isNavActive(pathname, subItem.url)}
+                  isActive={isNavActive(pathname, subItem.url ?? '#')}
                   render={
-                    <Link to={subItem.url as FileRouteTypes['to']}>
+                    <Link to={(subItem.url ?? '#') as FileRouteTypes['to']}>
                       {subItem.title}
                     </Link>
                   }

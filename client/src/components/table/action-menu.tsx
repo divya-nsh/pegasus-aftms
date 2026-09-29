@@ -1,4 +1,5 @@
 import { MoreHorizontal } from 'lucide-react'
+import { useMemo } from 'react'
 import type { ReactNode } from 'react'
 import {
   DropdownMenu,
@@ -13,6 +14,8 @@ import { Button } from '../ui/button'
 import { cn } from '@/lib/utils'
 import type { linkOptions } from '@tanstack/react-router'
 import { useRouter } from '@tanstack/react-router'
+import type { TPermissionKeys } from 'server/types/shared'
+import { useAuth } from '@/context/auth-context'
 
 export type MenuAction =
   | {
@@ -22,6 +25,7 @@ export type MenuAction =
       onClick?: () => void
       isDestructive?: boolean
       redirectTo?: ReturnType<typeof linkOptions>
+      permissionKey?: TPermissionKeys
     }
   | { type: 'separator'; hidden?: boolean }
 
@@ -33,6 +37,17 @@ type Props = {
 
 export function ActionMenu({ actions = [], className, children }: Props) {
   const router = useRouter()
+  const { isUserCan } = useAuth()
+
+  const filteredActions = useMemo(() => {
+    return actions.filter((action) => {
+      if (!action) return false
+      if (action.type === 'separator') return true
+      if (action.permissionKey && !isUserCan(action.permissionKey)) return false
+      return true
+    })
+  }, [actions, isUserCan])
+
   return (
     <DropdownMenu>
       <DropdownMenuTrigger
@@ -48,12 +63,19 @@ export function ActionMenu({ actions = [], className, children }: Props) {
           <DropdownMenuLabel>Actions</DropdownMenuLabel>
           <DropdownMenuSeparator />
           {children}
-          {actions.map((action, index) => {
+          {filteredActions.map((action, index) => {
             if (!action) return null
             if (action.type === 'separator') {
-              if (action.hidden) return null
-              return <DropdownMenuSeparator key={index} />
+              // If the separator is not the first or last item, show it
+              if (
+                !!filteredActions[index + 1] &&
+                !!filteredActions[index - 1]
+              ) {
+                return <DropdownMenuSeparator key={index} />
+              }
+              return null // If the separator is the first or last item, don't show it
             }
+
             return (
               <DropdownMenuItem
                 key={index}

@@ -9,7 +9,6 @@ import { protectedProcedure, router } from "#/trpc.js";
 import { TRPCError } from "@trpc/server";
 import { and, eq } from "drizzle-orm";
 import { z } from "zod";
-import roleService from "../role/role.service.js";
 import {
   createSchema,
   missionStatusSchema,
@@ -126,13 +125,11 @@ const scheduleRouter = router({
       }),
     )
     .query(async ({ ctx, input }) => {
-      const scope = roleService.canDo(ctx.user.role || "", "schedule", "view");
-
       let loggedInPersonnelId: number | undefined;
 
-      if (scope === "assigned" && ctx.user.personnelId != null) {
-        loggedInPersonnelId = ctx.user.personnelId;
-      }
+      // if (scope === "assigned" && ctx.user.personnelId != null) {
+      //   loggedInPersonnelId = ctx.user.personnelId;
+      // }
 
       const personnelId = loggedInPersonnelId ?? input.personnelId;
 
@@ -145,12 +142,12 @@ const scheduleRouter = router({
           id: "desc",
         },
         where: {
-          NOT:
-            scope === "assigned"
-              ? {
-                  status: "draft",
-                }
-              : undefined,
+          // NOT:
+          //   scope === "assigned"
+          //     ? {
+          //         status: "draft",
+          //       }
+          //     : undefined,
           status: input.status
             ? {
                 in: input.status,
@@ -241,13 +238,13 @@ const scheduleRouter = router({
   getById: protectedProcedure
     .input(z.object({ id: z.number() }))
     .query(async ({ ctx, input }) => {
-      const scope = roleService.canDo(ctx.user.role || "", "schedule", "view");
+      // const scope = roleService.canDo(ctx.user.role || "", "schedule", "view");
 
       let personnelId: number | undefined;
 
-      if (scope === "assigned" && ctx.user.personnelId != null) {
-        personnelId = ctx.user.personnelId;
-      }
+      // if (scope === "assigned" && ctx.user.personnelId != null) {
+      //   personnelId = ctx.user.personnelId;
+      // }
 
       const data = await db.query.missionScheduleTable.findFirst({
         with: {

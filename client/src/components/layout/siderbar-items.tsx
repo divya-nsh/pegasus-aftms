@@ -9,17 +9,16 @@ import {
   MapPinnedIcon,
   MapPinIcon,
   UserIcon,
-  FileTextIcon,
   PrinterIcon,
   ClipboardCheckIcon,
   ShieldIcon,
 } from 'lucide-react'
-import type { NavItems } from './sidebar.types'
+import type { NavNode } from './sidebar.types'
 
-export const navItems: NavItems[] = [
+export const navItems: NavNode[] = [
   {
     title: 'Operations',
-    items: [
+    children: [
       {
         title: 'Instructor Dashboard',
         url: '/instructor-dashboard',
@@ -30,6 +29,7 @@ export const navItems: NavItems[] = [
         url: '/schedules',
         icon: CalendarClockIcon,
         matchUrlMode: 'exact',
+        permissionKey: 'eventSchedule.read',
       },
       {
         title: 'Evaluate Schedule',
@@ -45,56 +45,56 @@ export const navItems: NavItems[] = [
   },
   {
     title: 'Masters',
-    items: [
+    children: [
       {
         title: 'Event / Mission',
         url: '/events',
         icon: TargetIcon,
-        permissionKey: 'events.view',
+        permissionKey: 'event.read',
       },
       {
         title: 'Personnel',
         url: '/personnel',
         icon: UsersIcon,
-        permissionKey: 'personnel.view',
+        permissionKey: 'personnel.read',
       },
       {
         title: 'Aircraft',
         url: '/aircraft',
         icon: PlaneIcon,
-        permissionKey: 'aircraft.view',
+        permissionKey: 'aircraft.read',
       },
       {
         title: 'Area',
         url: '/area',
         icon: MapPinnedIcon,
-        permissionKey: 'area.view',
+        permissionKey: 'area.read',
       },
       {
         title: 'Location',
         url: '/locations',
         icon: MapPinIcon,
-        permissionKey: 'location.view',
+        permissionKey: 'location.read',
       },
       {
         title: 'Gradding',
         url: '#',
         icon: GraduationCapIcon,
-        items: [
+        children: [
           {
             title: 'Template',
             url: '/grading-template',
-            permissionKey: 'grading-template.view',
+            permissionKey: 'gradingTemplate.read',
           },
           {
             title: 'Scale',
             url: '/grading-scale',
-            permissionKey: 'grading-scale.view',
+            permissionKey: 'gradingScale.read',
           },
           {
             title: 'Attribute',
             url: '/grading-attribute',
-            permissionKey: 'grading-attribute.view',
+            permissionKey: 'gradingAttribute.read',
           },
         ],
       },
@@ -102,51 +102,34 @@ export const navItems: NavItems[] = [
         title: 'User',
         url: '/users',
         icon: UserIcon,
-        permissionKey: 'user.view',
+        permissionKey: 'user.read',
       },
       {
         title: 'Roles',
         url: '/roles',
         icon: ShieldIcon,
-        permissionKey: 'role.view',
+        // Only show to super admin
+        permissionKey: '*',
       },
     ],
   },
   {
     title: 'Reports',
-    items: [
+    children: [
       {
         title: 'Print Schedule',
         url: '/reports/print-schedule',
+        permissionKey: 'eventSchedule.read',
         icon: PrinterIcon,
-      },
-      {
-        title: 'Flight Log',
-        url: '#',
-        icon: FileTextIcon,
-      },
-      {
-        title: 'Shift Report',
-        url: '#',
-        icon: CalendarDaysIcon,
       },
     ],
   },
-  // {
-  //   title: 'Future Modules',
-  //   items: [
-  //     { title: 'Aircraft Type', url: '/aircraft-type' },
-  //     { title: 'Flight Log ', url: '/flight-log' },
-  //     { title: 'User', url: '/user' },
-  //     { title: 'Squadron', url: '/' },
-  //   ],
-  // }
 ]
 
-export const traineeNavItems: NavItems[] = [
+export const traineeNavItems: NavNode[] = [
   {
     title: 'Training',
-    items: [
+    children: [
       {
         title: 'Dashboard',
         url: '/trainee-dashboard',

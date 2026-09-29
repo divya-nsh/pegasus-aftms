@@ -12,7 +12,11 @@ import {
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
 import { trpc, trpcClient } from '@/trpc'
-import { useMutation, useSuspenseQuery } from '@tanstack/react-query'
+import {
+  useMutation,
+  useQueryClient,
+  useSuspenseQuery,
+} from '@tanstack/react-query'
 import { toast } from 'react-hot-toast'
 import { z } from 'zod'
 
@@ -50,6 +54,7 @@ export function RoleModelForm({
   mode: 'create' | 'edit'
   initialFormData?: RoleModelFormData
 }) {
+  const queryClient = useQueryClient()
   const { data: permissionsGroup } = useSuspenseQuery(
     trpc.rolesV2.getPermissions.queryOptions(),
   )
@@ -63,6 +68,7 @@ export function RoleModelForm({
     validators: {
       onDynamic: schema,
     },
+    onSubmit: ({ value }) => mutation.mutate(value),
   })
 
   const mutation = useMutation({
@@ -85,6 +91,8 @@ export function RoleModelForm({
           ? 'New role created successfully'
           : 'Role save successfully',
       )
+      queryClient.resetQueries(trpc.rolesV2.pathFilter())
+
       onClose()
     },
     onError: (error) => {

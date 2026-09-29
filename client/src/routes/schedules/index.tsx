@@ -94,49 +94,44 @@ const columns: ColumnDef<TTableFeatures, TScheduleListItem>[] = ch.columns([
           info.table.options.meta?.onRowAction?.(action, info.row.id)
         }
       return (
-        <ActionMenu>
-          <AccessControl module="schedule" action="view">
-            <DropdownMenuItem onClick={handleClick('view')}>
-              <EyeIcon className="h-4 w-4" />
-              View
-            </DropdownMenuItem>
-          </AccessControl>
+        <ActionMenu
+          actions={[
+            {
+              label: 'View',
+              onClick: handleClick('view'),
+              icon: <EyeIcon />,
+              permissionKey: 'eventSchedule.read',
+            },
+            {
+              label: 'Edit',
+              onClick: handleClick('edit'),
+              icon: <PencilIcon />,
+              permissionKey: 'eventSchedule.update',
+            },
 
-          {/* <DropdownMenuItem onClick={handleClick('grade')}>
-            <ClipboardCheckIcon className="h-4 w-4" />
-            Grading sheet
-          </DropdownMenuItem> */}
-          <DropdownMenuItem onClick={handleClick('evaluate')}>
-            <CalendarClockIcon className="h-4 w-4" />
-            Evaluate
-          </DropdownMenuItem>
+            {
+              label: 'Print',
+              onClick: handleClick('print'),
+              icon: <PrinterIcon />,
+              permissionKey: 'eventSchedule.read',
+            },
+            {
+              label: 'Evaluate',
+              onClick: handleClick('evaluate'),
+              icon: <CalendarClockIcon />,
+              permissionKey: 'eventSchedule.update',
+            },
 
-          <AccessControl module="schedule" action="edit">
-            <DropdownMenuItem onClick={handleClick('edit')}>
-              <PencilIcon className="h-4 w-4" />
-              Edit
-            </DropdownMenuItem>
-          </AccessControl>
-
-          <AccessControl module="schedule" action="view">
-            <DropdownMenuItem onClick={handleClick('print')}>
-              <PrinterIcon className="h-4 w-4" />
-              Print
-            </DropdownMenuItem>
-          </AccessControl>
-
-          <DropdownMenuSeparator />
-
-          <AccessControl module="schedule" action="delete">
-            <DropdownMenuItem
-              variant="destructive"
-              onClick={handleClick('delete')}
-            >
-              <TrashIcon className="h-4 w-4" />
-              Delete
-            </DropdownMenuItem>
-          </AccessControl>
-        </ActionMenu>
+            { type: 'separator' },
+            {
+              label: 'Delete',
+              onClick: handleClick('delete'),
+              isDestructive: true,
+              icon: <TrashIcon className="h-4 w-4" />,
+              permissionKey: 'eventSchedule.delete',
+            },
+          ]}
+        />
       )
     },
     size: 70,
@@ -400,7 +395,7 @@ function RouteComponent() {
             <CalendarClockIcon />
             Day timeline
           </LinkButton>
-          <AccessControl module="schedule" action="create">
+          <AccessControl permissionKey="eventSchedule.create">
             <LinkButton to="/schedules/create" newButton />
           </AccessControl>
         </div>

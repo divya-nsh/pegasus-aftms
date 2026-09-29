@@ -2,7 +2,7 @@ import FullPageSpinner from '@/components/loaders/page-loader'
 import { trpc } from '@/trpc'
 import type { TrpcRouterOutputs } from '@/trpc'
 import { useQuery } from '@tanstack/react-query'
-import { createContext, useCallback, useContext } from 'react'
+import { createContext, useCallback, useContext, useMemo } from 'react'
 import type { RoleModule, ModuleAction } from 'server/types/role'
 import type { TPermissionKeys } from 'server/types/shared'
 
@@ -28,11 +28,17 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     isPending,
   } = useQuery(trpc.users.getMyProfile.queryOptions())
 
+  const permissionsSet = useMemo(() => {
+    // For better performance, we use a set to check if a permission is in the user's permissions
+    return new Set(user?.role?.permissions ?? [])
+  }, [user])
+
   const isUserCan = useCallback(
     (permissionKey: TPermissionKeys) => {
-      return user?.role?.permissions.includes(permissionKey) ?? false
+      if (permissionsSet.has('*')) return true
+      return permissionsSet.has(permissionKey)
     },
-    [user],
+    [permissionsSet],
   )
 
   if (isPending)
