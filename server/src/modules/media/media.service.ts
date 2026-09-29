@@ -138,7 +138,7 @@ class MediaService {
   }
 
   async startCleanupJob(batchSize: number) {
-    console.log("Starting cleanup job");
+    console.log("✔ Media Cleanup Job is Initiated!!");
     const mediaRecords = await db
       .select()
       .from(mediaTable)
@@ -168,7 +168,7 @@ class MediaService {
       await db.delete(mediaTable).where(eq(mediaTable.id, mediaRecord.id));
     }
 
-    console.log("Cleanup job completed");
+    // console.log("Cleanup job completed");
 
     setTimeout(() => {
       this.startCleanupJob(batchSize);

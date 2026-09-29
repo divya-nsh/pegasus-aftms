@@ -11,7 +11,7 @@ type TCreateUser = {
   email?: string;
   name: string;
   isActive: boolean;
-  role: string;
+  roleId: number;
 };
 
 const hashPassword = async (password: string) => {
@@ -24,9 +24,6 @@ const comparePassword = async (password: string, hash: string) => {
 
 class UserService {
   async createUser(values: TCreateUser, tx?: DBTransaction) {
-    if (!roleService.getById(values.role)) {
-      throw new TRPCError({ code: "BAD_REQUEST", message: "Role not found" });
-    }
     const user = await (tx ?? db)
       .insert(userTable)
       .values({
@@ -35,7 +32,7 @@ class UserService {
         email: values.email,
         name: values.name,
         isActive: values.isActive,
-        role: values.role,
+        roleId: values.roleId,
       })
       .returning();
     return user;
@@ -46,9 +43,6 @@ class UserService {
     values: Partial<TCreateUser>,
     tx?: DBTransaction,
   ) {
-    if (values.role && !roleService.getById(values.role)) {
-      throw new TRPCError({ code: "BAD_REQUEST", message: "Role not found" });
-    }
     await (tx ?? db)
       .update(userTable)
       .set({
@@ -59,7 +53,7 @@ class UserService {
         email: values.email,
         name: values.name,
         isActive: values.isActive ?? undefined,
-        role: values.role ?? undefined,
+        roleId: values.roleId ?? undefined,
       })
       .where(eq(userTable.id, id))
       .returning();
@@ -113,7 +107,6 @@ class UserService {
         isActive: true,
         createdAt: true,
         updatedAt: true,
-        role: true,
         name: true,
       },
       with: {
@@ -125,6 +118,13 @@ class UserService {
             firstName: true,
             lastName: true,
             personnelType: true,
+          },
+        },
+        role: {
+          columns: {
+            id: true,
+            name: true,
+            permissions: true,
           },
         },
       },

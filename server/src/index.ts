@@ -6,7 +6,6 @@ import { appRouter } from "./router.js";
 import { createContext } from "./trpc.js";
 import { SESSION_COOKIE_NAME } from "./config/constants.js";
 import db, { testConnection } from "./db/db.js";
-import { ensureDefaultAdmin } from "./modules/user/seed-admin.js";
 import morgan from "morgan";
 import path from "node:path";
 import {
@@ -17,6 +16,8 @@ import { serveClient } from "./middleware/serveClient.js";
 import { DrizzleSessionStore } from "./lib/drizzle-session-store.js";
 import { fileURLToPath } from "node:url";
 import fs from "node:fs";
+import { IS_DEVELOPMENT, NODE_ENV } from "./lib/env.js";
+import { populateData } from "./populate.js";
 
 const appDirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -82,17 +83,20 @@ app.use(
   }),
 );
 
+console.log({
+  NODE_ENV: NODE_ENV,
+});
+
 app.listen(port, async () => {
-  console.log(`Server is listening on port ${port}!`);
-  console.log(`URL: http://localhost:${port}`);
-  const indexHtml = path.join(clientPath, "index.html");
-  if (fs.existsSync(indexHtml)) {
-    console.log(`Serving client from ${clientPath}`);
-  } else {
-    console.error(`Client build not found at ${clientPath}`);
-  }
   await testConnection();
-  await ensureDefaultAdmin();
+  await populateData();
+
+  console.log(`✔ Server Started at port ${port}!`);
+  console.log(`> Site URL: http://localhost:${port}`);
+  const indexHtml = path.join(clientPath, "index.html");
+  if (!fs.existsSync(indexHtml) && !IS_DEVELOPMENT) {
+    console.error(`✘ Client build not found at ${clientPath}`);
+  }
 });
 
 function resolveClientPath(entryDir: string) {

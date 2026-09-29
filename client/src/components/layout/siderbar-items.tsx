@@ -12,6 +12,7 @@ import {
   FileTextIcon,
   PrinterIcon,
   ClipboardCheckIcon,
+  ShieldIcon,
 } from 'lucide-react'
 import type { NavItems } from './sidebar.types'
 
@@ -45,21 +46,69 @@ export const navItems: NavItems[] = [
   {
     title: 'Masters',
     items: [
-      { title: 'Event / Mission', url: '/events', icon: TargetIcon },
-      { title: 'Personnel', url: '/personnel', icon: UsersIcon },
-      { title: 'Aircraft', url: '/aircraft', icon: PlaneIcon },
-      { title: 'Area', url: '/area', icon: MapPinnedIcon },
-      { title: 'User', url: '/users', icon: UserIcon },
-      { title: 'Location', url: '/locations', icon: MapPinIcon },
+      {
+        title: 'Event / Mission',
+        url: '/events',
+        icon: TargetIcon,
+        permissionKey: 'events.view',
+      },
+      {
+        title: 'Personnel',
+        url: '/personnel',
+        icon: UsersIcon,
+        permissionKey: 'personnel.view',
+      },
+      {
+        title: 'Aircraft',
+        url: '/aircraft',
+        icon: PlaneIcon,
+        permissionKey: 'aircraft.view',
+      },
+      {
+        title: 'Area',
+        url: '/area',
+        icon: MapPinnedIcon,
+        permissionKey: 'area.view',
+      },
+      {
+        title: 'Location',
+        url: '/locations',
+        icon: MapPinIcon,
+        permissionKey: 'location.view',
+      },
       {
         title: 'Gradding',
         url: '#',
         icon: GraduationCapIcon,
         items: [
-          { title: 'Template', url: '/grading-template' },
-          { title: 'Scale', url: '/grading-scale' },
-          { title: 'Attribute', url: '/grading-attribute' },
+          {
+            title: 'Template',
+            url: '/grading-template',
+            permissionKey: 'grading-template.view',
+          },
+          {
+            title: 'Scale',
+            url: '/grading-scale',
+            permissionKey: 'grading-scale.view',
+          },
+          {
+            title: 'Attribute',
+            url: '/grading-attribute',
+            permissionKey: 'grading-attribute.view',
+          },
         ],
+      },
+      {
+        title: 'User',
+        url: '/users',
+        icon: UserIcon,
+        permissionKey: 'user.view',
+      },
+      {
+        title: 'Roles',
+        url: '/roles',
+        icon: ShieldIcon,
+        permissionKey: 'role.view',
       },
     ],
   },

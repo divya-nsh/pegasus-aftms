@@ -1,5 +1,6 @@
 import type { FileRouteTypes } from '@/routeTree.gen'
 import type { LucideIcon } from 'lucide-react'
+import type { TPermissionKeys } from 'server/types/shared'
 
 export type NavItems = {
   title: string
@@ -10,6 +11,7 @@ export type NavSubItem = {
   title: string
   url: FileRouteTypes['to'] | '#'
   matchUrlMode?: 'exact' | 'prefix'
+  permissionKey?: TPermissionKeys
 }
 
 export type NavMenuItem = {
@@ -18,4 +20,5 @@ export type NavMenuItem = {
   icon?: LucideIcon
   items?: Array<NavSubItem>
   matchUrlMode?: 'exact' | 'prefix'
+  permissionKey?: TPermissionKeys
 }

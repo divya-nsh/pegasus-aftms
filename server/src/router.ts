@@ -7,7 +7,6 @@ import personnelRouter from "./modules/personnel/personnel.router.js";
 import scheduleRouter from "./modules/schedule/schedule.router.js";
 import { protectedProcedure, publicProcedure, router } from "./trpc.js";
 import z from "zod";
-import { TRPCError } from "@trpc/server";
 import userRouter from "./modules/user/user.router.js";
 import db from "./db/db.js";
 import mediaRouter from "./modules/media/media.router.js";
@@ -28,7 +27,7 @@ export const appRouter = router({
   missions: missionRouter,
   schedules: scheduleRouter,
   users: userRouter,
-  roles: roleRouter,
+  rolesV2: roleRouter,
   media: mediaRouter,
   gradingAttribute: gradingAttributeRouter,
   gradingScale: gradingScaleRouter,

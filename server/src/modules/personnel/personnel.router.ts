@@ -1,6 +1,5 @@
 import db from "#/db/db.js";
 import { personnelTable, userTable } from "#/db/schema.js";
-import { DEFAULT_TRAINEE_ROLE } from "#/config/roles.js";
 import { protectedProcedure, router } from "#/trpc.js";
 import { pilotQualifications } from "@repo/shared";
 import { TRPCError } from "@trpc/server";
@@ -8,6 +7,7 @@ import { desc, eq } from "drizzle-orm";
 import { z } from "zod";
 import { mediaService } from "../media/media.service.js";
 import userService from "../user/user.service.js";
+import roleService, { TRAINEE_ROLE_NAME } from "../role/role.service.js";
 
 const optionalText = z.string().optional();
 const AUTO_CODE_PREFIX = "PRS-";
@@ -122,20 +122,13 @@ async function createLinkedUser(
     });
   }
 
-  // if (email) {
-  //   const [existingEmail] = await tx
-  //     .select({ id: userTable.id })
-  //     .from(userTable)
-  //     .where(eq(userTable.email, email))
-  //     .limit(1);
-
-  //   if (existingEmail) {
-  //     throw new TRPCError({
-  //       code: "CONFLICT",
-  //       message: "A user with this email already exists",
-  //     });
-  //   }
-  // }
+  const role = await roleService.getByName(TRAINEE_ROLE_NAME);
+  if (!role) {
+    throw new TRPCError({
+      code: "INTERNAL_SERVER_ERROR",
+      message: `Role with name ${TRAINEE_ROLE_NAME} not found`,
+    });
+  }
 
   const [user] = await userService.createUser(
     {
@@ -144,7 +137,7 @@ async function createLinkedUser(
       name: `${input.firstName} ${input.lastName}`,
       password,
       isActive: true,
-      role: DEFAULT_TRAINEE_ROLE,
+      roleId: role.id,
     },
     tx,
   );

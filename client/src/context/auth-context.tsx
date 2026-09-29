@@ -4,6 +4,7 @@ import type { TrpcRouterOutputs } from '@/trpc'
 import { useQuery } from '@tanstack/react-query'
 import { createContext, useCallback, useContext } from 'react'
 import type { RoleModule, ModuleAction } from 'server/types/role'
+import type { TPermissionKeys } from 'server/types/shared'
 
 type AuthUser = TrpcRouterOutputs['users']['getMyProfile']
 
@@ -15,8 +16,9 @@ export type AuthContextType = {
   linkedPersonnel?: AuthUser['personnel'][number]
   isAuthenticated: boolean
   refetch: () => void
-  isUserCan: (module: RoleModule, action: ModuleAction) => boolean
+  isUserCan: (permissionKey: TPermissionKeys) => boolean
 }
+
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
 
 export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
@@ -27,14 +29,8 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
   } = useQuery(trpc.users.getMyProfile.queryOptions())
 
   const isUserCan = useCallback(
-    (module: RoleModule, action: ModuleAction) => {
-      if (user?.role?.isAdmin) return true
-      return (
-        user?.role?.permissions.some(
-          (permission) =>
-            permission.module === module && permission.actions.includes(action),
-        ) ?? false
-      )
+    (permissionKey: TPermissionKeys) => {
+      return user?.role?.permissions.includes(permissionKey) ?? false
     },
     [user],
   )
@@ -74,16 +70,14 @@ export const useAuth = () => {
 
 export const AccessControl = ({
   children,
-  module,
-  action,
+  permissionKey,
   fallback = null,
 }: {
   children: React.ReactNode
-  module: RoleModule
-  action: ModuleAction
+  permissionKey: TPermissionKeys
   fallback?: React.ReactNode
 }) => {
   const { isUserCan } = useAuth()
 
-  return isUserCan(module, action) ? children : fallback
+  return isUserCan(permissionKey) ? children : fallback
 }

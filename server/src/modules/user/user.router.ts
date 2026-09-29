@@ -13,7 +13,7 @@ const createSchema = z.object({
   password: z.string().min(1),
   isActive: z.boolean().default(true),
   name: z.string().trim().max(255).nullable().optional(),
-  role: z.string().optional(),
+  roleId: z.number().optional(),
 });
 
 const updateSchema = z.object({
@@ -22,7 +22,7 @@ const updateSchema = z.object({
   password: z.string().optional(),
   isActive: z.boolean(),
   name: z.string().trim().max(255).nullable().optional(),
-  role: z.string().optional(),
+  roleId: z.number().optional(),
 });
 
 const deleteSchema = z.object({
@@ -43,26 +43,12 @@ const userRouter = router({
       });
     }
 
-    return {
-      ...user,
-      role: roleService.getById(user.role || ""),
-    };
+    return user;
   }),
 
   getAll: protectedProcedure.query(async () => {
     console.time("getAllUsers");
     const users = await db.query.userTable.findMany({
-      columns: {
-        id: true,
-        username: true,
-        lastLoginAt: true,
-        passwordChangedAt: true,
-        isActive: true,
-        createdAt: true,
-        updatedAt: true,
-        role: true,
-        name: true,
-      },
       with: {
         personnel: {
           columns: {
@@ -71,6 +57,12 @@ const userRouter = router({
             firstName: true,
             lastName: true,
             personnelType: true,
+          },
+        },
+        role: {
+          columns: {
+            id: true,
+            name: true,
           },
         },
       },
@@ -122,7 +114,7 @@ const userRouter = router({
         password,
         isActive: input.isActive,
         name: input.name || null,
-        role: input.role ?? null,
+        roleId: input.roleId ?? null,
       })
       .returning({ id: userTable.id });
     return user;
@@ -138,7 +130,7 @@ const userRouter = router({
         username: data.username,
         isActive: data.isActive,
         name: data.name || null,
-        role: data.role ?? null,
+        roleId: data.roleId ?? null,
         ...(nextPassword
           ? {
               password: await hashPassword(nextPassword),

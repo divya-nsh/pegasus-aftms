@@ -44,12 +44,22 @@ export const userTable = snakeCase.table("user", {
   username: varchar({ length: 60 }).notNull().unique(),
   email: varchar({ length: 255 }).unique(),
   name: varchar({ length: 255 }),
-  role: varchar(),
+  // role: varchar(), //deprecated for backward compatibility
+  roleId: integer().references(() => roleTable.id),
   // null password represents a user that has not set a password yet
   password: varchar(),
   lastLoginAt: timestamp(),
   passwordChangedAt: timestamp(),
   isActive: boolean().notNull().default(true),
+  ...timeStampts,
+});
+
+export const roleTable = snakeCase.table("role", {
+  id: integer().primaryKey().generatedAlwaysAsIdentity(),
+  name: varchar().notNull().unique(),
+  permissions: varchar().array().notNull().default([]),
+  description: varchar(),
+  isSystem: boolean().notNull().default(false),
   ...timeStampts,
 });
 
@@ -218,9 +228,14 @@ export const missionScheduleParticipantGradingTable = snakeCase.table(
     ...timeStampts,
   },
   (table) => [
-    uniqueIndex(
-      "unique_mission_schedule_participant_id_grading_template_attribute_id_idx",
-    ).on(table.missionScheduleParticipantId, table.gradingTemplateAttributeId),
+    // uniqueIndex("A".repeat(63)).on(
+    //   table.missionScheduleParticipantId,
+    //   table.gradingTemplateAttributeId,
+    // ),
+    uniqueIndex("unique_participant_id_grading_template_attribute_id_idx").on(
+      table.missionScheduleParticipantId,
+      table.gradingTemplateAttributeId,
+    ),
   ],
 );
 

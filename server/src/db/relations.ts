@@ -8,6 +8,10 @@ export const relations = defineRelations({ ...schema }, (r) => ({
       from: r.userTable.id,
       to: r.personnelTable.userId,
     }),
+    role: r.one.roleTable({
+      from: r.userTable.roleId,
+      to: r.roleTable.id,
+    }),
   },
   personnelTable: {
     user: r.one.userTable({

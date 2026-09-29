@@ -88,10 +88,9 @@ const columns: ColumnDef<TTableFeatures, TUserListItem>[] = ch.columns([
     header: 'Name',
     cell: (info) => info.getValue() ?? '-',
   }),
-  ch.accessor('role', {
+  ch.accessor('role.name', {
     header: 'Role',
     cell: (info) => info.getValue() ?? '-',
-    size: 100,
   }),
   ch.accessor('isActive', {
     header: 'Active',
@@ -117,7 +116,7 @@ function toUserFormData(row: TUserListItem): UserFormData {
     password: '',
     isActive: row.isActive,
     name: row.name ?? '',
-    role: row.role ?? '',
+    roleId: row.roleId,
   }
 }
 

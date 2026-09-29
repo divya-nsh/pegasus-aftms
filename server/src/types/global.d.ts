@@ -2,9 +2,13 @@ export interface SessionData {
   user?: {
     id: number;
     username: string;
-    role: string | null;
     name: string;
     personnelId: number | null;
+    role: {
+      id: number;
+      name: string;
+      permissions: string[];
+    } | null;
   };
 }
 
@@ -13,9 +17,13 @@ declare module "express-session" {
     user?: {
       id: number;
       username: string;
-      role: string | null;
       name: string;
       personnelId: number | null;
+      role: {
+        id: number;
+        name: string;
+        permissions: string[];
+      } | null;
     };
   }
 }

@@ -42,7 +42,7 @@ function createSchema(mode: 'create' | 'edit') {
         : z.string().trim(),
     isActive: z.boolean(),
     name: z.string(),
-    role: z.string(),
+    roleId: z.number().nullable(),
   })
 }
 
@@ -61,7 +61,7 @@ export const defaultUserFormData: UserFormData = {
   username: '',
   password: '',
   isActive: true,
-  role: '',
+  roleId: null,
   name: '',
 }
 
@@ -82,7 +82,7 @@ export default function UserForm({
 }: UserFormProps) {
   const queryClient = useQueryClient()
   const schema = useMemo(() => createSchema(mode), [mode])
-  const rolesQuery = useSuspenseQuery(trpc.roles.getOptions.queryOptions())
+  const rolesQuery = useSuspenseQuery(trpc.rolesV2.getAll.queryOptions())
 
   const form = useAppForm({
     ...baseFormOptions,
@@ -97,12 +97,15 @@ export default function UserForm({
     mutationFn: async (data: UserFormData) => {
       if (toEditId) {
         return trpcClient.users.update.mutate({
-          toEditId,
           ...data,
+          toEditId,
+          roleId: data.roleId!,
         })
       }
+
       return trpcClient.users.create.mutate({
         ...data,
+        roleId: data.roleId!,
       })
     },
     onSuccess: () => {
@@ -180,13 +183,16 @@ export default function UserForm({
             />
 
             <form.AppField
-              name="role"
+              name="roleId"
               children={(f) => (
                 <f.CBasicSelect
                   label="Role"
                   placeholder="Select role"
-                  options={rolesQuery.data}
-                  emptyAsNull
+                  options={rolesQuery.data.map((role) => ({
+                    label: role.name,
+                    value: role.id,
+                  }))}
+                  valueAsNumber
                 />
               )}
             />
