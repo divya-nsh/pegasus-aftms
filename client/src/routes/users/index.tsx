@@ -5,13 +5,14 @@ import { TablePagination } from '@/components/table/table-pagination'
 import {
   AppTable,
   baseTableOptions,
+  createTableActionHandler,
   // eslint-disable-next-line import/consistent-type-specifier-style
   type TTableFeatures,
 } from '@/components/table/table.tsx'
-import { createFileRoute, useNavigate } from '@tanstack/react-router'
+import { createFileRoute } from '@tanstack/react-router'
 import { createColumnHelper, useTable } from '@tanstack/react-table'
 import type { ColumnDef } from '@tanstack/react-table'
-import { PencilIcon, TrashIcon } from 'lucide-react'
+import { TrashIcon } from 'lucide-react'
 import { useState } from 'react'
 import { ActionMenu } from '@/components/table/action-menu'
 import trpc, { trpcClient } from '@/trpc'
@@ -30,18 +31,16 @@ import PageCard from '@/components/layout/PageCard'
 import NewButton from '@/components/buttons/new-button'
 import UserForm from './-components/user-form'
 import type { UserFormData } from './-components/user-form'
-import z from 'zod'
+import { protectRouteBeforeLoad } from '@/lib/utils'
+import { AccessControl, useAuth } from '@/context/auth-context'
 
 export const Route = createFileRoute('/users/')({
   component: RouteComponent,
   pendingComponent: FullPageSpinner,
+  beforeLoad: protectRouteBeforeLoad('user.read'),
   errorComponent: ({ error }) => (
     <ErrorAlert error={error} title="Failed to Load Users" />
   ),
-  validateSearch: z.object({
-    modal: z.enum(['create', 'edit']).optional().catch(undefined),
-    docId: z.number().optional().catch(undefined),
-  }),
 })
 
 type TUserListItem = TrpcRouterOutputs['users']['getAll']['items'][number]
@@ -52,15 +51,20 @@ const columns: ColumnDef<TTableFeatures, TUserListItem>[] = ch.columns([
   ch.display({
     header: '-',
     cell: (info) => {
+      const handleAction = createTableActionHandler(info)
       return (
         <ActionMenu
           actions={[
             {
-              label: 'Edit',
-              icon: <PencilIcon className="h-4 w-4" />,
-              onClick: () => {
-                info.table.options.meta?.onRowAction?.('edit', info.row.id)
-              },
+              type: 'view',
+              onClick: handleAction('edit'),
+              // If User can't update then lable edit as view
+              permissionKey: ({ isUserCan }) => !isUserCan('user.update'),
+            },
+            {
+              type: 'edit',
+              onClick: handleAction('edit'),
+              permissionKey: 'user.update',
             },
             {
               label: 'Delete',
@@ -69,6 +73,7 @@ const columns: ColumnDef<TTableFeatures, TUserListItem>[] = ch.columns([
               onClick: () => {
                 info.table.options.meta?.onRowAction?.('delete', info.row.id)
               },
+              permissionKey: 'user.delete',
             },
           ]}
         />
@@ -78,6 +83,7 @@ const columns: ColumnDef<TTableFeatures, TUserListItem>[] = ch.columns([
     id: 'actions',
     meta: {
       align: 'center',
+      preventDefaultRowClick: true,
     },
     minSize: 70,
   }),
@@ -121,10 +127,13 @@ function toUserFormData(row: TUserListItem): UserFormData {
 }
 
 function RouteComponent() {
+  const { isUserCan } = useAuth()
+  const [modal, setModal] = useState<{
+    mode: 'create' | 'edit'
+    rowId?: number
+  } | null>(null)
   const usersQ = useSuspenseQuery(trpc.users.getAll.queryOptions())
   const queryClient = useQueryClient()
-  const search = Route.useSearch()
-  const navigate = useNavigate({ from: '/users/' })
   const [searchText, setSearchText] = useState<string>('')
 
   const deleteMutation = useMutation({
@@ -148,22 +157,26 @@ function RouteComponent() {
   })
 
   const closeModal = () => {
-    navigate({ search: {}, replace: true })
+    setModal(null)
   }
 
   const openModal = (rowId?: string) => {
     if (rowId) {
-      navigate({
-        search: { modal: 'edit', docId: Number(rowId) },
+      setModal({
+        mode: 'edit',
+        rowId: Number(rowId),
       })
       return
+    } else {
+      setModal({
+        mode: 'create',
+      })
     }
-    navigate({ search: { modal: 'create' } })
   }
 
   const editUser =
-    search.modal === 'edit' && search.docId != null
-      ? usersQ.data.items.find((item) => item.id === search.docId)
+    modal?.mode === 'edit' && modal.rowId
+      ? usersQ.data.items.find((item) => item.id === modal.rowId)
       : undefined
 
   const table = useTable({
@@ -199,13 +212,17 @@ function RouteComponent() {
     globalFilterFn: 'includesString',
   })
 
+  const viewOnly = !isUserCan('user.update')
+
   return (
     <PageCard className="space-y-4">
       <div className="items-center gap-1 border-b mb-4 pb-1 flex justify-between">
         <h1 className="text-xl font-bold">Users</h1>
         <div className="flex items-center gap-4">
           <RefreshButton query={usersQ} />
-          <NewButton onClick={() => openModal()} />
+          <AccessControl permissionKey="user.create">
+            <NewButton onClick={() => openModal()} />
+          </AccessControl>
         </div>
       </div>
       <div className=" mb-3 flex items-center justify-between">
@@ -222,12 +239,12 @@ function RouteComponent() {
       <AppTable table={table} />
       <TablePagination table={table} />
 
-      {search.modal === 'create' && (
+      {modal?.mode === 'create' && (
         <UserForm mode="create" onClose={closeModal} />
       )}
-      {search.modal === 'edit' && editUser && (
+      {modal?.mode === 'edit' && editUser && (
         <UserForm
-          mode="edit"
+          mode={viewOnly ? 'view' : 'edit'}
           initialFormData={toUserFormData(editUser)}
           toEditId={editUser.id}
           linkedPersonnel={editUser.personnel[0] ?? null}

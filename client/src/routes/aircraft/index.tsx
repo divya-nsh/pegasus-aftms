@@ -5,13 +5,13 @@ import { TablePagination } from '@/components/table/table-pagination'
 import {
   AppTable,
   baseTableOptions,
+  createTableActionHandler,
   // eslint-disable-next-line import/consistent-type-specifier-style
   type TTableFeatures,
 } from '@/components/table/table.tsx'
 import { createFileRoute } from '@tanstack/react-router'
 import { createColumnHelper, useTable } from '@tanstack/react-table'
 import type { ColumnDef } from '@tanstack/react-table'
-import { PencilIcon, TrashIcon } from 'lucide-react'
 import { useState } from 'react'
 import { ActionMenu } from '@/components/table/action-menu'
 import trpc, { trpcClient } from '@/trpc'
@@ -31,11 +31,12 @@ import RefreshButton from '@/components/table/refresh-button'
 import NewButton from '@/components/buttons/new-button'
 import AircraftForm from './-components/aircraft-form'
 import type { AircraftFormData } from './-components/aircraft-form'
+import { AccessControl, useAuth } from '@/context/auth-context'
 
 export const Route = createFileRoute('/aircraft/')({
   component: RouteComponent,
   pendingComponent: FullPageSpinner,
-  beforeLoad: protectRouteBeforeLoad('aircraft', 'view'),
+  beforeLoad: protectRouteBeforeLoad('aircraft.read'),
   errorComponent: ({ error }) => (
     <ErrorAlert error={error} title="Failed to Load Aircraft" />
   ),
@@ -50,23 +51,24 @@ const columns: ColumnDef<TTableFeatures, TAircraftListItem>[] = ch.columns([
   ch.display({
     header: '-',
     cell: (info) => {
+      const handleAction = createTableActionHandler(info)
       return (
         <ActionMenu
           actions={[
             {
-              label: 'Edit',
-              icon: <PencilIcon className="h-4 w-4" />,
-              onClick: () => {
-                info.table.options.meta?.onRowAction?.('edit', info.row.id)
-              },
+              type: 'view',
+              onClick: handleAction('edit'),
+              permissionKey: ({ isUserCan }) => !isUserCan('aircraft.update'),
             },
             {
-              label: 'Delete',
-              isDestructive: true,
-              icon: <TrashIcon className="h-4 w-4" />,
-              onClick: () => {
-                info.table.options.meta?.onRowAction?.('delete', info.row.id)
-              },
+              type: 'edit',
+              onClick: handleAction('edit'),
+              permissionKey: 'aircraft.update',
+            },
+            {
+              type: 'delete',
+              onClick: handleAction('delete'),
+              permissionKey: 'aircraft.delete',
             },
           ]}
         />
@@ -113,6 +115,7 @@ const columns: ColumnDef<TTableFeatures, TAircraftListItem>[] = ch.columns([
 function RouteComponent() {
   const aircraftQ = useSuspenseQuery(trpc.aircraft.getAll.queryOptions())
   const queryClient = useQueryClient()
+  const { isUserCan } = useAuth()
 
   const [formModel, setFormModel] = useState<{
     data?: AircraftFormData
@@ -148,8 +151,9 @@ function RouteComponent() {
   }
 
   const deleteMutation = useMutation({
-    mutationFn: ({ toDeleteId }: { toDeleteId: number }) => {
-      return trpcClient.aircraft.delete.mutate({ toDeleteId })
+    mutationFn: async ({ toDeleteId }: { toDeleteId: number }) => {
+      if (!isUserCan('aircraft.delete')) return
+      await trpcClient.aircraft.delete.mutate({ toDeleteId })
     },
     onSuccess: () => {
       queryClient.resetQueries(trpc.aircraft.pathFilter())
@@ -206,7 +210,9 @@ function RouteComponent() {
         <h1 className="text-xl font-bold">Aircraft</h1>
         <div className="flex items-center gap-4">
           <RefreshButton query={aircraftQ} />
-          <NewButton onClick={() => openModal()} />
+          <AccessControl permissionKey={'aircraft.create'}>
+            <NewButton onClick={() => openModal()} />
+          </AccessControl>
         </div>
       </div>
       <ErrorAlert error={aircraftQ.error} />

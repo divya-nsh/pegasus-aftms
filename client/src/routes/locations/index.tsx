@@ -5,13 +5,13 @@ import { TablePagination } from '@/components/table/table-pagination'
 import {
   AppTable,
   baseTableOptions,
+  createTableActionHandler,
   // eslint-disable-next-line import/consistent-type-specifier-style
   type TTableFeatures,
 } from '@/components/table/table.tsx'
 import { createFileRoute } from '@tanstack/react-router'
 import { createColumnHelper, useTable } from '@tanstack/react-table'
 import type { ColumnDef } from '@tanstack/react-table'
-import { PencilIcon, TrashIcon } from 'lucide-react'
 import { useState } from 'react'
 import LocationForm from './-components/location-form'
 import type { LocationFormData as FormData } from './-components/location-form'
@@ -30,11 +30,12 @@ import PageCard from '@/components/layout/PageCard'
 import { protectRouteBeforeLoad } from '@/lib/utils'
 import NewButton from '@/components/buttons/new-button'
 import RefreshButton from '@/components/table/refresh-button'
+import { AccessControl } from '@/context/auth-context'
 
 export const Route = createFileRoute('/locations/')({
   component: RouteComponent,
   pendingComponent: FullPageSpinner,
-  beforeLoad: protectRouteBeforeLoad('location', 'view'),
+  beforeLoad: protectRouteBeforeLoad('location.read'),
   errorComponent: ({ error }) => (
     <ErrorAlert error={error} title="Failed to Load Locations" />
   ),
@@ -49,23 +50,24 @@ const columns: ColumnDef<TTableFeatures, TLocationListItem>[] = ch.columns([
   ch.display({
     header: '-',
     cell: (info) => {
+      const handleAction = createTableActionHandler(info)
       return (
         <ActionMenu
           actions={[
             {
-              label: 'Edit',
-              icon: <PencilIcon className="h-4 w-4" />,
-              onClick: () => {
-                info.table.options.meta?.onRowAction?.('edit', info.row.id)
-              },
+              type: 'view',
+              onClick: handleAction('edit'),
+              permissionKey: ({ isUserCan }) => !isUserCan('location.update'),
             },
             {
-              label: 'Delete',
-              isDestructive: true,
-              icon: <TrashIcon className="h-4 w-4" />,
-              onClick: () => {
-                info.table.options.meta?.onRowAction?.('delete', info.row.id)
-              },
+              type: 'edit',
+              onClick: handleAction('edit'),
+              permissionKey: 'location.update',
+            },
+            {
+              type: 'delete',
+              onClick: handleAction('delete'),
+              permissionKey: 'location.delete',
             },
           ]}
         />
@@ -219,7 +221,9 @@ function RouteComponent() {
           {/* <Separator orientation="vertical" className="mx-2" /> */}
           <h1 className="text-xl font-bold mr-auto">Locations</h1>
           <RefreshButton query={locationsQ} />
-          <NewButton onClick={() => openModal()} />
+          <AccessControl permissionKey={'location.create'}>
+            <NewButton onClick={() => openModal()} />
+          </AccessControl>
         </div>
         <ErrorAlert error={locationsQ.error} />
         <div className=" mb-3 flex items-center justify-between px-5">

@@ -17,7 +17,12 @@ import {
   globalFilteringFeature,
   useTable,
 } from '@tanstack/react-table'
-import type { ColumnDef, ReactTable, RowData } from '@tanstack/react-table'
+import type {
+  CellContext,
+  ColumnDef,
+  ReactTable,
+  RowData,
+} from '@tanstack/react-table'
 import {
   Table,
   TableBody,
@@ -34,11 +39,11 @@ type MyColumnMeta = {
   preventDefaultRowClick?: boolean
 }
 
+export type TTableActionType =
+  'edit' | 'delete' | 'view' | 'print' | 'grade' | 'evaluate'
+
 type MyTableMeta = {
-  onRowAction?: (
-    actionType: 'edit' | 'delete' | 'view' | 'print' | 'grade' | 'evaluate',
-    rowId: string,
-  ) => void
+  onRowAction?: (actionType: TTableActionType, rowId: string) => void
   onRowDoubleClick?: (rowId: string) => void
 }
 
@@ -314,4 +319,12 @@ export function AppTableWrapper<TData extends Record<string, unknown>>({
   return (
     <AppTable table={table} tableLayout={tableLayout} className={className} />
   )
+}
+
+export const createTableActionHandler = <TData extends RowData>(
+  info: CellContext<TTableFeatures, TData>,
+) => {
+  return (action: TTableActionType) => () => {
+    info.table.options.meta?.onRowAction?.(action, info.row.id)
+  }
 }

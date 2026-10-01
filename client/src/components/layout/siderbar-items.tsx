@@ -35,12 +35,13 @@ export const navItems: NavNode[] = [
         title: 'Evaluate Schedule',
         url: '/schedules/evaluate-list',
         icon: ClipboardCheckIcon,
+        permissionKey: 'eventSchedule.read',
       },
-      {
-        title: 'Trainee Dashboard',
-        url: '/trainee-dashboard',
-        icon: GraduationCapIcon,
-      },
+      // {
+      //   title: 'Trainee Dashboard',
+      //   url: '/trainee-dashboard',
+      //   icon: GraduationCapIcon,
+      // },
     ],
   },
   {
@@ -64,18 +65,7 @@ export const navItems: NavNode[] = [
         icon: PlaneIcon,
         permissionKey: 'aircraft.read',
       },
-      {
-        title: 'Area',
-        url: '/area',
-        icon: MapPinnedIcon,
-        permissionKey: 'area.read',
-      },
-      {
-        title: 'Location',
-        url: '/locations',
-        icon: MapPinIcon,
-        permissionKey: 'location.read',
-      },
+
       {
         title: 'Gradding',
         url: '#',
@@ -98,18 +88,38 @@ export const navItems: NavNode[] = [
           },
         ],
       },
+
       {
-        title: 'User',
-        url: '/users',
-        icon: UserIcon,
-        permissionKey: 'user.read',
+        title: 'Administration',
+        icon: ShieldIcon,
+        children: [
+          {
+            title: 'User',
+            url: '/users',
+            icon: UserIcon,
+            permissionKey: 'user.read',
+          },
+          {
+            title: 'Roles',
+            url: '/roles',
+            icon: ShieldIcon,
+            // Only show to super admin
+            permissionKey: '*',
+          },
+        ],
+      },
+
+      {
+        title: 'Area',
+        url: '/area',
+        icon: MapPinnedIcon,
+        permissionKey: 'area.read',
       },
       {
-        title: 'Roles',
-        url: '/roles',
-        icon: ShieldIcon,
-        // Only show to super admin
-        permissionKey: '*',
+        title: 'Location',
+        url: '/locations',
+        icon: MapPinIcon,
+        permissionKey: 'location.read',
       },
     ],
   },

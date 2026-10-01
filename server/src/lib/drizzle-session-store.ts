@@ -12,7 +12,7 @@ export class DrizzleSessionStore extends Store {
   constructor(
     private db: Database,
     // IT Represent Session Data Schema Version as its store jsonb schema may change in the future
-    public readonly version: number = 2,
+    public readonly version: number,
   ) {
     super();
     console.log("✔ Session Cleanup Job is Initiated!!");

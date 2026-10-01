@@ -1,12 +1,12 @@
 import type { RouterContext } from '@/routes/__root'
 import { redirect } from '@tanstack/react-router'
-import type { LinkProps } from '@tanstack/react-router'
 import { clsx } from 'clsx'
 import type { ClassValue } from 'clsx'
-import type { ModuleAction, RoleModule } from 'server/types/role'
 import { twMerge } from 'tailwind-merge'
 import { appFormatTime, formatDate } from './date'
 import { isSameDay } from 'date-fns'
+import { isPermitted } from '@/lib/permission'
+import type { PermissionRequirement } from '@/lib/permission'
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
@@ -21,13 +21,12 @@ export function getErrorMessage(error: unknown) {
 }
 
 export function protectRouteBeforeLoad(
-  module: RoleModule,
-  action: ModuleAction,
+  permission: PermissionRequirement,
   redirectOptions: Parameters<typeof redirect>[0] = { to: '/' },
 ) {
   return ({ context }: { context: RouterContext }) => {
-    const { isUserCan } = context.auth!
-    if (!isUserCan(module, action)) {
+    const auth = context.auth
+    if (!auth || !isPermitted(auth, permission)) {
       throw redirect(redirectOptions)
     }
   }

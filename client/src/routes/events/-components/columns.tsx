@@ -1,7 +1,8 @@
+import { createTableActionHandler } from '@/components/table/table.tsx'
 import type { TTableFeatures } from '@/components/table/table.tsx'
 import { createColumnHelper } from '@tanstack/react-table'
 import type { ColumnDef } from '@tanstack/react-table'
-import { CalendarIcon, PencilIcon, TrashIcon } from 'lucide-react'
+import { CalendarIcon } from 'lucide-react'
 import type { TrpcRouterOutputs } from 'server/router'
 import { getMissionType } from '@repo/shared'
 import { ActionMenu } from '@/components/table/action-menu'
@@ -15,10 +16,16 @@ const columns: ColumnDef<TTableFeatures, TMissionListItem>[] = ch.columns([
   ch.display({
     header: '-',
     cell: (info) => {
-      // const router = useRouter()
+      const handleAction = createTableActionHandler(info)
+
       return (
         <ActionMenu
           actions={[
+            {
+              type: 'view',
+              onClick: handleAction('edit'),
+              permissionKey: ({ isUserCan }) => !isUserCan('event.update'),
+            },
             {
               label: 'Shedule it',
               icon: <CalendarIcon className="h-4 w-4" />,
@@ -30,22 +37,18 @@ const columns: ColumnDef<TTableFeatures, TMissionListItem>[] = ch.columns([
               }),
             },
             {
-              label: 'Edit',
-              icon: <PencilIcon className="h-4 w-4" />,
-              onClick: () => {
-                info.table.options.meta?.onRowAction?.('edit', info.row.id)
-              },
+              type: 'edit',
+              onClick: handleAction('edit'),
+              permissionKey: 'event.update',
             },
+            { type: 'separator' },
             {
-              label: 'Delete',
-              isDestructive: true,
-              icon: <TrashIcon className="h-4 w-4" />,
-              onClick: () => {
-                info.table.options.meta?.onRowAction?.('delete', info.row.id)
-              },
+              type: 'delete',
+              onClick: handleAction('delete'),
+              permissionKey: 'event.delete',
             },
           ]}
-        ></ActionMenu>
+        />
       )
     },
     size: 70,

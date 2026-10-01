@@ -5,13 +5,13 @@ import { TablePagination } from '@/components/table/table-pagination'
 import {
   AppTable,
   baseTableOptions,
+  createTableActionHandler,
   // eslint-disable-next-line import/consistent-type-specifier-style
   type TTableFeatures,
 } from '@/components/table/table.tsx'
 import { createFileRoute } from '@tanstack/react-router'
 import { createColumnHelper, useTable } from '@tanstack/react-table'
 import type { ColumnDef } from '@tanstack/react-table'
-import { PencilIcon, TrashIcon } from 'lucide-react'
 import { useState } from 'react'
 import GradingTemplateDialog from './-components/grading-template-form'
 import trpc, { trpcClient } from '@/trpc'
@@ -29,6 +29,8 @@ import PageCard from '@/components/layout/PageCard'
 import NewButton from '@/components/buttons/new-button'
 import RefreshButton from '@/components/table/refresh-button'
 import type { GradingTemplateFormData } from './-components/schema'
+import { protectRouteBeforeLoad } from '@/lib/utils'
+import { AccessControl } from '@/context/auth-context'
 
 export const Route = createFileRoute('/grading-template/')({
   component: RouteComponent,
@@ -36,6 +38,7 @@ export const Route = createFileRoute('/grading-template/')({
   errorComponent: ({ error }) => (
     <ErrorAlert error={error} title="Failed to Load Grading Templates" />
   ),
+  beforeLoad: protectRouteBeforeLoad('gradingTemplate.read'),
 })
 
 type TGradingTemplateListItem =
@@ -48,23 +51,25 @@ const columns: ColumnDef<TTableFeatures, TGradingTemplateListItem>[] =
     ch.display({
       header: '-',
       cell: (info) => {
+        const handleAction = createTableActionHandler(info)
         return (
           <ActionMenu
             actions={[
               {
-                label: 'Edit',
-                icon: <PencilIcon className="h-4 w-4" />,
-                onClick: () => {
-                  info.table.options.meta?.onRowAction?.('edit', info.row.id)
-                },
+                type: 'view',
+                onClick: handleAction('edit'),
+                permissionKey: ({ isUserCan }) =>
+                  !isUserCan('gradingTemplate.update'),
               },
               {
-                label: 'Delete',
-                isDestructive: true,
-                icon: <TrashIcon className="h-4 w-4" />,
-                onClick: () => {
-                  info.table.options.meta?.onRowAction?.('delete', info.row.id)
-                },
+                type: 'edit',
+                onClick: handleAction('edit'),
+                permissionKey: 'gradingTemplate.update',
+              },
+              {
+                type: 'delete',
+                onClick: handleAction('delete'),
+                permissionKey: 'gradingTemplate.delete',
               },
             ]}
           />
@@ -189,7 +194,9 @@ function RouteComponent() {
         <h1 className="text-xl font-bold">Grading Template</h1>
         <div className="flex items-center gap-4">
           <RefreshButton query={gradingTemplateQ} />
-          <NewButton onClick={() => setFormModel({ open: true })} />
+          <AccessControl permissionKey={'gradingTemplate.create'}>
+            <NewButton onClick={() => setFormModel({ open: true })} />
+          </AccessControl>
         </div>
       </div>
       <ErrorAlert error={gradingTemplateQ.error} />

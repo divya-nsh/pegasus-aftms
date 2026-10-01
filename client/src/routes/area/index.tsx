@@ -5,6 +5,7 @@ import { TablePagination } from '@/components/table/table-pagination'
 import {
   AppTable,
   baseTableOptions,
+  createTableActionHandler,
   // eslint-disable-next-line import/consistent-type-specifier-style
   type TTableFeatures,
 } from '@/components/table/table.tsx'
@@ -12,7 +13,7 @@ import { Button } from '@/components/ui/button'
 import { createFileRoute } from '@tanstack/react-router'
 import { createColumnHelper, useTable } from '@tanstack/react-table'
 import type { ColumnDef } from '@tanstack/react-table'
-import { PencilIcon, PlusIcon, TrashIcon } from 'lucide-react'
+import { PlusIcon } from 'lucide-react'
 import { useState } from 'react'
 import AreaForm from './-components/area-form'
 import type { AreaFormData } from './-components/area-form'
@@ -23,13 +24,15 @@ import {
   useSuspenseQuery,
 } from '@tanstack/react-query'
 import type { TrpcRouterOutputs } from 'server/router'
-import { formatDate } from '@/lib/date'
 import FullPageSpinner from '@/components/loaders/page-loader'
 import { ActionMenu } from '@/components/table/action-menu'
 import { toast } from '@/components/ui/toast'
 import { BlockingLoaderOverlay } from '@/components/loaders/BlockingLoader'
 import PageCard from '@/components/layout/PageCard'
 import RefreshButton from '@/components/table/refresh-button'
+import { protectRouteBeforeLoad } from '@/lib/utils'
+import NewButton from '@/components/buttons/new-button'
+import { AccessControl } from '@/context/auth-context'
 
 export const Route = createFileRoute('/area/')({
   component: RouteComponent,
@@ -37,6 +40,7 @@ export const Route = createFileRoute('/area/')({
   errorComponent: ({ error }) => (
     <ErrorAlert error={error} title="Failed to Load Areas" />
   ),
+  beforeLoad: protectRouteBeforeLoad('area.read'),
 })
 
 type TAreaListItem = TrpcRouterOutputs['areas']['getAll']['items'][number]
@@ -47,23 +51,24 @@ const columns: ColumnDef<TTableFeatures, TAreaListItem>[] = ch.columns([
   ch.display({
     header: '-',
     cell: (info) => {
+      const handleAction = createTableActionHandler(info)
       return (
         <ActionMenu
           actions={[
             {
-              label: 'Edit',
-              icon: <PencilIcon className="h-4 w-4" />,
-              onClick: () => {
-                info.table.options.meta?.onRowAction?.('edit', info.row.id)
-              },
+              type: 'view',
+              onClick: handleAction('edit'),
+              permissionKey: ({ isUserCan }) => !isUserCan('area.update'),
             },
             {
-              label: 'Delete',
-              isDestructive: true,
-              icon: <TrashIcon className="h-4 w-4" />,
-              onClick: () => {
-                info.table.options.meta?.onRowAction?.('delete', info.row.id)
-              },
+              type: 'edit',
+              onClick: handleAction('edit'),
+              permissionKey: 'area.update',
+            },
+            {
+              type: 'delete',
+              onClick: handleAction('delete'),
+              permissionKey: 'area.delete',
             },
           ]}
         />
@@ -213,6 +218,9 @@ function RouteComponent() {
             <PlusIcon />
             New
           </Button>
+          <AccessControl permissionKey={'area.create'}>
+            <NewButton onClick={() => openModal()} />
+          </AccessControl>
         </div>
       </div>
       <ErrorAlert error={areasQ.error} />

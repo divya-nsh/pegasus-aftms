@@ -1,14 +1,32 @@
-// function generateGradeRanges(optionsHightToLow: string[]) {
-//   const options = [...optionsHightToLow].reverse()
-//   // options ordered LOW to HIGH, e.g. ['F', 'C', 'B', 'A']
-//   const n = options.length
-//   const size = 100 / n
+// const symbols = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'
 
-//   let prevPoint = -1
-//   return options.map((label, i) => {
-//     const point = i === n - 1 ? 100 : Math.round((i + 1) * size)
-//     const lowerBound = prevPoint + 1
-//     prevPoint = point
-//     return { label, lowerBound, upperBound: point, point }
-//   })
+// function convertToTitle(columnNumber: number): string {
+//   columnNumber--
+//   if (columnNumber === 0) return 'A'
+//   let res = ''
+//   while (columnNumber > 0) {
+//     res = symbols[columnNumber % 26] + res
+//     columnNumber = Math.floor(columnNumber / 26)
+//   }
+//   return res
 // }
+
+class TreeNode {
+  val: number
+  left: TreeNode | null
+  right: TreeNode | null
+  constructor(val?: number, left?: TreeNode | null, right?: TreeNode | null) {
+    this.val = val === undefined ? 0 : val
+    this.left = left === undefined ? null : left
+    this.right = right === undefined ? null : right
+  }
+}
+
+function inorderTraversal(root: TreeNode | null): number[] {
+  if (!root) return []
+  return [
+    ...inorderTraversal(root.left),
+    root.val,
+    ...inorderTraversal(root.right),
+  ]
+}

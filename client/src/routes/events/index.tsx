@@ -23,6 +23,8 @@ import RefreshButton from '@/components/table/refresh-button'
 import NewButton from '@/components/buttons/new-button'
 import columns from './-components/columns'
 import z from 'zod'
+import { protectRouteBeforeLoad } from '@/lib/utils'
+import { AccessControl } from '@/context/auth-context'
 
 export const Route = createFileRoute('/events/')({
   component: RouteComponent,
@@ -34,6 +36,7 @@ export const Route = createFileRoute('/events/')({
     modal: z.enum(['create', 'edit']).optional().catch(undefined),
     docId: z.number().optional().catch(undefined),
   }),
+  beforeLoad: protectRouteBeforeLoad('event.read'),
 })
 
 type TMissionListItem = TrpcRouterOutputs['missions']['getAll']['items'][number]
@@ -134,7 +137,9 @@ function RouteComponent() {
         </div>
         <div className="flex items-center gap-4">
           <RefreshButton query={missionsQ} />
-          <NewButton onClick={() => openModal()} />
+          <AccessControl permissionKey={'event.create'}>
+            <NewButton onClick={() => openModal()} />
+          </AccessControl>
         </div>
       </div>
       <ErrorAlert error={missionsQ.error} />

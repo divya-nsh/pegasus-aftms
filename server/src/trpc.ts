@@ -3,6 +3,7 @@ import type * as trpcExpress from "@trpc/server/adapters/express";
 import type { SessionData } from "express-session";
 import { SESSION_COOKIE_NAME } from "./config/constants.js";
 import { prettifyError, ZodError } from "zod";
+import userService from "./modules/user/user.service.js";
 
 type SessionUser = NonNullable<SessionData["user"]>;
 
@@ -127,7 +128,7 @@ const baseProcedure = t.procedure.use(drizzleErrors);
 export const router = t.router;
 export const publicProcedure = baseProcedure;
 
-export const protectedProcedure = baseProcedure.use(({ ctx, next }) => {
+export const protectedProcedure = baseProcedure.use(async ({ ctx, next }) => {
   if (!ctx.user) {
     throw new TRPCError({
       code: "UNAUTHORIZED",
@@ -135,10 +136,15 @@ export const protectedProcedure = baseProcedure.use(({ ctx, next }) => {
     });
   }
 
+  const userRole = await userService.getUserRole(ctx.user.id);
+
   return next({
     ctx: {
       ...ctx,
-      user: ctx.user,
+      user: {
+        ...ctx.user,
+        role: userRole,
+      },
     },
   });
 });

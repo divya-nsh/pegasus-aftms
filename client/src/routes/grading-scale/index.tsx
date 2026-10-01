@@ -5,6 +5,7 @@ import { TablePagination } from '@/components/table/table-pagination'
 import {
   AppTable,
   baseTableOptions,
+  createTableActionHandler,
   // eslint-disable-next-line import/consistent-type-specifier-style
   type TTableFeatures,
 } from '@/components/table/table.tsx'
@@ -29,6 +30,7 @@ import { BlockingLoaderOverlay } from '@/components/loaders/BlockingLoader'
 import PageCard from '@/components/layout/PageCard'
 import NewButton from '@/components/buttons/new-button'
 import RefreshButton from '@/components/table/refresh-button'
+import { AccessControl } from '@/context/auth-context'
 
 export const Route = createFileRoute('/grading-scale/')({
   component: RouteComponent,
@@ -58,23 +60,25 @@ const columns: ColumnDef<TTableFeatures, TGradingScaleListItem>[] = ch.columns([
   ch.display({
     header: '-',
     cell: (info) => {
+      const handleAction = createTableActionHandler(info)
       return (
         <ActionMenu
           actions={[
             {
-              label: 'Edit',
-              icon: <PencilIcon className="h-4 w-4" />,
-              onClick: () => {
-                info.table.options.meta?.onRowAction?.('edit', info.row.id)
-              },
+              type: 'view',
+              onClick: handleAction('edit'),
+              permissionKey: ({ isUserCan }) =>
+                !isUserCan('gradingScale.update'),
             },
             {
-              label: 'Delete',
-              isDestructive: true,
-              icon: <TrashIcon className="h-4 w-4" />,
-              onClick: () => {
-                info.table.options.meta?.onRowAction?.('delete', info.row.id)
-              },
+              type: 'edit',
+              onClick: handleAction('edit'),
+              permissionKey: 'gradingScale.update',
+            },
+            {
+              type: 'delete',
+              onClick: handleAction('delete'),
+              permissionKey: 'gradingScale.delete',
             },
           ]}
         />
@@ -200,7 +204,9 @@ function RouteComponent() {
         <h1 className="text-xl font-bold">Grading Scale</h1>
         <div className="flex items-center gap-4">
           <RefreshButton query={gradingScaleQ} />
-          <NewButton onClick={() => setFormModel({ open: true })} />
+          <AccessControl permissionKey={'gradingScale.create'}>
+            <NewButton onClick={() => setFormModel({ open: true })} />
+          </AccessControl>
         </div>
       </div>
       <ErrorAlert error={gradingScaleQ.error} />

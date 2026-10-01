@@ -6,6 +6,7 @@ import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import PersonnelForm from './-components/personnel-form'
 import PageCard from '@/components/layout/PageCard'
+import { protectRouteBeforeLoad } from '@/lib/utils'
 
 export const Route = createFileRoute('/personnel/$id/edit')({
   component: RouteComponent,
@@ -13,6 +14,7 @@ export const Route = createFileRoute('/personnel/$id/edit')({
   errorComponent: ({ error }) => (
     <ErrorAlert error={error} title="Failed to Load Personnel" />
   ),
+  beforeLoad: protectRouteBeforeLoad('personnel.update'),
 })
 
 function RouteComponent() {

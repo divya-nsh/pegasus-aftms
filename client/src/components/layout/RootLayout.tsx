@@ -20,10 +20,11 @@ import {
   SidebarMenuSub,
 } from '@/components/ui/sidebar'
 import { useAuth } from '@/context/auth-context'
+import type { AuthContextType } from '@/context/auth-context'
+import { isPermitted } from '@/lib/permission'
 import { NavUser } from './nav-user'
 import { traineeNavItems, navItems } from './siderbar-items'
 import type { NavNode } from './sidebar.types'
-import type { TPermissionKeys } from 'server/types/shared'
 import {
   Collapsible,
   CollapsibleTrigger,
@@ -40,22 +41,18 @@ function isNavActive(pathname: string, url: string, mode?: 'exact' | 'prefix') {
   return pathname === url || pathname.startsWith(`${url}/`)
 }
 
-function filterVisibleNav(
-  nodes: NavNode[],
-  can: (permissionKey: TPermissionKeys) => boolean,
-): NavNode[] {
+function filterVisibleNav(nodes: NavNode[], auth: AuthContextType): NavNode[] {
   const visible: NavNode[] = []
 
   for (const node of nodes) {
-    // Not allowed skip this node
-    if (node.permissionKey && !can(node.permissionKey)) continue
+    if (node.permissionKey && !isPermitted(auth, node.permissionKey)) continue
 
     if (!node.children) {
       visible.push(node)
       continue
     }
 
-    const children = filterVisibleNav(node.children, can)
+    const children = filterVisibleNav(node.children, auth)
     if (children.length === 0) continue
 
     visible.push({ ...node, children })
@@ -80,13 +77,13 @@ export default function Layout({ children }: { children: React.ReactNode }) {
 }
 
 export function AppSidebar() {
-  const { user, isUserCan } = useAuth()
+  const auth = useAuth()
 
-  const isTrainee = user!.role?.name === 'Trainee'
+  const isTrainee = auth.user!.role?.name === 'Trainee'
 
   const visibleNav = useMemo(
-    () => filterVisibleNav(isTrainee ? traineeNavItems : navItems, isUserCan),
-    [isTrainee, isUserCan],
+    () => filterVisibleNav(isTrainee ? traineeNavItems : navItems, auth),
+    [isTrainee, auth],
   )
 
   return (

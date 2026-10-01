@@ -22,8 +22,8 @@ import { z } from 'zod'
 
 const schema = z.object({
   id: z.number().optional(),
-  name: z.string().min(1),
-  description: z.string().min(1),
+  name: z.string().min(1, 'Name is required'),
+  description: z.string(),
   permissions: z.set(z.string()),
 })
 
@@ -128,7 +128,6 @@ export function RoleModelForm({
             name="description"
             children={(f) => (
               <f.CTextAreaField
-                required
                 label="Description"
                 placeholder="Enter role description"
               />

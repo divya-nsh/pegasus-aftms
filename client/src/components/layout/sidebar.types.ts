@@ -1,6 +1,6 @@
 import type { FileRouteTypes } from '@/routeTree.gen'
 import type { LucideIcon } from 'lucide-react'
-import type { TPermissionKeys } from 'server/types/shared'
+import type { PermissionRequirement } from '@/lib/permission'
 
 export type NavNode = {
   title: string
@@ -8,5 +8,5 @@ export type NavNode = {
   icon?: LucideIcon
   children?: NavNode[]
   matchUrlMode?: 'exact' | 'prefix'
-  permissionKey?: TPermissionKeys
+  permissionKey?: PermissionRequirement
 }

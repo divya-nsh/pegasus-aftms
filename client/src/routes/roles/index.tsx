@@ -11,7 +11,6 @@ import {
 import { createFileRoute } from '@tanstack/react-router'
 import { createColumnHelper, useTable } from '@tanstack/react-table'
 import type { ColumnDef } from '@tanstack/react-table'
-import { PencilIcon, TrashIcon } from 'lucide-react'
 import { useState } from 'react'
 import { ActionMenu } from '@/components/table/action-menu'
 import trpc, { trpcClient } from '@/trpc'
@@ -30,11 +29,14 @@ import NewButton from '@/components/buttons/new-button'
 import { RoleModelForm } from './-role-model-form'
 import type { RoleModelFormData } from './-role-model-form'
 import { formatDate } from '@/lib/date'
+import { protectRouteBeforeLoad } from '@/lib/utils'
 
 export const Route = createFileRoute('/roles/')({
   component: RouteComponent,
   pendingComponent: FullPageSpinner,
   errorComponent: ({ error }) => <ErrorAlert error={error} />,
+  // It require permission for Admin with all access
+  beforeLoad: protectRouteBeforeLoad('*'),
 })
 
 type TRoleListItem = TrpcRouterOutputs['rolesV2']['getAll'][number]
@@ -47,23 +49,20 @@ const columns: ColumnDef<TTableFeatures, TRoleListItem>[] = ch.columns([
     cell: (info) => {
       if (info.row.original.isSystem) return null
 
+      const triggerAction = (action: 'edit' | 'delete') => () => {
+        info.table.options.meta?.onRowAction?.(action, info.row.id)
+      }
+
       return (
         <ActionMenu
           actions={[
             {
-              label: 'Edit',
-              icon: <PencilIcon className="h-4 w-4" />,
-              onClick: () => {
-                info.table.options.meta?.onRowAction?.('edit', info.row.id)
-              },
+              type: 'edit',
+              onClick: triggerAction('edit'),
             },
             {
-              label: 'Delete',
-              isDestructive: true,
-              icon: <TrashIcon className="h-4 w-4" />,
-              onClick: () => {
-                info.table.options.meta?.onRowAction?.('delete', info.row.id)
-              },
+              type: 'delete',
+              onClick: triggerAction('delete'),
             },
           ]}
         />

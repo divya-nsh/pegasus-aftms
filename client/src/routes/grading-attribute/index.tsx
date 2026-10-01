@@ -5,13 +5,13 @@ import { TablePagination } from '@/components/table/table-pagination'
 import {
   AppTable,
   baseTableOptions,
+  createTableActionHandler,
   // eslint-disable-next-line import/consistent-type-specifier-style
   type TTableFeatures,
 } from '@/components/table/table.tsx'
 import { createFileRoute } from '@tanstack/react-router'
 import { createColumnHelper, useTable } from '@tanstack/react-table'
 import type { ColumnDef } from '@tanstack/react-table'
-import { PencilIcon, TrashIcon } from 'lucide-react'
 import { useState } from 'react'
 import GradingAttributeDialog from './-components/grading-attribute-form'
 import type { GradingAttributeFormData } from './-components/grading-attribute-form'
@@ -29,6 +29,7 @@ import { BlockingLoaderOverlay } from '@/components/loaders/BlockingLoader'
 import PageCard from '@/components/layout/PageCard'
 import NewButton from '@/components/buttons/new-button'
 import RefreshButton from '@/components/table/refresh-button'
+import { AccessControl } from '@/context/auth-context'
 
 export const Route = createFileRoute('/grading-attribute/')({
   component: RouteComponent,
@@ -48,23 +49,25 @@ const columns: ColumnDef<TTableFeatures, TGradingAttributeListItem>[] =
     ch.display({
       header: '-',
       cell: (info) => {
+        const handleAction = createTableActionHandler(info)
         return (
           <ActionMenu
             actions={[
               {
-                label: 'Edit',
-                icon: <PencilIcon className="h-4 w-4" />,
-                onClick: () => {
-                  info.table.options.meta?.onRowAction?.('edit', info.row.id)
-                },
+                type: 'view',
+                onClick: handleAction('edit'),
+                permissionKey: ({ isUserCan }) =>
+                  !isUserCan('gradingAttribute.update'),
               },
               {
-                label: 'Delete',
-                isDestructive: true,
-                icon: <TrashIcon className="h-4 w-4" />,
-                onClick: () => {
-                  info.table.options.meta?.onRowAction?.('delete', info.row.id)
-                },
+                type: 'edit',
+                onClick: handleAction('edit'),
+                permissionKey: 'gradingAttribute.update',
+              },
+              {
+                type: 'delete',
+                onClick: handleAction('delete'),
+                permissionKey: 'gradingAttribute.delete',
               },
             ]}
           />
@@ -174,7 +177,9 @@ function RouteComponent() {
         </h1>
         <div className="flex items-center gap-4">
           <RefreshButton query={gradingAttributeQ} />
-          <NewButton onClick={() => openModal()} />
+          <AccessControl permissionKey={'gradingAttribute.create'}>
+            <NewButton onClick={() => openModal()} />
+          </AccessControl>
         </div>
       </div>
       <ErrorAlert error={gradingAttributeQ.error} />

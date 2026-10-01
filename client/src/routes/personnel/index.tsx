@@ -42,6 +42,7 @@ import { getMediaUrl } from '@/lib/media'
 import PageCard from '@/components/layout/PageCard'
 import { useLocalStorage } from '@/hooks/use-local-storage'
 import RefreshButton from '@/components/table/refresh-button'
+import { protectRouteBeforeLoad } from '@/lib/utils'
 
 export const Route = createFileRoute('/personnel/')({
   component: RouteComponent,
@@ -49,6 +50,7 @@ export const Route = createFileRoute('/personnel/')({
   errorComponent: ({ error }) => (
     <ErrorAlert error={error} title="Failed to Load Personnel" />
   ),
+  beforeLoad: protectRouteBeforeLoad('personnel.read'),
 })
 
 type TPersonnelListItem =

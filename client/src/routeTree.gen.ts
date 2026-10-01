@@ -10,7 +10,6 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as AreaRouteRouteImport } from './routes/area/route'
 import { Route as ComboxRouteImport } from './routes/combox'
 import { Route as DateRouteImport } from './routes/date'
 import { Route as FormGeneratorRouteImport } from './routes/form-generator'
@@ -33,7 +32,6 @@ import { Route as PersonnelIndexRouteImport } from './routes/personnel/index'
 import { Route as PersonnelCreateRouteImport } from './routes/personnel/create'
 import { Route as ReportsPrintScheduleRouteImport } from './routes/reports/print-schedule'
 import { Route as RolesIndexRouteImport } from './routes/roles/index'
-import { Route as RolesCreateRouteImport } from './routes/roles/create'
 import { Route as SchedulesIndexRouteImport } from './routes/schedules/index'
 import { Route as SchedulesCreateRouteImport } from './routes/schedules/create'
 import { Route as SchedulesEvaluateListRouteImport } from './routes/schedules/evaluate-list'
@@ -43,20 +41,13 @@ import { Route as TraineeDashboardIdRouteImport } from './routes/trainee-dashboa
 import { Route as TraineeDashboardCopyRouteImport } from './routes/trainee-dashboard/copy'
 import { Route as UsersIndexRouteImport } from './routes/users/index'
 import { Route as PersonnelIdEditRouteImport } from './routes/personnel/$id.edit'
-import { Route as RolesIdEditRouteImport } from './routes/roles/$id.edit'
 import { Route as SchedulesIdEditRouteImport } from './routes/schedules/$id.edit'
 import { Route as SchedulesIdEvaluateRouteImport } from './routes/schedules/$id.evaluate'
 import { Route as SchedulesIdGradeRouteImport } from './routes/schedules/$id.grade'
-import { Route as UsersIdEditRouteImport } from './routes/users/$id.edit'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const AreaRouteRoute = AreaRouteRouteImport.update({
-  id: '/area',
-  path: '/area',
   getParentRoute: () => rootRouteImport,
 } as any)
 const ComboxRoute = ComboxRouteImport.update({
@@ -110,9 +101,9 @@ const AircraftIndexRoute = AircraftIndexRouteImport.update({
   getParentRoute: () => rootRouteImport,
 } as any)
 const AreaIndexRoute = AreaIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AreaRouteRoute,
+  id: '/area/',
+  path: '/area/',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const EventsIndexRoute = EventsIndexRouteImport.update({
   id: '/events/',
@@ -171,11 +162,6 @@ const RolesIndexRoute = RolesIndexRouteImport.update({
   path: '/roles/',
   getParentRoute: () => rootRouteImport,
 } as any)
-const RolesCreateRoute = RolesCreateRouteImport.update({
-  id: '/roles/create',
-  path: '/roles/create',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const SchedulesIndexRoute = SchedulesIndexRouteImport.update({
   id: '/schedules/',
   path: '/schedules/',
@@ -221,11 +207,6 @@ const PersonnelIdEditRoute = PersonnelIdEditRouteImport.update({
   path: '/personnel/$id/edit',
   getParentRoute: () => rootRouteImport,
 } as any)
-const RolesIdEditRoute = RolesIdEditRouteImport.update({
-  id: '/roles/$id/edit',
-  path: '/roles/$id/edit',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const SchedulesIdEditRoute = SchedulesIdEditRouteImport.update({
   id: '/schedules/$id/edit',
   path: '/schedules/$id/edit',
@@ -241,15 +222,9 @@ const SchedulesIdGradeRoute = SchedulesIdGradeRouteImport.update({
   path: '/schedules/$id/grade',
   getParentRoute: () => rootRouteImport,
 } as any)
-const UsersIdEditRoute = UsersIdEditRouteImport.update({
-  id: '/users/$id/edit',
-  path: '/users/$id/edit',
-  getParentRoute: () => rootRouteImport,
-} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/area': typeof AreaRouteRouteWithChildren
   '/combox': typeof ComboxRoute
   '/date': typeof DateRoute
   '/form-generator': typeof FormGeneratorRoute
@@ -262,7 +237,6 @@ export interface FileRoutesByFullPath {
   '/instructor-dashboard/dummy': typeof InstructorDashboardDummyRoute
   '/personnel/create': typeof PersonnelCreateRoute
   '/reports/print-schedule': typeof ReportsPrintScheduleRoute
-  '/roles/create': typeof RolesCreateRoute
   '/schedules/create': typeof SchedulesCreateRoute
   '/schedules/evaluate-list': typeof SchedulesEvaluateListRoute
   '/schedules/timeline-view': typeof SchedulesTimelineViewRoute
@@ -282,11 +256,9 @@ export interface FileRoutesByFullPath {
   '/trainee-dashboard/': typeof TraineeDashboardIndexRoute
   '/users/': typeof UsersIndexRoute
   '/personnel/$id/edit': typeof PersonnelIdEditRoute
-  '/roles/$id/edit': typeof RolesIdEditRoute
   '/schedules/$id/edit': typeof SchedulesIdEditRoute
   '/schedules/$id/evaluate': typeof SchedulesIdEvaluateRoute
   '/schedules/$id/grade': typeof SchedulesIdGradeRoute
-  '/users/$id/edit': typeof UsersIdEditRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -302,7 +274,6 @@ export interface FileRoutesByTo {
   '/instructor-dashboard/dummy': typeof InstructorDashboardDummyRoute
   '/personnel/create': typeof PersonnelCreateRoute
   '/reports/print-schedule': typeof ReportsPrintScheduleRoute
-  '/roles/create': typeof RolesCreateRoute
   '/schedules/create': typeof SchedulesCreateRoute
   '/schedules/evaluate-list': typeof SchedulesEvaluateListRoute
   '/schedules/timeline-view': typeof SchedulesTimelineViewRoute
@@ -322,16 +293,13 @@ export interface FileRoutesByTo {
   '/trainee-dashboard': typeof TraineeDashboardIndexRoute
   '/users': typeof UsersIndexRoute
   '/personnel/$id/edit': typeof PersonnelIdEditRoute
-  '/roles/$id/edit': typeof RolesIdEditRoute
   '/schedules/$id/edit': typeof SchedulesIdEditRoute
   '/schedules/$id/evaluate': typeof SchedulesIdEvaluateRoute
   '/schedules/$id/grade': typeof SchedulesIdGradeRoute
-  '/users/$id/edit': typeof UsersIdEditRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
-  '/area': typeof AreaRouteRouteWithChildren
   '/combox': typeof ComboxRoute
   '/date': typeof DateRoute
   '/form-generator': typeof FormGeneratorRoute
@@ -344,7 +312,6 @@ export interface FileRoutesById {
   '/instructor-dashboard/dummy': typeof InstructorDashboardDummyRoute
   '/personnel/create': typeof PersonnelCreateRoute
   '/reports/print-schedule': typeof ReportsPrintScheduleRoute
-  '/roles/create': typeof RolesCreateRoute
   '/schedules/create': typeof SchedulesCreateRoute
   '/schedules/evaluate-list': typeof SchedulesEvaluateListRoute
   '/schedules/timeline-view': typeof SchedulesTimelineViewRoute
@@ -364,17 +331,14 @@ export interface FileRoutesById {
   '/trainee-dashboard/': typeof TraineeDashboardIndexRoute
   '/users/': typeof UsersIndexRoute
   '/personnel/$id/edit': typeof PersonnelIdEditRoute
-  '/roles/$id/edit': typeof RolesIdEditRoute
   '/schedules/$id/edit': typeof SchedulesIdEditRoute
   '/schedules/$id/evaluate': typeof SchedulesIdEvaluateRoute
   '/schedules/$id/grade': typeof SchedulesIdGradeRoute
-  '/users/$id/edit': typeof UsersIdEditRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/area'
     | '/combox'
     | '/date'
     | '/form-generator'
@@ -387,7 +351,6 @@ export interface FileRouteTypes {
     | '/instructor-dashboard/dummy'
     | '/personnel/create'
     | '/reports/print-schedule'
-    | '/roles/create'
     | '/schedules/create'
     | '/schedules/evaluate-list'
     | '/schedules/timeline-view'
@@ -407,11 +370,9 @@ export interface FileRouteTypes {
     | '/trainee-dashboard/'
     | '/users/'
     | '/personnel/$id/edit'
-    | '/roles/$id/edit'
     | '/schedules/$id/edit'
     | '/schedules/$id/evaluate'
     | '/schedules/$id/grade'
-    | '/users/$id/edit'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -427,7 +388,6 @@ export interface FileRouteTypes {
     | '/instructor-dashboard/dummy'
     | '/personnel/create'
     | '/reports/print-schedule'
-    | '/roles/create'
     | '/schedules/create'
     | '/schedules/evaluate-list'
     | '/schedules/timeline-view'
@@ -447,15 +407,12 @@ export interface FileRouteTypes {
     | '/trainee-dashboard'
     | '/users'
     | '/personnel/$id/edit'
-    | '/roles/$id/edit'
     | '/schedules/$id/edit'
     | '/schedules/$id/evaluate'
     | '/schedules/$id/grade'
-    | '/users/$id/edit'
   id:
     | '__root__'
     | '/'
-    | '/area'
     | '/combox'
     | '/date'
     | '/form-generator'
@@ -468,7 +425,6 @@ export interface FileRouteTypes {
     | '/instructor-dashboard/dummy'
     | '/personnel/create'
     | '/reports/print-schedule'
-    | '/roles/create'
     | '/schedules/create'
     | '/schedules/evaluate-list'
     | '/schedules/timeline-view'
@@ -488,16 +444,13 @@ export interface FileRouteTypes {
     | '/trainee-dashboard/'
     | '/users/'
     | '/personnel/$id/edit'
-    | '/roles/$id/edit'
     | '/schedules/$id/edit'
     | '/schedules/$id/evaluate'
     | '/schedules/$id/grade'
-    | '/users/$id/edit'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
-  AreaRouteRoute: typeof AreaRouteRouteWithChildren
   ComboxRoute: typeof ComboxRoute
   DateRoute: typeof DateRoute
   FormGeneratorRoute: typeof FormGeneratorRoute
@@ -510,13 +463,13 @@ export interface RootRouteChildren {
   InstructorDashboardDummyRoute: typeof InstructorDashboardDummyRoute
   PersonnelCreateRoute: typeof PersonnelCreateRoute
   ReportsPrintScheduleRoute: typeof ReportsPrintScheduleRoute
-  RolesCreateRoute: typeof RolesCreateRoute
   SchedulesCreateRoute: typeof SchedulesCreateRoute
   SchedulesEvaluateListRoute: typeof SchedulesEvaluateListRoute
   SchedulesTimelineViewRoute: typeof SchedulesTimelineViewRoute
   TraineeDashboardIdRoute: typeof TraineeDashboardIdRoute
   TraineeDashboardCopyRoute: typeof TraineeDashboardCopyRoute
   AircraftIndexRoute: typeof AircraftIndexRoute
+  AreaIndexRoute: typeof AreaIndexRoute
   EventsIndexRoute: typeof EventsIndexRoute
   GradingAttributeIndexRoute: typeof GradingAttributeIndexRoute
   GradingScaleIndexRoute: typeof GradingScaleIndexRoute
@@ -529,11 +482,9 @@ export interface RootRouteChildren {
   TraineeDashboardIndexRoute: typeof TraineeDashboardIndexRoute
   UsersIndexRoute: typeof UsersIndexRoute
   PersonnelIdEditRoute: typeof PersonnelIdEditRoute
-  RolesIdEditRoute: typeof RolesIdEditRoute
   SchedulesIdEditRoute: typeof SchedulesIdEditRoute
   SchedulesIdEvaluateRoute: typeof SchedulesIdEvaluateRoute
   SchedulesIdGradeRoute: typeof SchedulesIdGradeRoute
-  UsersIdEditRoute: typeof UsersIdEditRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -543,13 +494,6 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/area': {
-      id: '/area'
-      path: '/area'
-      fullPath: '/area'
-      preLoaderRoute: typeof AreaRouteRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/combox': {
@@ -624,10 +568,10 @@ declare module '@tanstack/react-router' {
     }
     '/area/': {
       id: '/area/'
-      path: '/'
+      path: '/area'
       fullPath: '/area/'
       preLoaderRoute: typeof AreaIndexRouteImport
-      parentRoute: typeof AreaRouteRoute
+      parentRoute: typeof rootRouteImport
     }
     '/events/': {
       id: '/events/'
@@ -706,13 +650,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof RolesIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/roles/create': {
-      id: '/roles/create'
-      path: '/roles/create'
-      fullPath: '/roles/create'
-      preLoaderRoute: typeof RolesCreateRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/schedules/': {
       id: '/schedules/'
       path: '/schedules'
@@ -776,13 +713,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof PersonnelIdEditRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/roles/$id/edit': {
-      id: '/roles/$id/edit'
-      path: '/roles/$id/edit'
-      fullPath: '/roles/$id/edit'
-      preLoaderRoute: typeof RolesIdEditRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/schedules/$id/edit': {
       id: '/schedules/$id/edit'
       path: '/schedules/$id/edit'
@@ -804,31 +734,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof SchedulesIdGradeRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/users/$id/edit': {
-      id: '/users/$id/edit'
-      path: '/users/$id/edit'
-      fullPath: '/users/$id/edit'
-      preLoaderRoute: typeof UsersIdEditRouteImport
-      parentRoute: typeof rootRouteImport
-    }
   }
 }
 
-interface AreaRouteRouteChildren {
-  AreaIndexRoute: typeof AreaIndexRoute
-}
-
-const AreaRouteRouteChildren: AreaRouteRouteChildren = {
-  AreaIndexRoute: AreaIndexRoute,
-}
-
-const AreaRouteRouteWithChildren = AreaRouteRoute._addFileChildren(
-  AreaRouteRouteChildren,
-)
-
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
-  AreaRouteRoute: AreaRouteRouteWithChildren,
   ComboxRoute: ComboxRoute,
   DateRoute: DateRoute,
   FormGeneratorRoute: FormGeneratorRoute,
@@ -841,13 +751,13 @@ const rootRouteChildren: RootRouteChildren = {
   InstructorDashboardDummyRoute: InstructorDashboardDummyRoute,
   PersonnelCreateRoute: PersonnelCreateRoute,
   ReportsPrintScheduleRoute: ReportsPrintScheduleRoute,
-  RolesCreateRoute: RolesCreateRoute,
   SchedulesCreateRoute: SchedulesCreateRoute,
   SchedulesEvaluateListRoute: SchedulesEvaluateListRoute,
   SchedulesTimelineViewRoute: SchedulesTimelineViewRoute,
   TraineeDashboardIdRoute: TraineeDashboardIdRoute,
   TraineeDashboardCopyRoute: TraineeDashboardCopyRoute,
   AircraftIndexRoute: AircraftIndexRoute,
+  AreaIndexRoute: AreaIndexRoute,
   EventsIndexRoute: EventsIndexRoute,
   GradingAttributeIndexRoute: GradingAttributeIndexRoute,
   GradingScaleIndexRoute: GradingScaleIndexRoute,
@@ -860,11 +770,9 @@ const rootRouteChildren: RootRouteChildren = {
   TraineeDashboardIndexRoute: TraineeDashboardIndexRoute,
   UsersIndexRoute: UsersIndexRoute,
   PersonnelIdEditRoute: PersonnelIdEditRoute,
-  RolesIdEditRoute: RolesIdEditRoute,
   SchedulesIdEditRoute: SchedulesIdEditRoute,
   SchedulesIdEvaluateRoute: SchedulesIdEvaluateRoute,
   SchedulesIdGradeRoute: SchedulesIdGradeRoute,
-  UsersIdEditRoute: UsersIdEditRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)

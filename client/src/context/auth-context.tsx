@@ -3,7 +3,8 @@ import { trpc } from '@/trpc'
 import type { TrpcRouterOutputs } from '@/trpc'
 import { useQuery } from '@tanstack/react-query'
 import { createContext, useCallback, useContext, useMemo } from 'react'
-import type { RoleModule, ModuleAction } from 'server/types/role'
+import { isPermitted } from '@/lib/permission'
+import type { PermissionRequirement } from '@/lib/permission'
 import type { TPermissionKeys } from 'server/types/shared'
 
 type AuthUser = TrpcRouterOutputs['users']['getMyProfile']
@@ -41,6 +42,20 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     [permissionsSet],
   )
 
+  const profile = user?.personnel[0]
+
+  const value = useMemo(
+    (): AuthContextType => ({
+      user,
+      profile,
+      refetch,
+      isAuthenticated: !!user,
+      isUserCan,
+      linkedPersonnel: profile,
+    }),
+    [user, profile, refetch, isUserCan],
+  )
+
   if (isPending)
     return (
       <div className="flex min-h-svh items-center justify-center">
@@ -48,22 +63,7 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
       </div>
     )
 
-  const profile = user?.personnel[0]
-
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        profile,
-        refetch,
-        isAuthenticated: !!user,
-        isUserCan,
-        linkedPersonnel: profile,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  )
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }
 
 export const useAuth = () => {
@@ -80,10 +80,10 @@ export const AccessControl = ({
   fallback = null,
 }: {
   children: React.ReactNode
-  permissionKey: TPermissionKeys
+  permissionKey: PermissionRequirement
   fallback?: React.ReactNode
 }) => {
-  const { isUserCan } = useAuth()
+  const auth = useAuth()
 
-  return isUserCan(permissionKey) ? children : fallback
+  return isPermitted(auth, permissionKey) ? children : fallback
 }

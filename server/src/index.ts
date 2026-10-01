@@ -16,7 +16,7 @@ import { serveClient } from "./middleware/serveClient.js";
 import { DrizzleSessionStore } from "./lib/drizzle-session-store.js";
 import { fileURLToPath } from "node:url";
 import fs from "node:fs";
-import { IS_DEVELOPMENT, NODE_ENV } from "./lib/env.js";
+import { IS_DEVELOPMENT } from "./lib/env.js";
 import { populateData } from "./populate.js";
 
 const appDirname = path.dirname(fileURLToPath(import.meta.url));
@@ -28,7 +28,7 @@ const clientPath = resolveClientPath(appDirname);
 
 app.use(
   session({
-    store: new DrizzleSessionStore(db, 2),
+    store: new DrizzleSessionStore(db, 3),
     name: SESSION_COOKIE_NAME,
     secret: process.env.SESSION_SECRET ?? "random-secret-key",
     resave: false,
@@ -82,10 +82,6 @@ app.use(
     },
   }),
 );
-
-console.log({
-  NODE_ENV: NODE_ENV,
-});
 
 app.listen(port, async () => {
   await testConnection();

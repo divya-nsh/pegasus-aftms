@@ -1,4 +1,10 @@
-import { MoreHorizontal } from 'lucide-react'
+import {
+  EyeIcon,
+  MoreHorizontal,
+  PencilIcon,
+  PrinterIcon,
+  TrashIcon,
+} from 'lucide-react'
 import { useMemo } from 'react'
 import type { ReactNode } from 'react'
 import {
@@ -14,18 +20,27 @@ import { Button } from '../ui/button'
 import { cn } from '@/lib/utils'
 import type { linkOptions } from '@tanstack/react-router'
 import { useRouter } from '@tanstack/react-router'
-import type { TPermissionKeys } from 'server/types/shared'
 import { useAuth } from '@/context/auth-context'
+import { isPermitted } from '@/lib/permission'
+import type { PermissionRequirement } from '@/lib/permission'
+
+// Provide default icon and label for common actions types for convenience
+const actionTypesMap = {
+  edit: { icon: <PencilIcon />, label: 'Edit' },
+  delete: { icon: <TrashIcon />, label: 'Delete' },
+  print: { icon: <PrinterIcon />, label: 'Print' },
+  view: { icon: <EyeIcon />, label: 'View' },
+}
 
 export type MenuAction =
   | {
-      type?: 'action'
-      label: string
+      type?: keyof typeof actionTypesMap | 'separator'
+      label?: string
       icon?: ReactNode
       onClick?: () => void
       isDestructive?: boolean
       redirectTo?: ReturnType<typeof linkOptions>
-      permissionKey?: TPermissionKeys
+      permissionKey?: PermissionRequirement
     }
   | { type: 'separator'; hidden?: boolean }
 
@@ -37,16 +52,17 @@ type Props = {
 
 export function ActionMenu({ actions = [], className, children }: Props) {
   const router = useRouter()
-  const { isUserCan } = useAuth()
+  const auth = useAuth()
 
   const filteredActions = useMemo(() => {
     return actions.filter((action) => {
       if (!action) return false
       if (action.type === 'separator') return true
-      if (action.permissionKey && !isUserCan(action.permissionKey)) return false
+      if (action.permissionKey && !isPermitted(auth, action.permissionKey))
+        return false
       return true
     })
-  }, [actions, isUserCan])
+  }, [actions, auth])
 
   return (
     <DropdownMenu>
@@ -76,6 +92,10 @@ export function ActionMenu({ actions = [], className, children }: Props) {
               return null // If the separator is the first or last item, don't show it
             }
 
+            const actionTypeConfig = action.type
+              ? actionTypesMap[action.type]
+              : undefined
+
             return (
               <DropdownMenuItem
                 key={index}
@@ -86,10 +106,14 @@ export function ActionMenu({ actions = [], className, children }: Props) {
                     router.navigate(action.redirectTo)
                   }
                 }}
-                variant={action.isDestructive ? 'destructive' : 'default'}
+                variant={
+                  (action.isDestructive ?? action.type === 'delete')
+                    ? 'destructive'
+                    : 'default'
+                }
               >
-                {action.icon}
-                {action.label}
+                {action.icon ?? actionTypeConfig?.icon}
+                {action.label ?? actionTypeConfig?.label}
               </DropdownMenuItem>
             )
           })}

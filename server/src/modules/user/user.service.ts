@@ -2,7 +2,6 @@ import db, { type DBTransaction } from "#/db/db.js";
 import { userTable } from "#/db/schema.js";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
-import roleService from "../role/role.service.js";
 import { TRPCError } from "@trpc/server";
 
 type TCreateUser = {
@@ -134,6 +133,26 @@ class UserService {
     });
 
     return user;
+  }
+
+  async getUserRole(userId: number) {
+    const row = await db.query.userTable.findFirst({
+      columns: {},
+      with: {
+        role: {
+          columns: {
+            id: true,
+            name: true,
+            permissions: true,
+          },
+        },
+      },
+      where: {
+        id: userId,
+      },
+    });
+
+    return row?.role;
   }
 }
 

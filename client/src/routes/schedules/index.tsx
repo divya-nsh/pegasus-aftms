@@ -97,22 +97,19 @@ const columns: ColumnDef<TTableFeatures, TScheduleListItem>[] = ch.columns([
         <ActionMenu
           actions={[
             {
-              label: 'View',
+              type: 'view',
               onClick: handleClick('view'),
-              icon: <EyeIcon />,
               permissionKey: 'eventSchedule.read',
             },
             {
-              label: 'Edit',
+              type: 'edit',
               onClick: handleClick('edit'),
-              icon: <PencilIcon />,
               permissionKey: 'eventSchedule.update',
             },
 
             {
-              label: 'Print',
+              type: 'print',
               onClick: handleClick('print'),
-              icon: <PrinterIcon />,
               permissionKey: 'eventSchedule.read',
             },
             {
@@ -124,10 +121,8 @@ const columns: ColumnDef<TTableFeatures, TScheduleListItem>[] = ch.columns([
 
             { type: 'separator' },
             {
-              label: 'Delete',
+              type: 'delete',
               onClick: handleClick('delete'),
-              isDestructive: true,
-              icon: <TrashIcon className="h-4 w-4" />,
               permissionKey: 'eventSchedule.delete',
             },
           ]}

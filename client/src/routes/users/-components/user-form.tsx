@@ -1,8 +1,4 @@
-import {
-  baseFormOptions,
-  handleSubmitInvalid,
-  useAppForm,
-} from '@/components/form/tanstack-form'
+import { baseFormOptions, useAppForm } from '@/components/form/tanstack-form'
 import {
   Dialog,
   DialogContent,
@@ -14,7 +10,6 @@ import {
 import { FieldColumns } from '@/components/ui/field'
 import { getErrorMessage } from '@/lib/utils'
 import trpc, { trpcClient } from '@/trpc'
-import { revalidateLogic } from '@tanstack/react-form'
 import {
   useMutation,
   useQueryClient,
@@ -33,7 +28,7 @@ export type LinkedPersonnel = {
   personnelType: string
 }
 
-function createSchema(mode: 'create' | 'edit') {
+function createSchema(mode: 'create' | 'edit' | 'view') {
   return z.object({
     username: z.string().trim().min(1, 'Required').max(60),
     password:
@@ -66,11 +61,17 @@ export const defaultUserFormData: UserFormData = {
 }
 
 export type UserFormProps = {
-  mode: 'create' | 'edit'
+  mode: 'create' | 'edit' | 'view'
   toEditId?: number
   initialFormData?: UserFormData
   linkedPersonnel?: LinkedPersonnel | null
   onClose: (open: boolean) => void
+}
+
+const modalTitle = {
+  edit: 'Edit User',
+  view: 'View User',
+  create: 'Create New User',
 }
 
 export default function UserForm({
@@ -84,13 +85,18 @@ export default function UserForm({
   const schema = useMemo(() => createSchema(mode), [mode])
   const rolesQuery = useSuspenseQuery(trpc.rolesV2.getAll.queryOptions())
 
+  const isViewOnly = mode === 'view'
+
   const form = useAppForm({
     ...baseFormOptions,
     defaultValues: initialFormData,
     validators: {
       onDynamic: schema,
     },
-    onSubmit: ({ value }) => mutation.mutateAsync(value),
+    onSubmit: ({ value }) => {
+      if (isViewOnly) return
+      return mutation.mutateAsync(value)
+    },
   })
 
   const mutation = useMutation({
@@ -140,9 +146,7 @@ export default function UserForm({
     >
       <DialogContent>
         <DialogHeader>
-          <DialogTitle className="uppercase">
-            {mode === 'create' ? 'New User' : 'Edit User'}
-          </DialogTitle>
+          <DialogTitle className="uppercase">{modalTitle[mode]}</DialogTitle>
         </DialogHeader>
         <DialogMain className="space-y-6">
           <FieldColumns cols={1}>
@@ -212,11 +216,13 @@ export default function UserForm({
           />
         </DialogMain>
         <DialogFooter>
-          <form.AppForm>
-            <form.SubscribeButton
-              label={mode === 'create' ? 'Create' : 'Save'}
-            />
-          </form.AppForm>
+          {!isViewOnly && (
+            <form.AppForm>
+              <form.SubscribeButton
+                label={mode === 'create' ? 'Create' : 'Save'}
+              />
+            </form.AppForm>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
