@@ -265,7 +265,12 @@ export function AppTable<TData extends RowData>({
                     )}
                     onClick={(e) => {
                       if (cell.column.columnDef.meta?.preventDefaultRowClick) {
-                        e.preventDefault()
+                        e.stopPropagation()
+                      }
+                    }}
+                    onDoubleClick={(e) => {
+                      if (cell.column.columnDef.meta?.preventDefaultRowClick) {
+                        e.stopPropagation()
                       }
                     }}
                   >

@@ -17,9 +17,10 @@ export default function RefreshButton({
   query?: {
     refetch: () => void
     isPending: boolean
+    isLoading: boolean
   }
 }) {
-  const _isPending = isPending || query?.isPending
+  const _isPending = isPending || query?.isLoading
   const _onClick = onClick || query?.refetch
 
   return (

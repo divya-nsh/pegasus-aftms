@@ -2,6 +2,7 @@ import {
   handleSubmitInvalid,
   useAppForm,
 } from '@/components/form/tanstack-form'
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -18,6 +19,7 @@ import toast from 'react-hot-toast'
 import { z } from 'zod'
 
 const schema = z.object({
+  id: z.number().optional(),
   name: z.string().min(1, 'Required').min(3),
   notes: z.string().optional(),
 })
@@ -25,17 +27,22 @@ const schema = z.object({
 export type GradingAttributeFormData = z.infer<typeof schema>
 
 export type GradingAttributeFormProps = {
-  mode: 'create' | 'edit'
-  toEditId?: number
+  mode: 'create' | 'edit' | 'view'
   initialFormData?: GradingAttributeFormData
-  onOpenChange: (open: boolean) => void
+  onClose: () => void
+}
+
+const titles = {
+  singular: 'Grading Attribute',
+  create: 'New Grading Attribute',
+  edit: 'Edit Grading Attribute',
+  view: 'Grading Attribute Details',
 }
 
 export default function GradingAttributeDialog({
   mode,
-  toEditId,
   initialFormData = defaultFormData,
-  onOpenChange,
+  onClose,
 }: GradingAttributeFormProps) {
   const form = useAppForm({
     defaultValues: initialFormData,
@@ -51,10 +58,10 @@ export default function GradingAttributeDialog({
   const queryClient = useQueryClient()
   const mutation = useMutation({
     mutationFn: async (data: GradingAttributeFormData) => {
-      if (toEditId) {
+      if (data.id) {
         return trpcClient.gradingAttribute.update.mutate({
           ...data,
-          toEditId,
+          toEditId: data.id,
         })
       } else {
         return trpcClient.gradingAttribute.create.mutate(data)
@@ -63,22 +70,19 @@ export default function GradingAttributeDialog({
     onSuccess: () => {
       queryClient.resetQueries(trpc.gradingAttribute.pathFilter())
       toast.success('Grading Attribute Saved Successfully')
-      onOpenChange(false)
+      onClose()
     },
     onError: (error) => {
       toast.error(error.message)
     },
   })
 
-  const title =
-    mode === 'create' ? 'New Grading Attribute' : 'Edit Grading Attribute'
-
   const validateNameUnique = async ({ value }: { value: string }) => {
     try {
       const isNameExists = await trpcClient.gradingAttribute.isNameExists.query(
         {
           name: value,
-          excludeId: toEditId,
+          excludeId: initialFormData.id,
         },
       )
       if (isNameExists) return 'Name already exists'
@@ -87,17 +91,19 @@ export default function GradingAttributeDialog({
     }
   }
 
+  const readonly = mode === 'view'
+
   return (
     <Dialog
       open={true}
-      onOpenChange={(nextOpen) => {
+      onOpenChange={() => {
         if (mutation.isPending) return
-        onOpenChange(nextOpen)
+        onClose()
       }}
     >
       <DialogContent className="sm:max-w-lg">
         <DialogHeader className="">
-          <DialogTitle className=" ">{title}</DialogTitle>
+          <DialogTitle className=" ">{titles[mode]}</DialogTitle>
         </DialogHeader>
         <DialogMain className="grid gap-4">
           <form.AppField
@@ -110,6 +116,7 @@ export default function GradingAttributeDialog({
                 required
                 label="Grading Attribute"
                 placeholder="eg. Endurance, Knowledge, etc."
+                readOnly={readonly}
               />
             )}
           />
@@ -119,16 +126,23 @@ export default function GradingAttributeDialog({
               <f.CTextAreaField
                 label="Description"
                 placeholder="Optional description or any notes"
+                readOnly={readonly}
               />
             )}
           />
         </DialogMain>
         <DialogFooter>
-          <form.AppForm>
-            <form.SubscribeButton
-              label={mode === 'create' ? 'Create' : 'Update'}
-            />
-          </form.AppForm>
+          {readonly ? (
+            <Button variant="outline" onClick={onClose}>
+              Close
+            </Button>
+          ) : (
+            <form.AppForm>
+              <form.SubscribeButton
+                label={mode === 'create' ? 'Create' : 'Update'}
+              />
+            </form.AppForm>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

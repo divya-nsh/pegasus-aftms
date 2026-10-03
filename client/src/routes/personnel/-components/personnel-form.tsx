@@ -178,6 +178,7 @@ export default function PersonnelForm({
   initialFormData?: PersonnelFormData
   linkedUser?: LinkedUser | null
 }) {
+  const isReadOnlyMode = mode === 'view'
   const queryClient = useQueryClient()
   const navigate = useNavigate()
 
@@ -193,6 +194,7 @@ export default function PersonnelForm({
 
   const mutation = useMutation({
     mutationFn: (data: PersonnelFormData) => {
+      if (isReadOnlyMode) throw new Error('Personnel is read only')
       if (toEditId) {
         return trpcClient.personnel.update.mutate({
           ...data,
@@ -216,8 +218,6 @@ export default function PersonnelForm({
       toast.error(error.message)
     },
   })
-
-  const isReadOnly = mode === 'view'
 
   const validateUsernameUnique = async ({
     value,
@@ -250,7 +250,7 @@ export default function PersonnelForm({
                   name="personnelType"
                   children={(f) => (
                     <f.CBasicSelect
-                      readOnly={isReadOnly}
+                      readOnly={isReadOnlyMode}
                       label="Personnel Type"
                       required
                       className=" max-w-82"
@@ -267,7 +267,7 @@ export default function PersonnelForm({
                   <f.CTextField
                     label="First Name"
                     required
-                    readOnly={isReadOnly}
+                    readOnly={isReadOnlyMode}
                   />
                 )}
               />
@@ -278,7 +278,7 @@ export default function PersonnelForm({
                   <f.CTextField
                     label="Last Name"
                     required
-                    readOnly={isReadOnly}
+                    readOnly={isReadOnlyMode}
                   />
                 )}
               />
@@ -287,7 +287,7 @@ export default function PersonnelForm({
                 name="gender"
                 children={(f) => (
                   <f.CBasicSelect
-                    readOnly={isReadOnly}
+                    readOnly={isReadOnlyMode}
                     required
                     label="Gender"
                     placeholder="Select gender"
@@ -304,7 +304,7 @@ export default function PersonnelForm({
                       max={new Date().toISOString().slice(0, 10)}
                       label="Date of Birth"
                       type="date"
-                      readOnly={isReadOnly}
+                      readOnly={isReadOnlyMode}
                       required
                     />
                   )}
@@ -333,7 +333,7 @@ export default function PersonnelForm({
                   value={f.state.value ?? null}
                   onValueChange={f.handleChange}
                   errors={f.state.meta.errors}
-                  disabled={isReadOnly}
+                  disabled={isReadOnlyMode}
                 />
               )}
             />
@@ -347,27 +347,27 @@ export default function PersonnelForm({
               <f.CTextField
                 label="Civil/Service Id"
                 placeholder="Auto Generate if empty {PRS-<id>}"
-                readOnly={isReadOnly}
+                readOnly={isReadOnlyMode}
               />
             )}
           />
           <form.AppField
             name="batchNo"
             children={(f) => (
-              <f.CTextField label="Batch No" readOnly={isReadOnly} />
+              <f.CTextField label="Batch No" readOnly={isReadOnlyMode} />
             )}
           />
           <form.AppField
             name="rank"
             children={(f) => (
-              <f.CTextField label="Rank" readOnly={isReadOnly} />
+              <f.CTextField label="Rank" readOnly={isReadOnlyMode} />
             )}
           />
           <form.AppField
             name="qualification"
             children={(f) => (
               <f.CBasicSelect
-                readOnly={isReadOnly}
+                readOnly={isReadOnlyMode}
                 label="Qualification"
                 placeholder="Select qualification"
                 options={[...pilotQualificationOptions]}
@@ -381,7 +381,7 @@ export default function PersonnelForm({
                 label="Date of Joining"
                 type="date"
                 required
-                readOnly={isReadOnly}
+                readOnly={isReadOnlyMode}
               />
             )}
           />
@@ -391,7 +391,7 @@ export default function PersonnelForm({
           <form.AppField
             name="phone"
             children={(f) => (
-              <f.CTextField label="Phone Number" readOnly={isReadOnly} />
+              <f.CTextField label="Phone Number" readOnly={isReadOnlyMode} />
             )}
           />
           <form.Subscribe selector={(state) => state.values.isCreateUser}>
@@ -403,7 +403,7 @@ export default function PersonnelForm({
                     required={!!isCreateUser}
                     label="Email"
                     type="email"
-                    readOnly={isReadOnly}
+                    readOnly={isReadOnlyMode}
                   />
                 )}
               />
@@ -415,7 +415,7 @@ export default function PersonnelForm({
               <f.CTextAreaField
                 className="col-span-3"
                 label="Address"
-                readOnly={isReadOnly}
+                readOnly={isReadOnlyMode}
               />
             )}
           />
@@ -426,7 +426,7 @@ export default function PersonnelForm({
             name="medicalStatus"
             children={(f) => (
               <f.CBasicSelect
-                readOnly={isReadOnly}
+                readOnly={isReadOnlyMode}
                 required
                 label="Medical Status"
                 placeholder="Select medical status"
@@ -438,7 +438,7 @@ export default function PersonnelForm({
             name="medicalExamDate"
             children={(f) => (
               <f.CTextField
-                readOnly={isReadOnly}
+                readOnly={isReadOnlyMode}
                 label="Medical Exam Date"
                 type="date"
                 required
@@ -449,7 +449,7 @@ export default function PersonnelForm({
             name="medicalValidUntil"
             children={(f) => (
               <f.CTextField
-                readOnly={isReadOnly}
+                readOnly={isReadOnlyMode}
                 label="Medical Valid Until"
                 type="date"
                 required
@@ -461,13 +461,13 @@ export default function PersonnelForm({
         <FormSection title="User Configuration" columns={1}>
           {linkedUser ? (
             <Link
-              to="/users/$id/edit"
-              params={{ id: String(linkedUser.id) }}
+              to="/users"
+              // params={{ id: String(linkedUser.id) }}
               className="text-sm text-blue-500"
             >
               MANAGE USER (Username: {linkedUser.username})
             </Link>
-          ) : !isReadOnly ? (
+          ) : !isReadOnlyMode ? (
             <>
               <form.AppField
                 name="isCreateUser"
@@ -484,7 +484,7 @@ export default function PersonnelForm({
                         }}
                         children={(f) => (
                           <f.CTextField
-                            readOnly={isReadOnly}
+                            readOnly={isReadOnlyMode}
                             required
                             label="Username"
                             placeholder="Enter username for user account"
@@ -495,7 +495,7 @@ export default function PersonnelForm({
                         name="newUserPassword"
                         children={(f) => (
                           <f.CTextField
-                            readOnly={isReadOnly}
+                            readOnly={isReadOnlyMode}
                             required
                             label="Password"
                             placeholder="Enter password for user account"
@@ -510,7 +510,7 @@ export default function PersonnelForm({
           ) : null}
         </FormSection>
 
-        {mode !== 'view' && (
+        {!isReadOnlyMode && (
           <div className="flex justify-end gap-2 pt-2">
             <LinkButton to="/personnel" variant="outline">
               Cancel

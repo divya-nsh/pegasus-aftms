@@ -2,6 +2,7 @@ import {
   handleSubmitInvalid,
   useAppForm,
 } from '@/components/form/tanstack-form'
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -29,7 +30,7 @@ const schema = z.object({
 export type AircraftFormData = z.infer<typeof schema>
 
 export type AircraftFormProps = {
-  mode: 'create' | 'edit'
+  mode: 'create' | 'edit' | 'view'
   toEditId?: number
   initialFormData?: AircraftFormData
   onClose: () => void
@@ -48,6 +49,12 @@ const statusOptions = [
   { label: 'In Storage', value: 'in_storage' },
   { label: 'Retired', value: 'retired' },
 ]
+
+const titles = {
+  create: 'New Aircraft',
+  edit: 'Edit Aircraft',
+  view: 'Aircraft Details',
+}
 
 export default function AircraftForm({
   mode,
@@ -90,7 +97,7 @@ export default function AircraftForm({
     },
   })
 
-  const title = mode === 'create' ? 'New Aircraft' : 'Edit Aircraft'
+  const readonly = mode === 'view'
 
   return (
     <Dialog
@@ -102,22 +109,30 @@ export default function AircraftForm({
     >
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="uppercase">{title}</DialogTitle>
+          <DialogTitle className="uppercase">{titles[mode]}</DialogTitle>
         </DialogHeader>
         <DialogMain className="grid grid-cols-2 gap-4">
           <form.AppField
             name="name"
-            children={(f) => <f.CTextField required label="Name" />}
+            children={(f) => (
+              <f.CTextField required label="Name" readOnly={readonly} />
+            )}
           />
           <form.AppField
             name="tailNumber"
             children={(f) => (
-              <f.CTextField required label="Tail Number / Call Sign" />
+              <f.CTextField
+                required
+                label="Tail Number / Call Sign"
+                readOnly={readonly}
+              />
             )}
           />
           <form.AppField
             name="serialNumber"
-            children={(f) => <f.CTextField label="Serial Number" />}
+            children={(f) => (
+              <f.CTextField label="Serial Number" readOnly={readonly} />
+            )}
           />
           <form.AppField
             name="aircraftType"
@@ -126,13 +141,18 @@ export default function AircraftForm({
                 label="Aircraft Type"
                 placeholder="Select aircraft type"
                 options={aircraftTypeOptions}
+                readOnly={readonly}
               />
             )}
           />
           <form.AppField
             name="inductionDate"
             children={(f) => (
-              <f.CTextField label="Induction Date" type="date" />
+              <f.CTextField
+                label="Induction Date"
+                type="date"
+                readOnly={readonly}
+              />
             )}
           />
           <form.AppField
@@ -142,6 +162,7 @@ export default function AircraftForm({
                 label="Status"
                 placeholder="Select status"
                 options={statusOptions}
+                readOnly={readonly}
               />
             )}
           />
@@ -152,16 +173,23 @@ export default function AircraftForm({
                 className="col-span-2"
                 label="Remarks"
                 placeholder="Enter optional remarks"
+                readOnly={readonly}
               />
             )}
           />
         </DialogMain>
         <DialogFooter>
-          <form.AppForm>
-            <form.SubscribeButton
-              label={mode === 'create' ? 'Create' : 'Save'}
-            />
-          </form.AppForm>
+          {readonly ? (
+            <Button variant="outline" onClick={onClose}>
+              Close
+            </Button>
+          ) : (
+            <form.AppForm>
+              <form.SubscribeButton
+                label={mode === 'create' ? 'Create' : 'Save'}
+              />
+            </form.AppForm>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

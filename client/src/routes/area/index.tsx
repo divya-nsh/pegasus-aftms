@@ -32,15 +32,18 @@ import PageCard from '@/components/layout/PageCard'
 import RefreshButton from '@/components/table/refresh-button'
 import { protectRouteBeforeLoad } from '@/lib/utils'
 import NewButton from '@/components/buttons/new-button'
-import { AccessControl } from '@/context/auth-context'
+import { AccessControl, useUserCan } from '@/context/auth-context'
 
 export const Route = createFileRoute('/area/')({
   component: RouteComponent,
   pendingComponent: FullPageSpinner,
-  errorComponent: ({ error }) => (
+  errorComponent: ({ error }: { error: unknown }) => (
     <ErrorAlert error={error} title="Failed to Load Areas" />
   ),
   beforeLoad: protectRouteBeforeLoad('area.read'),
+  loader({ context }) {
+    context.queryClient.prefetchQuery(trpc.areas.getAll.queryOptions())
+  },
 })
 
 type TAreaListItem = TrpcRouterOutputs['areas']['getAll']['items'][number]
@@ -82,15 +85,6 @@ const columns: ColumnDef<TTableFeatures, TAreaListItem>[] = ch.columns([
     },
     minSize: 70,
   }),
-  // ch.display({
-  //   header: 'S.No',
-  //   cell: (info) => info.row.index + 1,
-  //   size: 70,
-  //   id: 'index',
-  //   meta: {
-  //     align: 'center',
-  //   },
-  // }),
   ch.accessor('code', {
     header: 'Code',
     size: 150,
@@ -120,6 +114,7 @@ const columns: ColumnDef<TTableFeatures, TAreaListItem>[] = ch.columns([
 function RouteComponent() {
   const areasQ = useSuspenseQuery(trpc.areas.getAll.queryOptions())
   const queryClient = useQueryClient()
+  const canUpdate = useUserCan('area.update')
 
   const [formModel, setFormModel] = useState<{
     data?: AreaFormData
@@ -240,7 +235,7 @@ function RouteComponent() {
 
       {formModel?.open && (
         <AreaForm
-          mode={formModel.editItemId ? 'edit' : 'create'}
+          mode={formModel.editItemId ? (canUpdate ? 'edit' : 'view') : 'create'}
           initialFormData={formModel.data}
           toEditId={formModel.editItemId}
           onClose={() => setFormModel({ open: false })}

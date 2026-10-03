@@ -19,6 +19,7 @@ import toast from 'react-hot-toast'
 import { z } from 'zod'
 import { FieldError } from '@/components/ui/field'
 import { ScaleOptionsLine } from './options-line'
+import { Button } from '@/components/ui/button'
 
 const scoreValue = z.number().min(0, 'Min 0').max(100, 'Max 100')
 
@@ -31,6 +32,7 @@ const optionSchema = z.object({
 })
 
 const schema = z.object({
+  id: z.number().optional(),
   name: z.string().min(1, 'Required').min(3),
   notes: z.string(),
   options: z.array(optionSchema).min(1, 'Add at least one option'),
@@ -40,17 +42,21 @@ export type GradingScaleOptionFormData = z.infer<typeof optionSchema>
 export type GradingScaleFormData = z.infer<typeof schema>
 
 export type GradingScaleFormProps = {
-  mode: 'create' | 'edit'
-  toEditId?: number
+  mode: 'create' | 'edit' | 'view'
   initialFormData?: GradingScaleFormData
-  onOpenChange: (open: boolean) => void
+  onClose: () => void
+}
+
+const titleMap = {
+  create: 'New Grading Scale',
+  edit: 'Edit Grading Scale',
+  view: 'Grading Scale Details',
 }
 
 export default function GradingScaleDialog({
   mode,
-  toEditId,
   initialFormData = defaultFormData,
-  onOpenChange,
+  onClose,
 }: GradingScaleFormProps) {
   const form = useAppForm({
     ...baseFormOptions,
@@ -67,10 +73,10 @@ export default function GradingScaleDialog({
   const queryClient = useQueryClient()
   const mutation = useMutation({
     mutationFn: async (data: GradingScaleFormData) => {
-      if (toEditId) {
+      if (data.id) {
         return trpcClient.gradingScale.update.mutate({
           ...data,
-          toEditId,
+          toEditId: data.id,
         })
       }
       return trpcClient.gradingScale.create.mutate(data)
@@ -78,20 +84,18 @@ export default function GradingScaleDialog({
     onSuccess: () => {
       queryClient.resetQueries(trpc.gradingScale.pathFilter())
       toast.success('Grading Scale Saved Successfully')
-      onOpenChange(false)
+      onClose()
     },
     onError: (error) => {
       toast.error(error.message)
     },
   })
 
-  const title = mode === 'create' ? 'New Grading Scale' : 'Edit Grading Scale'
-
   const validateNameUnique = async ({ value }: { value: string }) => {
     try {
       const isNameExists = await trpcClient.gradingScale.isNameExists.query({
         name: value,
-        excludeId: toEditId,
+        excludeId: initialFormData.id,
       })
       if (isNameExists) return 'Name already exists'
     } catch (error) {
@@ -99,17 +103,19 @@ export default function GradingScaleDialog({
     }
   }
 
+  const readonly = mode === 'view'
+
   return (
     <Dialog
       open={true}
-      onOpenChange={(nextOpen) => {
+      onOpenChange={() => {
         if (mutation.isPending) return
-        onOpenChange(nextOpen)
+        onClose()
       }}
     >
       <DialogContent className="min-w-xl">
         <DialogHeader>
-          <DialogTitle>{title}</DialogTitle>
+          <DialogTitle>{titleMap[mode]}</DialogTitle>
         </DialogHeader>
         <DialogMain className=" space-y-4">
           <form.AppField
@@ -122,6 +128,7 @@ export default function GradingScaleDialog({
                 required
                 label="Scale Name"
                 placeholder="eg. ABCF Scale"
+                readOnly={readonly}
               />
             )}
           />
@@ -131,6 +138,7 @@ export default function GradingScaleDialog({
               <f.CTextAreaField
                 label="Description"
                 placeholder="Optional description or any notes"
+                readOnly={readonly}
               />
             )}
           />
@@ -142,6 +150,7 @@ export default function GradingScaleDialog({
                 <ScaleOptionsLine
                   options={f.state.value}
                   setOptions={f.handleChange}
+                  readonly={readonly}
                 />
                 <FieldError errors={f.state.meta.errors} />
               </>
@@ -150,9 +159,15 @@ export default function GradingScaleDialog({
         </DialogMain>
         <DialogFooter>
           <form.AppForm>
-            <form.SubscribeButton
-              label={mode === 'create' ? 'Create' : 'Save'}
-            />
+            {readonly ? (
+              <Button variant="outline" onClick={onClose}>
+                Close
+              </Button>
+            ) : (
+              <form.SubscribeButton
+                label={mode === 'create' ? 'Create' : 'Save'}
+              />
+            )}
           </form.AppForm>
         </DialogFooter>
       </DialogContent>

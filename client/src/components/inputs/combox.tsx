@@ -24,6 +24,7 @@ export type ComboboxWrapperProps<T extends string | number = string> = {
   autoFocus?: boolean
   showTrigger?: boolean
   showClear?: boolean
+  readOnly?: boolean
   id?: string
 }
 

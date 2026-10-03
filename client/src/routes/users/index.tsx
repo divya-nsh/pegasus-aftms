@@ -32,15 +32,19 @@ import NewButton from '@/components/buttons/new-button'
 import UserForm from './-components/user-form'
 import type { UserFormData } from './-components/user-form'
 import { protectRouteBeforeLoad } from '@/lib/utils'
-import { AccessControl, useAuth } from '@/context/auth-context'
+import { AccessControl } from '@/context/auth-context'
 
 export const Route = createFileRoute('/users/')({
   component: RouteComponent,
   pendingComponent: FullPageSpinner,
   beforeLoad: protectRouteBeforeLoad('user.read'),
-  errorComponent: ({ error }) => (
+  errorComponent: ({ error }: { error: unknown }) => (
     <ErrorAlert error={error} title="Failed to Load Users" />
   ),
+  loader({ context }) {
+    context.queryClient.prefetchQuery(trpc.users.getAll.queryOptions())
+    context.queryClient.prefetchQuery(trpc.rolesV2.getAll.queryOptions())
+  },
 })
 
 type TUserListItem = TrpcRouterOutputs['users']['getAll']['items'][number]
@@ -57,9 +61,8 @@ const columns: ColumnDef<TTableFeatures, TUserListItem>[] = ch.columns([
           actions={[
             {
               type: 'view',
-              onClick: handleAction('edit'),
+              onClick: handleAction('view'),
               // If User can't update then lable edit as view
-              permissionKey: ({ isUserCan }) => !isUserCan('user.update'),
             },
             {
               type: 'edit',
@@ -127,9 +130,8 @@ function toUserFormData(row: TUserListItem): UserFormData {
 }
 
 function RouteComponent() {
-  const { isUserCan } = useAuth()
   const [modal, setModal] = useState<{
-    mode: 'create' | 'edit'
+    mode: 'create' | 'edit' | 'view'
     rowId?: number
   } | null>(null)
   const usersQ = useSuspenseQuery(trpc.users.getAll.queryOptions())
@@ -160,24 +162,23 @@ function RouteComponent() {
     setModal(null)
   }
 
-  const openModal = (rowId?: string) => {
+  const openModal = (rowId?: string, mode?: 'create' | 'edit' | 'view') => {
     if (rowId) {
       setModal({
-        mode: 'edit',
+        mode: mode ?? 'edit',
         rowId: Number(rowId),
       })
       return
     } else {
       setModal({
-        mode: 'create',
+        mode: mode ?? 'create',
       })
     }
   }
 
-  const editUser =
-    modal?.mode === 'edit' && modal.rowId
-      ? usersQ.data.items.find((item) => item.id === modal.rowId)
-      : undefined
+  const editUser = modal?.rowId
+    ? usersQ.data.items.find((item) => item.id === modal.rowId)
+    : undefined
 
   const table = useTable({
     ...baseTableOptions<TUserListItem>(),
@@ -194,6 +195,8 @@ function RouteComponent() {
       onRowAction: (action, rowId) => {
         if (action === 'edit') {
           openModal(rowId)
+        } else if (action === 'view') {
+          openModal(rowId, 'view')
         } else if (action === 'delete') {
           const confirm = window.confirm(
             'Are you sure you want to delete this user?',
@@ -211,8 +214,6 @@ function RouteComponent() {
     onGlobalFilterChange: setSearchText,
     globalFilterFn: 'includesString',
   })
-
-  const viewOnly = !isUserCan('user.update')
 
   return (
     <PageCard className="space-y-4">
@@ -242,9 +243,9 @@ function RouteComponent() {
       {modal?.mode === 'create' && (
         <UserForm mode="create" onClose={closeModal} />
       )}
-      {modal?.mode === 'edit' && editUser && (
+      {(modal?.mode === 'edit' || modal?.mode === 'view') && editUser && (
         <UserForm
-          mode={viewOnly ? 'view' : 'edit'}
+          mode={modal.mode}
           initialFormData={toUserFormData(editUser)}
           toEditId={editUser.id}
           linkedPersonnel={editUser.personnel[0] ?? null}

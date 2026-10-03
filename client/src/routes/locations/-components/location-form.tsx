@@ -2,6 +2,7 @@ import {
   handleSubmitInvalid,
   useAppForm,
 } from '@/components/form/tanstack-form'
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
@@ -17,6 +18,7 @@ import toast from 'react-hot-toast'
 import { z } from 'zod'
 
 const schema = z.object({
+  id: z.number().optional(),
   code: z.string().min(1, 'Required').min(3).uppercase(),
   name: z.string().min(1, 'Required').min(2),
   description: z.string().optional(),
@@ -27,19 +29,25 @@ const schema = z.object({
 export type LocationFormData = z.infer<typeof schema>
 
 export type LocationFormProps = {
-  mode: 'create' | 'edit'
-  toEditId?: number
+  mode: 'create' | 'edit' | 'view'
   initialFormData?: LocationFormData
   // onSubmit: (data: LocationFormData) => void
-  onOpenChange: (open: boolean) => void
+  onClose: () => void
+}
+
+const titleMap = {
+  create: 'New Location',
+  edit: 'Edit Location',
+  view: 'Location Details',
 }
 
 export default function LocationForm({
   mode,
-  toEditId,
   initialFormData = defaultFormData,
-  onOpenChange,
+  onClose,
 }: LocationFormProps) {
+  const toEditId = initialFormData.id
+
   const form = useAppForm({
     defaultValues: initialFormData,
     validators: {
@@ -64,14 +72,12 @@ export default function LocationForm({
     onSuccess: () => {
       queryClient.resetQueries(trpc.locations.pathFilter())
       toast.success('Location Saved Successfully')
-      onOpenChange(false)
+      onClose()
     },
     onError: (error) => {
       toast.error(error.message)
     },
   })
-
-  const title = mode === 'create' ? 'New Location' : 'Edit Location'
 
   const validateCodeUnique = async ({ value }: { value: string }) => {
     try {
@@ -85,18 +91,19 @@ export default function LocationForm({
     }
   }
 
+  const readonly = mode === 'view'
+
   return (
     <Dialog
       open={true}
-      onOpenChange={(nextOpen) => {
+      onOpenChange={() => {
         if (mutation.isPending) return
-        onOpenChange(nextOpen)
+        onClose()
       }}
     >
       <DialogContent className="sm:max-w-xl">
         <DialogHeader className="">
-          <DialogTitle className=" uppercase">{title}</DialogTitle>
-          {/* <DialogDescription>{description}</DialogDescription> */}
+          <DialogTitle className=" uppercase">{titleMap[mode]}</DialogTitle>
         </DialogHeader>
         <DialogMain className="grid gap-4">
           <form.AppField
@@ -110,6 +117,7 @@ export default function LocationForm({
                 valueAsUppercase
                 required
                 label="Location Code"
+                readOnly={readonly}
                 placeholder="Must be unique and no spaces"
               />
             )}
@@ -117,7 +125,13 @@ export default function LocationForm({
 
           <form.AppField
             name="name"
-            children={(f) => <f.CTextField required label="Location Name" />}
+            children={(f) => (
+              <f.CTextField
+                required
+                label="Location Name"
+                readOnly={readonly}
+              />
+            )}
           />
 
           <form.AppField
@@ -126,6 +140,7 @@ export default function LocationForm({
               <f.CTextField
                 label="Phone"
                 placeholder="Enter optional phone number"
+                readOnly={readonly}
               />
             )}
           />
@@ -135,6 +150,7 @@ export default function LocationForm({
               <f.CTextAreaField
                 label="Address"
                 placeholder="Enter optional address"
+                readOnly={readonly}
               />
             )}
           />
@@ -143,6 +159,7 @@ export default function LocationForm({
             children={(f) => (
               <f.CTextAreaField
                 label="Note / Description"
+                readOnly={readonly}
                 placeholder="Enter optional note or description"
               />
             )}
@@ -151,7 +168,13 @@ export default function LocationForm({
 
         <DialogFooter>
           <form.AppForm>
-            <form.SubscribeButton label="Save" />
+            {readonly ? (
+              <Button variant="outline" onClick={onClose}>
+                Close
+              </Button>
+            ) : (
+              <form.SubscribeButton label="Save" />
+            )}
           </form.AppForm>
         </DialogFooter>
       </DialogContent>

@@ -27,10 +27,16 @@ const schema = z.object({
 export type AreaFormData = z.infer<typeof schema>
 
 export type AreaFormProps = {
-  mode: 'create' | 'edit'
+  mode: 'create' | 'edit' | 'view'
   toEditId?: number
   initialFormData?: AreaFormData
   onClose: () => void
+}
+
+const titles = {
+  create: 'New Area',
+  edit: 'Edit Area',
+  view: 'Area Details',
 }
 
 export default function AreaForm({
@@ -39,6 +45,7 @@ export default function AreaForm({
   initialFormData = defaultFormData,
   onClose,
 }: AreaFormProps) {
+  const readOnlyMode = mode === 'view'
   const form = useAppForm({
     defaultValues: initialFormData,
     validationLogic: revalidateLogic(),
@@ -53,6 +60,7 @@ export default function AreaForm({
   const queryClient = useQueryClient()
   const mutation = useMutation({
     mutationFn: async (data: AreaFormData) => {
+      if (readOnlyMode) throw new Error('Area is read only')
       if (toEditId) {
         return trpcClient.areas.update.mutate({
           ...data,
@@ -72,7 +80,7 @@ export default function AreaForm({
     },
   })
 
-  const title = mode === 'create' ? 'New Area' : 'Edit Area'
+  const title = titles[mode]
 
   const validateCodeUnique = async ({ value }: { value: string }) => {
     try {
@@ -110,27 +118,43 @@ export default function AreaForm({
                 required
                 label="Area Code"
                 placeholder="Must be unique and no spaces"
+                readOnly={readOnlyMode}
               />
             )}
           />
           <form.AppField
             name="name"
-            children={(f) => <f.CTextField required label="Area Name" />}
+            children={(f) => (
+              <f.CTextField
+                required
+                label="Area Name"
+                readOnly={readOnlyMode}
+              />
+            )}
           />
           <form.AppField
             name="address"
-            children={(f) => <f.CTextAreaField label="Address" />}
+            children={(f) => (
+              <f.CTextAreaField label="Address" readOnly={readOnlyMode} />
+            )}
           />
           <form.AppField
             name="description"
-            children={(f) => <f.CTextAreaField label="Note Or Description" />}
+            children={(f) => (
+              <f.CTextAreaField
+                label="Note Or Description"
+                readOnly={readOnlyMode}
+              />
+            )}
           />
         </DialogMain>
         <DialogFooter>
           <form.AppForm>
-            <form.SubscribeButton
-              label={mode === 'create' ? 'Create' : 'Save'}
-            />
+            {!readOnlyMode && (
+              <form.SubscribeButton
+                label={mode === 'create' ? 'Create' : 'Save'}
+              />
+            )}
           </form.AppForm>
         </DialogFooter>
       </DialogContent>

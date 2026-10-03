@@ -74,6 +74,11 @@ export const useAuth = () => {
   return context
 }
 
+export const useUserCan = (permissionKey: TPermissionKeys) => {
+  const { isUserCan } = useAuth()
+  return isUserCan(permissionKey)
+}
+
 export const AccessControl = ({
   children,
   permissionKey,

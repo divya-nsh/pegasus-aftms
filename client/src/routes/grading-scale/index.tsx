@@ -12,8 +12,6 @@ import {
 import { createFileRoute } from '@tanstack/react-router'
 import { createColumnHelper, useTable } from '@tanstack/react-table'
 import type { ColumnDef } from '@tanstack/react-table'
-import { PencilIcon, TrashIcon } from 'lucide-react'
-import { useState } from 'react'
 import GradingScaleDialog from './-components/grading-scale-form'
 import type { GradingScaleFormData } from './-components/grading-scale-form'
 import trpc, { trpcClient } from '@/trpc'
@@ -30,29 +28,24 @@ import { BlockingLoaderOverlay } from '@/components/loaders/BlockingLoader'
 import PageCard from '@/components/layout/PageCard'
 import NewButton from '@/components/buttons/new-button'
 import RefreshButton from '@/components/table/refresh-button'
-import { AccessControl } from '@/context/auth-context'
+import { AccessControl, useUserCan } from '@/context/auth-context'
+import { protectRouteBeforeLoad } from '@/lib/utils'
+import { useModalForm } from '@/hooks/use-form-modal'
 
 export const Route = createFileRoute('/grading-scale/')({
   component: RouteComponent,
   pendingComponent: FullPageSpinner,
-  errorComponent: ({ error }) => (
+  errorComponent: ({ error }: { error: unknown }) => (
     <ErrorAlert error={error} title="Failed to Load Grading Scales" />
   ),
+  beforeLoad: protectRouteBeforeLoad('gradingScale.read'),
+  loader({ context }) {
+    context.queryClient.prefetchQuery(trpc.gradingScale.getAll.queryOptions())
+  },
 })
 
 type TGradingScaleListItem =
   TrpcRouterOutputs['gradingScale']['getAll']['items'][number]
-
-function toFormOptions(
-  options: TGradingScaleListItem['options'],
-): GradingScaleFormData['options'] {
-  return options.map((option) => ({
-    label: option.label,
-    point: Number(option.point),
-    lowerBound: Number(option.lowerBound),
-    upperBound: Number(option.upperBound),
-  }))
-}
 
 const ch = createColumnHelper<TTableFeatures, TGradingScaleListItem>()
 
@@ -113,18 +106,17 @@ const columns: ColumnDef<TTableFeatures, TGradingScaleListItem>[] = ch.columns([
 ])
 
 function RouteComponent() {
+  const canUpdate = useUserCan('gradingScale.update')
   const gradingScaleQ = useSuspenseQuery(
     trpc.gradingScale.getAll.queryOptions(),
   )
   const queryClient = useQueryClient()
 
-  const [formModel, setFormModel] = useState<{
-    data?: GradingScaleFormData
-    open: boolean
-    editItemId?: number
-  } | null>({
-    open: false,
-  })
+  const {
+    modalState,
+    openModal: _openModal,
+    closeModal,
+  } = useModalForm<GradingScaleFormData>()
 
   const deleteMutation = useMutation({
     mutationFn: ({ id }: { id: number }) => {
@@ -148,25 +140,22 @@ function RouteComponent() {
 
   const openModal = (rowId?: string) => {
     const row = rowId ? table.getRow(rowId).original : null
-    if (!row) {
-      setFormModel({ open: true })
-    } else {
-      setFormModel({
-        open: true,
-        editItemId: row.id,
-        data: {
-          name: row.name,
-          notes: row.notes ?? '',
-          options: row.options.map((option) => ({
-            id: option.id,
-            label: option.label,
-            point: Number(option.point),
-            lowerBound: Number(option.lowerBound),
-            upperBound: Number(option.upperBound),
-          })),
-        },
-      })
-    }
+
+    _openModal(
+      row && {
+        id: row.id,
+        name: row.name,
+        notes: row.notes ?? '',
+        options: row.options.map((option) => ({
+          id: option.id,
+          label: option.label,
+          point: Number(option.point),
+          lowerBound: Number(option.lowerBound),
+          upperBound: Number(option.upperBound),
+        })),
+      },
+      !canUpdate,
+    )
   }
 
   const table = useTable({
@@ -193,7 +182,7 @@ function RouteComponent() {
           }
         }
       },
-      onRowDoubleClick: (rowId) => openModal(rowId),
+      onRowDoubleClick: openModal,
     },
     globalFilterFn: 'includesString',
   })
@@ -205,7 +194,7 @@ function RouteComponent() {
         <div className="flex items-center gap-4">
           <RefreshButton query={gradingScaleQ} />
           <AccessControl permissionKey={'gradingScale.create'}>
-            <NewButton onClick={() => setFormModel({ open: true })} />
+            <NewButton onClick={() => openModal()} />
           </AccessControl>
         </div>
       </div>
@@ -224,12 +213,11 @@ function RouteComponent() {
       <AppTable table={table} coverFullWidth />
       <TablePagination table={table} />
 
-      {formModel?.open && (
+      {modalState.open && (
         <GradingScaleDialog
-          mode={formModel.editItemId ? 'edit' : 'create'}
-          initialFormData={formModel.data}
-          toEditId={formModel.editItemId}
-          onOpenChange={(open) => setFormModel({ ...formModel, open })}
+          mode={modalState.mode}
+          initialFormData={modalState.data}
+          onClose={closeModal}
         />
       )}
       <BlockingLoaderOverlay show={deleteMutation.isPending} />

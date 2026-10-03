@@ -1,4 +1,5 @@
 import * as ShadcnCombobox from '@/components/ui/combobox'
+import { useState } from 'react'
 
 export type ComboOption = {
   label: string
@@ -23,6 +24,7 @@ export type AppComboboxProps<T extends ComboOption> = {
   icon?: React.ReactNode
   inputRef?: React.RefObject<HTMLInputElement | null>
   autoFocus?: boolean
+  readOnly?: boolean
 }
 
 function AppCombobox<T extends ComboOption>({
@@ -43,9 +45,13 @@ function AppCombobox<T extends ComboOption>({
   allowClear = true,
   icon,
   inputRef,
+  readOnly,
 }: AppComboboxProps<T>) {
+  const [open, setOpen] = useState(false)
+
   return (
     <ShadcnCombobox.Combobox
+      open={open}
       disabled={disabled}
       required={required}
       itemToStringLabel={itemToStringLabel}
@@ -54,9 +60,14 @@ function AppCombobox<T extends ComboOption>({
       onValueChange={onValueChange}
       isItemEqualToValue={isItemEqualToValue}
       itemToStringValue={itemToStringValue}
+      onOpenChange={(v) => {
+        if (readOnly && v == true) return
+        setOpen(v)
+      }}
       //   limit={limitOptions}
     >
       <ShadcnCombobox.ComboboxInput
+        readOnly={readOnly}
         autoFocus={autoFocus}
         showClear={required ? false : allowClear}
         className={className}

@@ -40,6 +40,9 @@ export const Route = createFileRoute('/aircraft/')({
   errorComponent: ({ error }) => (
     <ErrorAlert error={error} title="Failed to Load Aircraft" />
   ),
+  loader({ context }) {
+    context.queryClient.prefetchQuery(trpc.aircraft.getAll.queryOptions())
+  },
 })
 
 type TAircraftListItem =
@@ -204,6 +207,8 @@ function RouteComponent() {
     globalFilterFn: 'includesString',
   })
 
+  const readOnly = !isUserCan('aircraft.update')
+
   return (
     <PageCard>
       <div className="items-center gap-1 border-b mb-4 pb-1 flex justify-between">
@@ -232,7 +237,7 @@ function RouteComponent() {
 
       {formModel?.open && (
         <AircraftForm
-          mode={formModel.editItemId ? 'edit' : 'create'}
+          mode={formModel.editItemId ? (readOnly ? 'view' : 'edit') : 'create'}
           initialFormData={formModel.data}
           toEditId={formModel.editItemId}
           onClose={() => setFormModel({ open: false })}

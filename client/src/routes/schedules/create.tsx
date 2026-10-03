@@ -9,6 +9,7 @@ import AppCombobox from '@/components/inputs/combox2'
 import { useMemo, useState } from 'react'
 import ErrorAlert from '@/components/errors/ErrorAlert'
 import { Button } from '@/components/ui/button'
+import { protectRouteBeforeLoad } from '@/lib/utils'
 
 export const Route = createFileRoute('/schedules/create')({
   component: RouteComponent,
@@ -21,6 +22,7 @@ export const Route = createFileRoute('/schedules/create')({
       <ErrorAlert error={error} />
     </PageCard>
   ),
+  beforeLoad: protectRouteBeforeLoad('eventSchedule.create'),
 })
 
 function RouteComponent() {

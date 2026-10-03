@@ -30,15 +30,19 @@ import PageCard from '@/components/layout/PageCard'
 import { protectRouteBeforeLoad } from '@/lib/utils'
 import NewButton from '@/components/buttons/new-button'
 import RefreshButton from '@/components/table/refresh-button'
-import { AccessControl } from '@/context/auth-context'
+import { AccessControl, useUserCan } from '@/context/auth-context'
+import { useModalForm } from '@/hooks/use-form-modal'
 
 export const Route = createFileRoute('/locations/')({
   component: RouteComponent,
   pendingComponent: FullPageSpinner,
   beforeLoad: protectRouteBeforeLoad('location.read'),
-  errorComponent: ({ error }) => (
+  errorComponent: ({ error }: { error: unknown }) => (
     <ErrorAlert error={error} title="Failed to Load Locations" />
   ),
+  loader({ context }) {
+    context.queryClient.prefetchQuery(trpc.locations.getAll.queryOptions())
+  },
 })
 
 type TLocationListItem =
@@ -122,16 +126,15 @@ const columns: ColumnDef<TTableFeatures, TLocationListItem>[] = ch.columns([
 ])
 
 function RouteComponent() {
+  const canUpdate = useUserCan('location.update')
   const locationsQ = useSuspenseQuery(trpc.locations.getAll.queryOptions())
   const queryClient = useQueryClient()
 
-  const [formModel, setFormModel] = useState<{
-    data?: FormData
-    open: boolean
-    editItemId?: number
-  } | null>({
-    open: false,
-  })
+  const {
+    modalState,
+    openModal: _openModal,
+    closeModal,
+  } = useModalForm<FormData>()
 
   const [columnFilters, setColumnFilters] = useState<string>('')
 
@@ -157,21 +160,19 @@ function RouteComponent() {
 
   const openModal = (row?: TLocationListItem) => {
     if (row) {
-      setFormModel({
-        open: true,
-        editItemId: row.id,
-        data: {
+      _openModal(
+        {
+          id: row.id,
           name: row.name,
           code: row.code,
           address: row.address ?? '',
           phone: row.phone ?? '',
           description: row.description ?? '',
         },
-      })
+        !canUpdate,
+      )
     } else {
-      setFormModel({
-        open: true,
-      })
+      _openModal()
     }
   }
 
@@ -245,12 +246,11 @@ function RouteComponent() {
       </div>
 
       {/* Form Modal */}
-      {formModel?.open && (
+      {modalState.open && (
         <LocationForm
-          mode={formModel.editItemId ? 'edit' : 'create'}
-          initialFormData={formModel.data}
-          toEditId={formModel.editItemId}
-          onOpenChange={(open) => setFormModel({ ...formModel, open })}
+          mode={modalState.mode}
+          initialFormData={modalState.data}
+          onClose={closeModal}
         />
       )}
       <BlockingLoaderOverlay show={deleteMutation.isPending} />

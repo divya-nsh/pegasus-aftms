@@ -85,7 +85,7 @@ export default function UserForm({
   const schema = useMemo(() => createSchema(mode), [mode])
   const rolesQuery = useSuspenseQuery(trpc.rolesV2.getAll.queryOptions())
 
-  const isViewOnly = mode === 'view'
+  const isReadOnly = mode === 'view'
 
   const form = useAppForm({
     ...baseFormOptions,
@@ -94,7 +94,7 @@ export default function UserForm({
       onDynamic: schema,
     },
     onSubmit: ({ value }) => {
-      if (isViewOnly) return
+      if (isReadOnly) return
       return mutation.mutateAsync(value)
     },
   })
@@ -161,18 +161,22 @@ export default function UserForm({
                   label="Username / UserId"
                   placeholder="Used to login to the system"
                   autoComplete="username"
+                  readOnly={isReadOnly}
                 />
               )}
             />
             <form.AppField
               name="name"
-              children={(f) => <f.CTextField label="Name" required />}
+              children={(f) => (
+                <f.CTextField label="Name" required readOnly={isReadOnly} />
+              )}
             />
 
             <form.AppField
               name="password"
               children={(f) => (
                 <f.CTextField
+                  readOnly={isReadOnly}
                   required={mode === 'create'}
                   label="Password"
                   type="password"
@@ -197,6 +201,7 @@ export default function UserForm({
                     value: role.id,
                   }))}
                   valueAsNumber
+                  readOnly={isReadOnly}
                 />
               )}
             />
@@ -205,18 +210,20 @@ export default function UserForm({
             <Link
               to="/personnel/$id/edit"
               params={{ id: String(linkedPersonnel.id) }}
-              className="text-sm text-blue-500"
+              className="text-sm text-blue-500 py-2"
             >
               View linked personnel: {personnelLabel(linkedPersonnel)}
             </Link>
           )}
           <form.AppField
             name="isActive"
-            children={(f) => <f.CCheckbox label="Active" />}
+            children={(f) => (
+              <f.CCheckbox label="Active" readOnly={isReadOnly} />
+            )}
           />
         </DialogMain>
         <DialogFooter>
-          {!isViewOnly && (
+          {!isReadOnly && (
             <form.AppForm>
               <form.SubscribeButton
                 label={mode === 'create' ? 'Create' : 'Save'}

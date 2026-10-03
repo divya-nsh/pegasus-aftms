@@ -11,7 +11,7 @@ import {
 import { createFileRoute } from '@tanstack/react-router'
 import { createColumnHelper, useTable } from '@tanstack/react-table'
 import type { ColumnDef } from '@tanstack/react-table'
-import { useState } from 'react'
+import { Suspense, useState } from 'react'
 import { ActionMenu } from '@/components/table/action-menu'
 import trpc, { trpcClient } from '@/trpc'
 import {
@@ -37,6 +37,9 @@ export const Route = createFileRoute('/roles/')({
   errorComponent: ({ error }) => <ErrorAlert error={error} />,
   // It require permission for Admin with all access
   beforeLoad: protectRouteBeforeLoad('*'),
+  loader({ context }) {
+    context.queryClient.prefetchQuery(trpc.rolesV2.getAll.queryOptions())
+  },
 })
 
 type TRoleListItem = TrpcRouterOutputs['rolesV2']['getAll'][number]

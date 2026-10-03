@@ -11,9 +11,11 @@ import { Badge } from '@/components/ui/badge'
 export function TemplateAttributesLine({
   attributes,
   setAttributes,
+  readOnly,
 }: {
   attributes: GradingTemplateFormData['attributes']
   setAttributes: (attributes: GradingTemplateFormData['attributes']) => void
+  readOnly?: boolean
 }) {
   const inputRef = useRef<HTMLInputElement>(null)
   const { data } = useQuery(trpc.gradingAttribute.getAll.queryOptions())
@@ -69,6 +71,7 @@ export function TemplateAttributesLine({
             className="flex items-center gap-2 border border-dashed rounded-md py-1 px-2 shadow-xs"
           >
             <Button
+              disabled={readOnly}
               variant="ghost-destructive"
               size="icon-sm"
               className="text-destructive"
@@ -83,16 +86,19 @@ export function TemplateAttributesLine({
             <span className="ml-auto text-xs text-muted-foreground">0–100</span>
           </li>
         ))}
-        <li>
-          <AppCombobox
-            inputRef={inputRef}
-            placeholder="Select & add attribute to list"
-            items={attributeOptions}
-            value={null}
-            onValueChange={addItem}
-            icon={<CirclePlusIcon />}
-          />
-        </li>
+        {!readOnly && (
+          <li>
+            <AppCombobox
+              disabled={readOnly}
+              inputRef={inputRef}
+              placeholder="Select & add attribute to list"
+              items={attributeOptions}
+              value={null}
+              onValueChange={addItem}
+              icon={<CirclePlusIcon />}
+            />
+          </li>
+        )}
       </ul>
       <p className="mt-3 flex items-center justify-end gap-2 border-t pt-2 text-sm">
         <span className="text-muted-foreground">Total Marks</span>

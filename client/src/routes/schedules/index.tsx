@@ -52,22 +52,23 @@ import PageCard from '@/components/layout/PageCard'
 import RefetchButton from '@/components/table/refresh-button'
 import { AccessControl } from '@/context/auth-context'
 import {
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu'
-import {
   EventSchedulePrintDocument,
   fetchScheduleForPrint,
 } from './-components/print-schedule'
 import type { PrintableSchedule } from './-components/print-schedule'
 import { GraddingSheetModal } from './$id.grade'
+import { protectRouteBeforeLoad } from '@/lib/utils'
 
 export const Route = createFileRoute('/schedules/')({
   component: RouteComponent,
   pendingComponent: FullPageSpinner,
-  errorComponent: ({ error }) => (
+  errorComponent: ({ error }: { error: unknown }) => (
     <ErrorAlert error={error} title="Failed to Load Event Schedules" />
   ),
+  beforeLoad: protectRouteBeforeLoad('eventSchedule.read'),
+  loader({ context }) {
+    context.queryClient.prefetchQuery(trpc.schedules.getAll.queryOptions({}))
+  },
 })
 
 type TScheduleListItem =

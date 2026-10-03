@@ -5,6 +5,7 @@ import { TablePagination } from '@/components/table/table-pagination'
 import {
   AppTable,
   baseTableOptions,
+  createTableActionHandler,
   // eslint-disable-next-line import/consistent-type-specifier-style
   type TTableFeatures,
 } from '@/components/table/table.tsx'
@@ -20,7 +21,7 @@ import {
 import { createFileRoute, useNavigate } from '@tanstack/react-router'
 import { createColumnHelper, useTable } from '@tanstack/react-table'
 import type { ColumnDef } from '@tanstack/react-table'
-import { LayoutGridIcon, PencilIcon, TableIcon, TrashIcon } from 'lucide-react'
+import { LayoutGridIcon, TableIcon } from 'lucide-react'
 import { useState } from 'react'
 import { ActionMenu } from '@/components/table/action-menu'
 import { Button } from '@/components/ui/button'
@@ -43,14 +44,18 @@ import PageCard from '@/components/layout/PageCard'
 import { useLocalStorage } from '@/hooks/use-local-storage'
 import RefreshButton from '@/components/table/refresh-button'
 import { protectRouteBeforeLoad } from '@/lib/utils'
+import { AccessControl } from '@/context/auth-context'
 
 export const Route = createFileRoute('/personnel/')({
   component: RouteComponent,
   pendingComponent: FullPageSpinner,
-  errorComponent: ({ error }) => (
+  errorComponent: ({ error }: { error: unknown }) => (
     <ErrorAlert error={error} title="Failed to Load Personnel" />
   ),
   beforeLoad: protectRouteBeforeLoad('personnel.read'),
+  loader({ context }) {
+    context.queryClient.prefetchQuery(trpc.personnel.getAll.queryOptions())
+  },
 })
 
 type TPersonnelListItem =
@@ -62,23 +67,24 @@ const columns: ColumnDef<TTableFeatures, TPersonnelListItem>[] = ch.columns([
   ch.display({
     header: '-',
     cell: (info) => {
+      const handleAction = createTableActionHandler(info)
       return (
         <ActionMenu
           actions={[
             {
-              label: 'Edit',
-              icon: <PencilIcon className="h-4 w-4" />,
-              onClick: () => {
-                info.table.options.meta?.onRowAction?.('edit', info.row.id)
-              },
+              type: 'view',
+              onClick: handleAction('edit'),
+              permissionKey: ({ isUserCan }) => !isUserCan('personnel.update'),
             },
             {
-              label: 'Delete',
-              isDestructive: true,
-              icon: <TrashIcon className="h-4 w-4" />,
-              onClick: () => {
-                info.table.options.meta?.onRowAction?.('delete', info.row.id)
-              },
+              type: 'edit',
+              onClick: handleAction('edit'),
+              permissionKey: 'personnel.update',
+            },
+            {
+              type: 'delete',
+              onClick: handleAction('delete'),
+              permissionKey: 'personnel.delete',
             },
           ]}
         />
@@ -88,6 +94,7 @@ const columns: ColumnDef<TTableFeatures, TPersonnelListItem>[] = ch.columns([
     id: 'actions',
     meta: {
       align: 'center',
+      preventDefaultRowClick: true,
     },
     minSize: 70,
   }),
@@ -252,7 +259,9 @@ function RouteComponent() {
       <div className="items-center gap-4 border-b mb-4 pb-1 flex justify-between">
         <h1 className="text-xl font-bold mr-auto">Personnel</h1>
         <RefreshButton query={personnelQ} />
-        <LinkButton to="/personnel/create" newButton />
+        <AccessControl permissionKey="personnel.create">
+          <LinkButton to="/personnel/create" newButton />
+        </AccessControl>
       </div>
       <ErrorAlert error={personnelQ.error} />
       <div className=" mb-3 flex items-center justify-between gap-3">

@@ -30,9 +30,11 @@ import type { TTableFeatures } from '@/components/table/table'
 import { createColumnHelper } from '@tanstack/react-table'
 import { makeFullName } from '@/lib/utils'
 import { formatDate, appFormatTime } from '@/lib/date'
+import FullPageSpinner from '@/components/loaders/page-loader'
 
 export const Route = createFileRoute('/instructor-dashboard/')({
   component: RouteComponent,
+  pendingComponent: FullPageSpinner,
 })
 
 const today = startOfToday()

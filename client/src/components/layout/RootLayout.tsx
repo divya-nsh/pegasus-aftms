@@ -91,23 +91,25 @@ export function AppSidebar() {
       <SidebarHeader>
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton
-              size="lg"
-              tooltip="Pegasus AFTMS"
-              className="pointer-events-none"
-            >
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary text-sm font-semibold text-sidebar-primary-foreground">
-                P
-              </span>
-              <span className="grid min-w-0 flex-1 text-left leading-tight">
-                <span className="truncate text-sm font-semibold">
-                  Pegasus AFTMS
+            <Link to="/">
+              <SidebarMenuButton
+                size="lg"
+                tooltip="Pegasus AFTMS"
+                className="pointer-events-none"
+              >
+                <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-sidebar-primary text-sm font-semibold text-sidebar-primary-foreground">
+                  P
                 </span>
-                <span className="truncate text-xs text-sidebar-foreground/70">
-                  Flight training
+                <span className="grid min-w-0 flex-1 text-left leading-tight">
+                  <span className="truncate text-sm font-semibold">
+                    Pegasus AFTMS
+                  </span>
+                  <span className="truncate text-xs text-sidebar-foreground/70">
+                    Flight training
+                  </span>
                 </span>
-              </span>
-            </SidebarMenuButton>
+              </SidebarMenuButton>
+            </Link>
           </SidebarMenuItem>
         </SidebarMenu>
       </SidebarHeader>

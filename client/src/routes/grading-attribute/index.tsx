@@ -29,14 +29,22 @@ import { BlockingLoaderOverlay } from '@/components/loaders/BlockingLoader'
 import PageCard from '@/components/layout/PageCard'
 import NewButton from '@/components/buttons/new-button'
 import RefreshButton from '@/components/table/refresh-button'
-import { AccessControl } from '@/context/auth-context'
+import { AccessControl, useUserCan } from '@/context/auth-context'
+import { protectRouteBeforeLoad } from '@/lib/utils'
+import { useModalForm } from '@/hooks/use-form-modal'
 
 export const Route = createFileRoute('/grading-attribute/')({
   component: RouteComponent,
   pendingComponent: FullPageSpinner,
-  errorComponent: ({ error }) => (
+  errorComponent: ({ error }: { error: unknown }) => (
     <ErrorAlert error={error} title="Failed to Load Grading Attributes" />
   ),
+  beforeLoad: protectRouteBeforeLoad('gradingAttribute.read'),
+  loader({ context }) {
+    context.queryClient.prefetchQuery(
+      trpc.gradingAttribute.getAll.queryOptions(),
+    )
+  },
 })
 
 type TGradingAttributeListItem =
@@ -95,18 +103,17 @@ const columns: ColumnDef<TTableFeatures, TGradingAttributeListItem>[] =
   ])
 
 function RouteComponent() {
+  const canUpdate = useUserCan('gradingAttribute.update')
   const gradingAttributeQ = useSuspenseQuery(
     trpc.gradingAttribute.getAll.queryOptions(),
   )
   const queryClient = useQueryClient()
 
-  const [formModel, setFormModel] = useState<{
-    data?: GradingAttributeFormData
-    open: boolean
-    editItemId?: number
-  } | null>({
-    open: false,
-  })
+  const {
+    modalState,
+    openModal: _openModal,
+    closeModal,
+  } = useModalForm<GradingAttributeFormData>()
 
   const deleteMutation = useMutation({
     mutationFn: ({ id }: { id: number }) => {
@@ -131,18 +138,16 @@ function RouteComponent() {
   const openModal = (rowId?: string) => {
     if (rowId) {
       const row = table.getRow(rowId).original
-      setFormModel({
-        open: true,
-        editItemId: row.id,
-        data: {
+      _openModal(
+        {
+          id: row.id,
           name: row.name,
           notes: row.notes ?? '',
         },
-      })
+        !canUpdate,
+      )
     } else {
-      setFormModel({
-        open: true,
-      })
+      _openModal()
     }
   }
 
@@ -164,7 +169,6 @@ function RouteComponent() {
           }
         }
       },
-      onRowDoubleClick: openModal,
     },
     globalFilterFn: 'includesString',
   })
@@ -197,12 +201,11 @@ function RouteComponent() {
       <AppTable table={table} coverFullWidth />
       <TablePagination table={table} />
 
-      {formModel?.open && (
+      {modalState.open && (
         <GradingAttributeDialog
-          mode={formModel.editItemId ? 'edit' : 'create'}
-          initialFormData={formModel.data}
-          toEditId={formModel.editItemId}
-          onOpenChange={(open) => setFormModel({ ...formModel, open })}
+          mode={modalState.mode}
+          initialFormData={modalState.data}
+          onClose={closeModal}
         />
       )}
       <BlockingLoaderOverlay show={deleteMutation.isPending} />

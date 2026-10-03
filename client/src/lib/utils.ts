@@ -27,6 +27,7 @@ export function protectRouteBeforeLoad(
   return ({ context }: { context: RouterContext }) => {
     const auth = context.auth
     if (!auth || !isPermitted(auth, permission)) {
+      alert(`You are not authorized to perform this action on ${permission}`)
       throw redirect(redirectOptions)
     }
   }

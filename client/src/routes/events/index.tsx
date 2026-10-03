@@ -24,12 +24,12 @@ import NewButton from '@/components/buttons/new-button'
 import columns from './-components/columns'
 import z from 'zod'
 import { protectRouteBeforeLoad } from '@/lib/utils'
-import { AccessControl } from '@/context/auth-context'
+import { AccessControl, useAuth } from '@/context/auth-context'
 
 export const Route = createFileRoute('/events/')({
   component: RouteComponent,
   pendingComponent: FullPageSpinner,
-  errorComponent: ({ error }) => (
+  errorComponent: ({ error }: { error: unknown }) => (
     <ErrorAlert error={error} title="Failed to Load Events" />
   ),
   validateSearch: z.object({
@@ -37,12 +37,16 @@ export const Route = createFileRoute('/events/')({
     docId: z.number().optional().catch(undefined),
   }),
   beforeLoad: protectRouteBeforeLoad('event.read'),
+  loader({ context }) {
+    context.queryClient.prefetchQuery(trpc.missions.getAll.queryOptions())
+  },
 })
 
 type TMissionListItem = TrpcRouterOutputs['missions']['getAll']['items'][number]
 
 function RouteComponent() {
   const missionsQ = useSuspenseQuery(trpc.missions.getAll.queryOptions())
+  const { isUserCan } = useAuth()
   const queryClient = useQueryClient()
 
   const [formModel, setFormModel] = useState<{
@@ -74,6 +78,8 @@ function RouteComponent() {
       })
     },
   })
+
+  const closeModal = () => setFormModel({ open: false })
 
   const openModal = (rowId?: string) => {
     if (rowId) {
@@ -126,6 +132,8 @@ function RouteComponent() {
     globalFilterFn: 'includesString',
   })
 
+  const readOnly = !isUserCan('event.update')
+
   return (
     <PageCard className="space-y-4">
       <div className="items-center gap-1 mt-1 border-b mb-4 pb-2 flex justify-between">
@@ -159,10 +167,10 @@ function RouteComponent() {
 
       {formModel?.open && (
         <MissionForm
-          mode={formModel.editItemId ? 'edit' : 'create'}
+          mode={formModel.editItemId ? (readOnly ? 'view' : 'edit') : 'create'}
           initialFormData={formModel.data}
           toEditId={formModel.editItemId}
-          onClose={() => setFormModel({ open: false })}
+          onClose={closeModal}
         />
       )}
       <BlockingLoaderOverlay show={deleteMutation.isPending} />

@@ -12,6 +12,7 @@ export const attributeSchema = z.object({
 })
 
 export const gradingTemplateSchema = z.object({
+  id: z.number().optional(),
   name: z.string().min(1, 'Required').min(3),
   notes: z.string(),
   gradingScaleId: z

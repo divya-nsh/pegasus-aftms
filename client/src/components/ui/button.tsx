@@ -50,12 +50,14 @@ function Button({
   className,
   variant = 'default',
   size = 'default',
+  onClick,
   ...props
 }: ButtonProps) {
   return (
     <ButtonPrimitive
       data-slot="button"
       className={cn(buttonVariants({ variant, size, className }))}
+      onClick={props.disabled ? undefined : onClick}
       {...props}
     />
   )

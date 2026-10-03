@@ -7,19 +7,26 @@ import { createFileRoute } from '@tanstack/react-router'
 import PersonnelForm from './-components/personnel-form'
 import PageCard from '@/components/layout/PageCard'
 import { protectRouteBeforeLoad } from '@/lib/utils'
+import { useUserCan } from '@/context/auth-context'
 
 export const Route = createFileRoute('/personnel/$id/edit')({
   component: RouteComponent,
   pendingComponent: FullPageSpinner,
-  errorComponent: ({ error }) => (
+  errorComponent: ({ error }: { error: unknown }) => (
     <ErrorAlert error={error} title="Failed to Load Personnel" />
   ),
-  beforeLoad: protectRouteBeforeLoad('personnel.update'),
+  beforeLoad: protectRouteBeforeLoad('personnel.read'),
+  loader({ context, params }) {
+    context.queryClient.prefetchQuery(
+      trpc.personnel.getById.queryOptions({ id: Number(params.id) }),
+    )
+  },
 })
 
 function RouteComponent() {
   const { id } = Route.useParams()
   const personnelId = Number(id)
+  const canEdit = useUserCan('personnel.update')
   const personnelQ = useSuspenseQuery(
     trpc.personnel.getById.queryOptions({ id: personnelId }),
   )
@@ -27,9 +34,12 @@ function RouteComponent() {
 
   return (
     <PageCard>
-      <PageHeader title="Edit Personnel" backTo="/personnel" />
+      <PageHeader
+        title={canEdit ? 'Edit Personnel' : `Personnel ${person.code}`}
+        backTo="/personnel"
+      />
       <PersonnelForm
-        mode="edit"
+        mode={canEdit ? 'edit' : 'view'}
         toEditId={person.id}
         initialFormData={{
           personnelType: person.personnelType,

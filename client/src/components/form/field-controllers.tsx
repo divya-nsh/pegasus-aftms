@@ -115,7 +115,15 @@ export function CTextAreaField({
   )
 }
 
-export function CCheckbox({ label }: { label: string }) {
+export function CCheckbox({
+  label,
+  readOnly,
+  disabled,
+}: {
+  label: string
+  readOnly?: boolean
+  disabled?: boolean
+}) {
   const field = useFieldContext<boolean>()
   const id = useId()
 
@@ -124,6 +132,8 @@ export function CCheckbox({ label }: { label: string }) {
   return (
     <Field className="flex items-center gap-2" orientation={'horizontal'}>
       <Checkbox
+        disabled={disabled}
+        readOnly={readOnly}
         aria-invalid={isInvalid}
         id={id}
         checked={field.state.value}

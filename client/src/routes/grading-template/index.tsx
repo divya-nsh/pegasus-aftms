@@ -12,7 +12,6 @@ import {
 import { createFileRoute } from '@tanstack/react-router'
 import { createColumnHelper, useTable } from '@tanstack/react-table'
 import type { ColumnDef } from '@tanstack/react-table'
-import { useState } from 'react'
 import GradingTemplateDialog from './-components/grading-template-form'
 import trpc, { trpcClient } from '@/trpc'
 import {
@@ -30,15 +29,21 @@ import NewButton from '@/components/buttons/new-button'
 import RefreshButton from '@/components/table/refresh-button'
 import type { GradingTemplateFormData } from './-components/schema'
 import { protectRouteBeforeLoad } from '@/lib/utils'
-import { AccessControl } from '@/context/auth-context'
+import { AccessControl, useUserCan } from '@/context/auth-context'
+import { useModalForm } from '@/hooks/use-form-modal'
 
 export const Route = createFileRoute('/grading-template/')({
   component: RouteComponent,
   pendingComponent: FullPageSpinner,
-  errorComponent: ({ error }) => (
+  errorComponent: ({ error }: { error: unknown }) => (
     <ErrorAlert error={error} title="Failed to Load Grading Templates" />
   ),
   beforeLoad: protectRouteBeforeLoad('gradingTemplate.read'),
+  loader({ context }) {
+    context.queryClient.prefetchQuery(
+      trpc.gradingTemplate.getAll.queryOptions(),
+    )
+  },
 })
 
 type TGradingTemplateListItem =
@@ -108,18 +113,14 @@ const columns: ColumnDef<TTableFeatures, TGradingTemplateListItem>[] =
   ])
 
 function RouteComponent() {
+  const readOnly = !useUserCan('gradingTemplate.update')
   const gradingTemplateQ = useSuspenseQuery(
     trpc.gradingTemplate.getAll.queryOptions(),
   )
   const queryClient = useQueryClient()
 
-  const [formModel, setFormModel] = useState<{
-    data?: GradingTemplateFormData
-    open: boolean
-    editItemId?: number
-  } | null>({
-    open: false,
-  })
+  const { modalState, openModal, closeModal } =
+    useModalForm<GradingTemplateFormData>()
 
   const deleteMutation = useMutation({
     mutationFn: ({ id }: { id: number }) => {
@@ -156,16 +157,17 @@ function RouteComponent() {
       onRowAction: (action, rowId) => {
         const row = table.getRow(rowId).original
         if (action === 'edit') {
-          setFormModel({
-            open: true,
-            editItemId: row.id,
-            data: {
+          openModal(
+            {
+              id: row.id,
               name: row.name,
               notes: row.notes ?? '',
-              gradingScaleId: {
-                label: row.gradingScale!.name,
-                value: row.gradingScaleId,
-              },
+              gradingScaleId: row.gradingScale
+                ? {
+                    label: row.gradingScale.name,
+                    value: row.gradingScaleId,
+                  }
+                : null,
               attributes: row.gradingTemplateAttributes.map((attribute) => ({
                 id: attribute.id,
                 attributeId: {
@@ -174,7 +176,8 @@ function RouteComponent() {
                 },
               })),
             },
-          })
+            readOnly,
+          )
         } else if (action === 'delete') {
           const confirm = window.confirm(
             'Are you sure you want to delete this grading template?',
@@ -195,7 +198,7 @@ function RouteComponent() {
         <div className="flex items-center gap-4">
           <RefreshButton query={gradingTemplateQ} />
           <AccessControl permissionKey={'gradingTemplate.create'}>
-            <NewButton onClick={() => setFormModel({ open: true })} />
+            <NewButton onClick={() => openModal()} />
           </AccessControl>
         </div>
       </div>
@@ -214,12 +217,11 @@ function RouteComponent() {
       <AppTable table={table} coverFullWidth />
       <TablePagination table={table} />
 
-      {formModel?.open && (
+      {modalState.open && (
         <GradingTemplateDialog
-          mode={formModel.editItemId ? 'edit' : 'create'}
-          initialFormData={formModel.data}
-          toEditId={formModel.editItemId}
-          onOpenChange={(open) => setFormModel({ ...formModel, open })}
+          mode={modalState.mode}
+          initialFormData={modalState.data}
+          onClose={closeModal}
         />
       )}
       <BlockingLoaderOverlay show={deleteMutation.isPending} />

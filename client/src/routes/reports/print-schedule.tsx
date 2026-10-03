@@ -22,6 +22,7 @@ import type {
   PrintScheduleListItem,
   PrintScheduleReportMeta,
 } from './-components/print-schedule-report'
+import { protectRouteBeforeLoad } from '@/lib/utils'
 
 export const Route = createFileRoute('/reports/print-schedule')({
   component: RouteComponent,
@@ -29,6 +30,7 @@ export const Route = createFileRoute('/reports/print-schedule')({
   errorComponent: ({ error }) => (
     <ErrorAlert error={error} title="Failed to Load Print Schedule" />
   ),
+  beforeLoad: protectRouteBeforeLoad('eventSchedule.read'),
 })
 
 const PRINTABLE_STATUSES = [

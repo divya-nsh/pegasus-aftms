@@ -3,8 +3,8 @@ import {
   createRootRouteWithContext,
   redirect,
 } from '@tanstack/react-router'
-// import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
-// import { TanStackDevtools } from '@tanstack/react-devtools'
+import { TanStackRouterDevtoolsPanel } from '@tanstack/react-router-devtools'
+import { TanStackDevtools } from '@tanstack/react-devtools'
 import '../styles.css'
 import Layout from '@/components/layout/RootLayout.tsx'
 import { Toaster } from '@/components/ui/toast'
@@ -12,6 +12,7 @@ import type { QueryClient } from '@tanstack/react-query'
 import FullPageSpinner from '@/components/loaders/page-loader'
 import type { AuthContextType } from '@/context/auth-context'
 import { Toaster as HotToaster } from 'react-hot-toast'
+import { ReactQueryDevtoolsPanel } from '@tanstack/react-query-devtools'
 
 export type RouterContext = {
   queryClient: QueryClient
@@ -64,7 +65,7 @@ function RootComponent() {
           },
         }}
       />
-      {/* 
+
       <TanStackDevtools
         config={{
           position: 'bottom-right',
@@ -74,8 +75,9 @@ function RootComponent() {
             name: 'TanStack Router',
             render: <TanStackRouterDevtoolsPanel />,
           },
+          { name: 'TanStack Query', render: <ReactQueryDevtoolsPanel /> },
         ]}
-      /> */}
+      />
     </>
   )
 }

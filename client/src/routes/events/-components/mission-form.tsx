@@ -17,9 +17,10 @@ import {
   useQueryClient,
   useSuspenseQuery,
 } from '@tanstack/react-query'
-import { defaultMissionTypeId, missionTypeOptions } from '@repo/shared'
+import { missionTypeOptions } from '@repo/shared'
 import toast from 'react-hot-toast'
 import { z } from 'zod'
+import { Button } from '@/components/ui/button'
 
 const schema = z.object({
   name: z.string().min(1, 'Required').min(3),
@@ -33,10 +34,17 @@ const schema = z.object({
 export type MissionFormData = z.infer<typeof schema>
 
 export type MissionFormProps = {
-  mode: 'create' | 'edit'
+  mode: 'create' | 'edit' | 'view'
   toEditId?: number
   initialFormData?: MissionFormData
-  onClose: (open: boolean) => void
+  onClose: () => void
+}
+
+const titles = {
+  singular: 'Event',
+  create: 'New Event',
+  edit: 'Edit Event',
+  view: 'Event Details',
 }
 
 export default function MissionForm({
@@ -46,7 +54,6 @@ export default function MissionForm({
   onClose,
 }: MissionFormProps) {
   const queryClient = useQueryClient()
-  // const aircraftQ = useSuspenseQuery(trpc.aircraft.getAll.queryOptions())
   const gradingTemplateQ = useSuspenseQuery(
     trpc.gradingTemplate.getAll.queryOptions(),
   )
@@ -77,37 +84,32 @@ export default function MissionForm({
     },
     onSuccess: () => {
       queryClient.resetQueries(trpc.missions.pathFilter())
-      toast.success('Event saved successfully')
-      onClose(false)
+      toast.success(`${titles.singular} saved successfully`)
+      onClose()
     },
     onError: (error) => {
       toast.error(error.message)
     },
   })
 
-  // const aircraftOptions = aircraftQ.data.items.map((item) => ({
-  //   value: item.id,
-  //   label: item.tailNumber ? `${item.name} (${item.tailNumber})` : item.name,
-  // }))
-
   const gradingTemplateOptions = gradingTemplateQ.data.items.map((item) => ({
     value: item.id,
     label: item.name,
   }))
 
+  const readonly = mode === 'view'
+
   return (
     <Dialog
       open
-      onOpenChange={(nextOpen) => {
+      onOpenChange={() => {
         if (mutation.isPending) return
-        onClose(nextOpen)
+        onClose()
       }}
     >
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle className="uppercase">
-            {mode === 'create' ? 'New Event' : 'Edit Event'}
-          </DialogTitle>
+          <DialogTitle className="uppercase">{titles[mode]}</DialogTitle>
         </DialogHeader>
         <DialogMain className="space-y-6">
           <FieldColumns>
@@ -118,6 +120,7 @@ export default function MissionForm({
                   required
                   label="Name"
                   placeholder="e.g. Chopper Fly"
+                  readOnly={readonly}
                 />
               )}
             />
@@ -129,6 +132,7 @@ export default function MissionForm({
                   label="Type"
                   placeholder="Select event type"
                   options={missionTypeOptions}
+                  readOnly={readonly}
                 />
               )}
             />
@@ -146,20 +150,10 @@ export default function MissionForm({
                       value ? Math.floor(Number(value) * 60) : null,
                     )
                   }}
+                  readOnly={readonly}
                 />
               )}
             />
-            {/* <form.AppField
-              name="aircraftId"
-              children={(f) => (
-                <f.CBasicSelect
-                  valueAsNumber
-                  label="Aircraft"
-                  placeholder="Optional"
-                  options={aircraftOptions}
-                />
-              )}
-            /> */}
             <form.AppField
               name="gradingTemplateId"
               children={(f) => (
@@ -168,6 +162,7 @@ export default function MissionForm({
                   label="Grading Template"
                   placeholder="Optional"
                   options={gradingTemplateOptions}
+                  readOnly={readonly}
                 />
               )}
             />
@@ -178,16 +173,23 @@ export default function MissionForm({
               <f.CTextAreaField
                 label="Description"
                 placeholder="e.g. Fly with chopper for 1 hour in circle"
+                readOnly={readonly}
               />
             )}
           />
         </DialogMain>
         <DialogFooter>
-          <form.AppForm>
-            <form.SubscribeButton
-              label={mode === 'create' ? 'Create' : 'Save'}
-            />
-          </form.AppForm>
+          {readonly ? (
+            <Button variant="outline" onClick={onClose}>
+              Close
+            </Button>
+          ) : (
+            <form.AppForm>
+              <form.SubscribeButton
+                label={mode === 'create' ? 'Create' : 'Save'}
+              />
+            </form.AppForm>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>
