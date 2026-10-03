@@ -209,10 +209,6 @@ function RouteComponent() {
         <h1 className="text-xl font-bold">Areas</h1>
         <div className="flex items-center gap-4">
           <RefreshButton query={areasQ} />
-          <Button onClick={() => openModal()}>
-            <PlusIcon />
-            New
-          </Button>
           <AccessControl permissionKey={'area.create'}>
             <NewButton onClick={() => openModal()} />
           </AccessControl>

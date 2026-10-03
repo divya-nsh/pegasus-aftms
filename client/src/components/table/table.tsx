@@ -139,7 +139,7 @@ export function AppTable<TData extends RowData>({
                     key={header.id}
                     colSpan={header.colSpan}
                     className={cn(
-                      'font-medium text-sm text-neutral-800 bg-muted/60 backdrop-blur-lg top-0 relative min-w-0 overflow-visible border-b first:border-l-0 border-l border-r last:border-r-0',
+                      'font-medium text-sm text-neutral-800 bg-muted/60 backdrop-blur-lg top-0 relative min-w-0 overflow-visible border-b first:border-l-0 hover:border-l hover:border-r last:border-r-0',
                     )}
                     style={{
                       width: header.getSize(),
@@ -258,7 +258,7 @@ export function AppTable<TData extends RowData>({
                       textAlign: cell.column.columnDef.meta?.align,
                     }}
                     className={cn(
-                      'align-middle relative truncate',
+                      'align-middle relative truncate border-dotted',
                       table.getRowModel().rows.length - 1 === i && 'border-b-0',
                       cell.column.getIsResizing() &&
                         'z-20 overflow-visible border-r border-dotted border-ring/60',

@@ -7,6 +7,7 @@ import { trpcClient } from '@/trpc'
 import { revalidateLogic } from '@tanstack/react-form'
 import { createFileRoute } from '@tanstack/react-router'
 import { useMutation } from '@tanstack/react-query'
+import { Plane, ShieldCheck } from 'lucide-react'
 import { z } from 'zod'
 
 export const Route = createFileRoute('/login')({
@@ -45,43 +46,117 @@ function LoginPage() {
   })
 
   return (
-    <div className="flex min-h-svh items-center justify-center bg-slate-200 p-4">
-      <form
-        onSubmit={(e) => {
-          e.preventDefault()
-          form.handleSubmit()
-        }}
-        className="w-full max-w-sm border space-y-5 bg-card rounded-lg p-6 shadow-sm"
-      >
-        <div className="space-y-1">
-          <h1 className="text-xl font-semibold">Sign in to your account</h1>
-          <p className="text-sm text-muted-foreground">Pegasus AFTMS</p>
+    <div className="grid min-h-svh lg:grid-cols-2">
+      {/* Brand panel */}
+      <aside className="relative hidden overflow-hidden bg-slate-950 text-white lg:flex lg:flex-col lg:justify-between lg:p-12">
+        {/* Gradient glows */}
+        <div className="pointer-events-none absolute -top-32 -left-32 size-[28rem] rounded-full bg-sky-500/30 blur-3xl" />
+        <div className="pointer-events-none absolute -right-24 -bottom-32 size-[26rem] rounded-full bg-indigo-500/30 blur-3xl" />
+        {/* Subtle grid */}
+        <div
+          className="pointer-events-none absolute inset-0 opacity-[0.07]"
+          style={{
+            backgroundImage:
+              'linear-gradient(to right, white 1px, transparent 1px), linear-gradient(to bottom, white 1px, transparent 1px)',
+            backgroundSize: '48px 48px',
+          }}
+        />
+
+        <div className="relative flex items-center gap-3">
+          <div className="flex size-10 items-center justify-center rounded-xl bg-white/10 ring-1 ring-white/20 backdrop-blur">
+            <Plane className="size-5 -rotate-45" />
+          </div>
+          <span className="text-lg font-semibold tracking-tight">Pegasus</span>
         </div>
 
-        <ErrorAlert error={loginMutation.error} />
+        <div className="relative space-y-4">
+          <h2 className="text-4xl leading-tight font-semibold tracking-tight">
+            Pegasus
+            <br />
+            <span className="bg-gradient-to-r from-sky-300 to-indigo-300 bg-clip-text text-transparent">
+              Flight Training Management
+            </span>
+          </h2>
+          <p className="max-w-md text-base text-slate-300">
+            Sign in with your assigned credentials to continue.
+          </p>
+        </div>
 
-        <form.AppField
-          name="username"
-          children={(f) => (
-            <f.CTextField required label="Username" autoComplete="username" />
-          )}
-        />
-        <form.AppField
-          name="password"
-          children={(f) => (
-            <f.CTextField
-              required
-              label="Password"
-              type="password"
-              autoComplete="current-password"
+        <div className="relative flex items-center gap-2 text-sm text-slate-400">
+          <ShieldCheck className="size-4" />
+          Secure, authorised access only
+        </div>
+      </aside>
+
+      {/* Form panel */}
+      <main className="flex items-center justify-center bg-neutral-50 p-6 sm:p-10">
+        <div className="w-full max-w-sm space-y-8">
+          {/* Mobile brand */}
+          <div className="flex items-center gap-3 lg:hidden">
+            <div className="flex size-10 items-center justify-center rounded-xl bg-slate-950 text-white">
+              <Plane className="size-5 -rotate-45" />
+            </div>
+            <span className="text-lg font-semibold tracking-tight">
+              Pegasus
+            </span>
+          </div>
+
+          <div className="space-y-2">
+            <h1 className="text-3xl font-semibold tracking-tight">
+              Welcome back
+            </h1>
+            <p className="text-sm text-muted-foreground">
+              Sign in to Pegasus Flight Training Management.
+            </p>
+          </div>
+
+          <form
+            onSubmit={(e) => {
+              e.preventDefault()
+              form.handleSubmit()
+            }}
+            className="space-y-5"
+          >
+            <ErrorAlert error={loginMutation.error} />
+
+            <form.AppField
+              name="username"
+              children={(f) => (
+                <f.CTextField
+                  required
+                  label="Username"
+                  autoComplete="username"
+                  placeholder="Your UserId or Email"
+                  autoFocus
+                />
+              )}
             />
-          )}
-        />
+            <form.AppField
+              name="password"
+              children={(f) => (
+                <f.CTextField
+                  required
+                  label="Password"
+                  type="password"
+                  autoComplete="current-password"
+                />
+              )}
+            />
 
-        <form.AppForm>
-          <form.SubscribeButton label="Sign in" className="w-full" noSubmit />
-        </form.AppForm>
-      </form>
+            <form.AppForm>
+              <form.SubscribeButton
+                label="Sign in"
+                className="h-11 w-full"
+                noSubmit
+              />
+            </form.AppForm>
+          </form>
+
+          <p className="text-center text-xs text-muted-foreground">
+            Having trouble signing in? Contact your administrator.
+          </p>
+        </div>
+      </main>
     </div>
   )
 }

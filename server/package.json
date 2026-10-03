@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
-  "bin": "./dist/index.js",
+  "bin": "./dist/bootstrap.js",
   "imports": {
     "#/*": "./dist/*"
   },
@@ -12,14 +12,15 @@
     "assets": [
       "node_modules/drizzle-orm/**/*",
       "client-dist/**/*",
-      "dist/client-dist/**/*"
+      "dist/client-dist/**/*",
+      "public/**/*"
     ],
     "targets": [
       "node24-win-x64"
     ],
     "public": true,
     "bytecode": false,
-    "outputPath": "dist"
+    "outputPath": "bin"
   },
   "scripts": {
     "start": "node ./dist/index.js",

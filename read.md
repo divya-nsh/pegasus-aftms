@@ -69,13 +69,3 @@ Client is kuwait goverment
     Responsive web application, SQL database, API integration, encrypted communication,
     backup & recovery, activity logging, high availability.
 
-## Fix Shedule
-
-- Fix personnels do server side pagination filter
-- Make sure all page have proper Filters and in Working Condition
-- Put Created by , Updated By in each Table
-- Permissions for Reports, Dashboard
-- Fix Suspense query problem inside modal
-- Improve Login Page
-- Add licenssing
-- Build a Tool which turn this into nssis installer windows app
