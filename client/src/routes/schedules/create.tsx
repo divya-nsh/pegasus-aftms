@@ -1,7 +1,11 @@
 import FullPageSpinner from '@/components/loaders/page-loader'
 import { createFileRoute } from '@tanstack/react-router'
 import ScheduleForm from './-components/shedule-form'
-import PageCard from '@/components/layout/PageCard'
+import PageCard, {
+  ListTitle,
+  PageCardHeader,
+  PageCardContent,
+} from '@/components/layout/PageCard'
 import { z } from 'zod'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { trpc } from '@/trpc'
@@ -48,10 +52,10 @@ function RouteComponent() {
   if (!missionId) {
     return (
       <PageCard>
-        <h1 className="text-lg font-bold border-b pb-1 mb-4">
-          Create Schedule
-        </h1>
-        <div className="space-y-2">
+        <PageCardHeader>
+          <ListTitle>Create Schedule</ListTitle>
+        </PageCardHeader>
+        <PageCardContent className="space-y-2">
           <AppCombobox
             autoFocus
             placeholder="Select Event to Schedule"
@@ -85,7 +89,7 @@ function RouteComponent() {
           >
             Next
           </Button>
-        </div>
+        </PageCardContent>
       </PageCard>
     )
   }
@@ -101,28 +105,26 @@ function RouteComponent() {
   }
 
   return (
-    <PageCard>
-      <ScheduleForm
-        mode="create"
-        defaultValues={{
-          mission: {
-            label: `${mission?.name || ''} (type: ${mission?.missionType || ''})`,
-            value: missionId,
-            gradingTemplateId: mission?.gradingTemplateId ?? 0,
-            durationMinutes: mission?.durationMinutes ?? 0,
-          },
-          id: null,
-          status: 'draft',
-          scheduleNumber: '',
-          name: mission?.name ?? '',
-          description: mission?.description ?? '',
-          area: null,
-          remarks: '',
-          startDateTime: '',
-          endDateTime: '',
-          assignments: [],
-        }}
-      />
-    </PageCard>
+    <ScheduleForm
+      mode="create"
+      defaultValues={{
+        mission: {
+          label: `${mission?.name || ''} (type: ${mission?.missionType || ''})`,
+          value: missionId,
+          gradingTemplateId: mission?.gradingTemplateId ?? 0,
+          durationMinutes: mission?.durationMinutes ?? 0,
+        },
+        id: null,
+        status: 'draft',
+        scheduleNumber: '',
+        name: mission?.name ?? '',
+        description: mission?.description ?? '',
+        area: null,
+        remarks: '',
+        startDateTime: '',
+        endDateTime: '',
+        assignments: [],
+      }}
+    />
   )
 }

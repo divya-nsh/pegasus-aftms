@@ -49,7 +49,7 @@ export function PersonnelCard({
   })
 
   return (
-    <div className="relative flex flex-col items-center rounded-lg border bg-card p-4 pt-5 text-center shadow-none transition-shadow hover:shadow-sm">
+    <div className="relative flex flex-col items-center rounded-lg border bg-muted/10 p-4 pt-5 text-center shadow-none transition-shadow hover:shadow-sm">
       <div className="absolute top-1.5 right-1.5">
         <ActionMenu
           actions={[

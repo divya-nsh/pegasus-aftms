@@ -48,7 +48,11 @@ import { BlockingLoaderOverlay } from '@/components/loaders/BlockingLoader'
 import MissionStatusBadge, {
   MISSION_STATUS_LABELS,
 } from './-components/mission-stage-bar'
-import PageCard from '@/components/layout/PageCard'
+import PageCard, {
+  ListTitle,
+  PageCardHeader,
+  PageCardContent,
+} from '@/components/layout/PageCard'
 import RefetchButton from '@/components/table/refresh-button'
 import { AccessControl } from '@/context/auth-context'
 import {
@@ -378,10 +382,10 @@ function RouteComponent() {
   })
 
   return (
-    <PageCard className="space-y-4">
-      <div className="items-center gap-1 border-b mb-4 pb-1 flex justify-between">
-        <h1 className="text-xl font-bold">Event Schedules</h1>
-        <div className="flex items-center gap-2">
+    <PageCard>
+      <PageCardHeader>
+        <ListTitle>Event Schedules</ListTitle>
+        <div className="flex items-center gap-3">
           <RefetchButton
             onClick={() => schedulesQ.refetch()}
             isPending={schedulesQ.isFetching}
@@ -395,9 +399,8 @@ function RouteComponent() {
             <LinkButton to="/schedules/create" newButton />
           </AccessControl>
         </div>
-      </div>
-      <ErrorAlert error={schedulesQ.error} />
-      <div className=" mb-3 flex items-center justify-between gap-3">
+      </PageCardHeader>
+      <PageCardContent className="flex items-center justify-between gap-3">
         <div className="flex items-center gap-3">
           <SearchInput
             value={table.state.globalFilter ?? ''}
@@ -447,9 +450,16 @@ function RouteComponent() {
         <div className="flex items-center gap-2">
           <ColumnVisibility table={table} />
         </div>
-      </div>
-      <AppTable table={table} />
-      <TablePagination table={table} />
+      </PageCardContent>
+      <AppTable
+        table={table}
+        rounded={false}
+        className="border-l-0 border-r-0"
+      />
+      <PageCardContent>
+        <TablePagination table={table} />
+      </PageCardContent>
+
       {printSchedule ? (
         <div aria-hidden className="absolute top-0 left-[-10000px] w-[210mm]">
           <div ref={printRef}>

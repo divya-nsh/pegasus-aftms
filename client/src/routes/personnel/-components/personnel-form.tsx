@@ -19,6 +19,13 @@ import {
 } from '@/components/form/tanstack-form'
 import { revalidateLogic } from '@tanstack/react-form'
 import { pilotQualificationOptions } from '@repo/shared'
+import { BlockingLoaderOverlay } from '@/components/loaders/BlockingLoader'
+import PageCard, {
+  ListTitle,
+  PageCardContent,
+  PageCardHeader,
+} from '@/components/layout/PageCard'
+import PageHeader from '@/components/layout/PageHeader'
 
 export type PersonnelType = 'pilot' | 'trainee' | 'instructor'
 export type Gender = 'male' | 'female' | 'other'
@@ -167,6 +174,12 @@ function FormSection({
   )
 }
 
+const titles = {
+  create: 'Create Personnel',
+  edit: 'Edit Personnel',
+  view: 'Personnel',
+}
+
 export default function PersonnelForm({
   mode,
   toEditId,
@@ -237,292 +250,307 @@ export default function PersonnelForm({
 
   return (
     <>
-      <ErrorAlert error={mutation.error} />
-      <div className="space-y-8 pb-6">
-        <section className="space-y-4">
-          <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase border-b pb-1">
-            Identity
-          </h2>
-          <div className="flex items-start gap-8">
-            <div className={cn('grid gap-6 flex-1', 'grid-cols-2')}>
-              <div className="col-span-2">
+      <PageCard>
+        <PageCardHeader>
+          <ListTitle>
+            {titles[mode]} {toEditId ? ` > ${initialFormData.code}` : ''}
+          </ListTitle>
+          <LinkButton to="/personnel" variant="ghost" size="sm">
+            Go Back
+          </LinkButton>
+        </PageCardHeader>
+        <PageCardContent className="space-y-8 pb-6">
+          <section className="space-y-4">
+            <h2 className="text-sm font-semibold tracking-wide text-muted-foreground uppercase border-b pb-1">
+              Identity
+            </h2>
+            <div className="flex items-start gap-8">
+              <div className={cn('grid gap-6 flex-1', 'grid-cols-2')}>
+                <div className="col-span-2">
+                  <form.AppField
+                    name="personnelType"
+                    children={(f) => (
+                      <f.CBasicSelect
+                        readOnly={isReadOnlyMode}
+                        label="Personnel Type"
+                        required
+                        className=" max-w-82"
+                        placeholder="Select personnel type"
+                        options={[...personnelTypeOptions]}
+                      />
+                    )}
+                  />
+                </div>
+
                 <form.AppField
-                  name="personnelType"
+                  name="firstName"
+                  children={(f) => (
+                    <f.CTextField
+                      label="First Name"
+                      required
+                      readOnly={isReadOnlyMode}
+                    />
+                  )}
+                />
+
+                <form.AppField
+                  name="lastName"
+                  children={(f) => (
+                    <f.CTextField
+                      label="Last Name"
+                      required
+                      readOnly={isReadOnlyMode}
+                    />
+                  )}
+                />
+
+                <form.AppField
+                  name="gender"
                   children={(f) => (
                     <f.CBasicSelect
                       readOnly={isReadOnlyMode}
-                      label="Personnel Type"
                       required
-                      className=" max-w-82"
-                      placeholder="Select personnel type"
-                      options={[...personnelTypeOptions]}
+                      label="Gender"
+                      placeholder="Select gender"
+                      options={[...genderOptions]}
                     />
                   )}
                 />
-              </div>
 
-              <form.AppField
-                name="firstName"
-                children={(f) => (
-                  <f.CTextField
-                    label="First Name"
-                    required
-                    readOnly={isReadOnlyMode}
+                <div>
+                  <form.AppField
+                    name="dateOfBirth"
+                    children={(f) => (
+                      <f.CTextField
+                        max={new Date().toISOString().slice(0, 10)}
+                        label="Date of Birth"
+                        type="date"
+                        readOnly={isReadOnlyMode}
+                        required
+                      />
+                    )}
                   />
-                )}
-              />
-
-              <form.AppField
-                name="lastName"
-                children={(f) => (
-                  <f.CTextField
-                    label="Last Name"
-                    required
-                    readOnly={isReadOnlyMode}
-                  />
-                )}
-              />
-
-              <form.AppField
-                name="gender"
-                children={(f) => (
-                  <f.CBasicSelect
-                    readOnly={isReadOnlyMode}
-                    required
-                    label="Gender"
-                    placeholder="Select gender"
-                    options={[...genderOptions]}
-                  />
-                )}
-              />
-
-              <div>
-                <form.AppField
-                  name="dateOfBirth"
-                  children={(f) => (
-                    <f.CTextField
-                      max={new Date().toISOString().slice(0, 10)}
-                      label="Date of Birth"
-                      type="date"
-                      readOnly={isReadOnlyMode}
-                      required
-                    />
-                  )}
-                />
-                <form.Subscribe selector={(state) => state.values.dateOfBirth}>
-                  {(dateOfBirth) => {
-                    const age = dateOfBirth ? calcAge(dateOfBirth) : null
-                    if (!age) return null
-                    return (
-                      <p className="mt-1 px-2 text-sm text-muted-foreground">
-                        {age.years} {age.years === 1 ? 'year' : 'years'} old
-                        {/* ,{' '}
+                  <form.Subscribe
+                    selector={(state) => state.values.dateOfBirth}
+                  >
+                    {(dateOfBirth) => {
+                      const age = dateOfBirth ? calcAge(dateOfBirth) : null
+                      if (!age) return null
+                      return (
+                        <p className="mt-1 px-2 text-sm text-muted-foreground">
+                          {age.years} {age.years === 1 ? 'year' : 'years'} old
+                          {/* ,{' '}
                         {age.months} {age.months === 1 ? 'month' : 'months'} */}
-                      </p>
-                    )
-                  }}
-                </form.Subscribe>
+                        </p>
+                      )
+                    }}
+                  </form.Subscribe>
+                </div>
               </div>
-            </div>
 
-            <form.Field
-              name="imageId"
+              <form.Field
+                name="imageId"
+                children={(f) => (
+                  <ProfilePhotoUpload
+                    className="row-span-2 h-40 w-50"
+                    value={f.state.value ?? null}
+                    onValueChange={f.handleChange}
+                    errors={f.state.meta.errors}
+                    disabled={isReadOnlyMode}
+                  />
+                )}
+              />
+            </div>
+          </section>
+
+          <FormSection title="Service details">
+            <form.AppField
+              name="code"
               children={(f) => (
-                <ProfilePhotoUpload
-                  className="row-span-2 h-40 w-50"
-                  value={f.state.value ?? null}
-                  onValueChange={f.handleChange}
-                  errors={f.state.meta.errors}
-                  disabled={isReadOnlyMode}
+                <f.CTextField
+                  label="Civil/Service Id"
+                  placeholder="Auto Generate if empty {PRS-<id>}"
+                  readOnly={isReadOnlyMode}
                 />
               )}
             />
-          </div>
-        </section>
+            <form.AppField
+              name="batchNo"
+              children={(f) => (
+                <f.CTextField label="Batch No" readOnly={isReadOnlyMode} />
+              )}
+            />
+            <form.AppField
+              name="rank"
+              children={(f) => (
+                <f.CTextField label="Rank" readOnly={isReadOnlyMode} />
+              )}
+            />
+            <form.AppField
+              name="qualification"
+              children={(f) => (
+                <f.CBasicSelect
+                  readOnly={isReadOnlyMode}
+                  label="Qualification"
+                  placeholder="Select qualification"
+                  options={[...pilotQualificationOptions]}
+                />
+              )}
+            />
+            <form.AppField
+              name="dateOfJoin"
+              children={(f) => (
+                <f.CTextField
+                  label="Date of Joining"
+                  type="date"
+                  required
+                  readOnly={isReadOnlyMode}
+                />
+              )}
+            />
+          </FormSection>
 
-        <FormSection title="Service details">
-          <form.AppField
-            name="code"
-            children={(f) => (
-              <f.CTextField
-                label="Civil/Service Id"
-                placeholder="Auto Generate if empty {PRS-<id>}"
-                readOnly={isReadOnlyMode}
-              />
-            )}
-          />
-          <form.AppField
-            name="batchNo"
-            children={(f) => (
-              <f.CTextField label="Batch No" readOnly={isReadOnlyMode} />
-            )}
-          />
-          <form.AppField
-            name="rank"
-            children={(f) => (
-              <f.CTextField label="Rank" readOnly={isReadOnlyMode} />
-            )}
-          />
-          <form.AppField
-            name="qualification"
-            children={(f) => (
-              <f.CBasicSelect
-                readOnly={isReadOnlyMode}
-                label="Qualification"
-                placeholder="Select qualification"
-                options={[...pilotQualificationOptions]}
-              />
-            )}
-          />
-          <form.AppField
-            name="dateOfJoin"
-            children={(f) => (
-              <f.CTextField
-                label="Date of Joining"
-                type="date"
-                required
-                readOnly={isReadOnlyMode}
-              />
-            )}
-          />
-        </FormSection>
+          <FormSection title="Contact">
+            <form.AppField
+              name="phone"
+              children={(f) => (
+                <f.CTextField label="Phone Number" readOnly={isReadOnlyMode} />
+              )}
+            />
+            <form.Subscribe selector={(state) => state.values.isCreateUser}>
+              {(isCreateUser) => (
+                <form.AppField
+                  name="email"
+                  children={(f) => (
+                    <f.CTextField
+                      required={!!isCreateUser}
+                      label="Email"
+                      type="email"
+                      readOnly={isReadOnlyMode}
+                    />
+                  )}
+                />
+              )}
+            </form.Subscribe>
+            <form.AppField
+              name="address"
+              children={(f) => (
+                <f.CTextAreaField
+                  className="col-span-3"
+                  label="Address"
+                  readOnly={isReadOnlyMode}
+                />
+              )}
+            />
+          </FormSection>
 
-        <FormSection title="Contact">
-          <form.AppField
-            name="phone"
-            children={(f) => (
-              <f.CTextField label="Phone Number" readOnly={isReadOnlyMode} />
-            )}
-          />
-          <form.Subscribe selector={(state) => state.values.isCreateUser}>
-            {(isCreateUser) => (
-              <form.AppField
-                name="email"
-                children={(f) => (
-                  <f.CTextField
-                    required={!!isCreateUser}
-                    label="Email"
-                    type="email"
-                    readOnly={isReadOnlyMode}
-                  />
-                )}
-              />
-            )}
-          </form.Subscribe>
-          <form.AppField
-            name="address"
-            children={(f) => (
-              <f.CTextAreaField
-                className="col-span-3"
-                label="Address"
-                readOnly={isReadOnlyMode}
-              />
-            )}
-          />
-        </FormSection>
+          <FormSection title="Medical">
+            <form.AppField
+              name="medicalStatus"
+              children={(f) => (
+                <f.CBasicSelect
+                  readOnly={isReadOnlyMode}
+                  required
+                  label="Medical Status"
+                  placeholder="Select medical status"
+                  options={[...medicalStatusOptions]}
+                />
+              )}
+            />
+            <form.AppField
+              name="medicalExamDate"
+              children={(f) => (
+                <f.CTextField
+                  readOnly={isReadOnlyMode}
+                  label="Medical Exam Date"
+                  type="date"
+                  required
+                />
+              )}
+            />
+            <form.AppField
+              name="medicalValidUntil"
+              children={(f) => (
+                <f.CTextField
+                  readOnly={isReadOnlyMode}
+                  label="Medical Valid Until"
+                  type="date"
+                  required
+                />
+              )}
+            />
+          </FormSection>
 
-        <FormSection title="Medical">
-          <form.AppField
-            name="medicalStatus"
-            children={(f) => (
-              <f.CBasicSelect
-                readOnly={isReadOnlyMode}
-                required
-                label="Medical Status"
-                placeholder="Select medical status"
-                options={[...medicalStatusOptions]}
-              />
-            )}
-          />
-          <form.AppField
-            name="medicalExamDate"
-            children={(f) => (
-              <f.CTextField
-                readOnly={isReadOnlyMode}
-                label="Medical Exam Date"
-                type="date"
-                required
-              />
-            )}
-          />
-          <form.AppField
-            name="medicalValidUntil"
-            children={(f) => (
-              <f.CTextField
-                readOnly={isReadOnlyMode}
-                label="Medical Valid Until"
-                type="date"
-                required
-              />
-            )}
-          />
-        </FormSection>
+          <FormSection title="User Configuration" columns={1}>
+            {linkedUser ? (
+              <Link
+                to="/users"
+                // params={{ id: String(linkedUser.id) }}
+                className="text-sm text-blue-500"
+              >
+                MANAGE USER (Username: {linkedUser.username})
+              </Link>
+            ) : !isReadOnlyMode ? (
+              <>
+                <form.AppField
+                  name="isCreateUser"
+                  children={(f) => <f.CCheckbox label="Create User Account" />}
+                />
+                <form.Subscribe selector={(state) => state.values.isCreateUser}>
+                  {(isCreateUser) =>
+                    isCreateUser ? (
+                      <>
+                        <form.AppField
+                          name="newUserUsername"
+                          validators={{
+                            onBlurAsync: validateUsernameUnique,
+                          }}
+                          children={(f) => (
+                            <f.CTextField
+                              readOnly={isReadOnlyMode}
+                              required
+                              label="Username"
+                              placeholder="Enter username for user account"
+                            />
+                          )}
+                        />
+                        <form.AppField
+                          name="newUserPassword"
+                          children={(f) => (
+                            <f.CTextField
+                              readOnly={isReadOnlyMode}
+                              required
+                              label="Password"
+                              placeholder="Enter password for user account"
+                            />
+                          )}
+                        />
+                      </>
+                    ) : null
+                  }
+                </form.Subscribe>
+              </>
+            ) : null}
+          </FormSection>
+        </PageCardContent>
+      </PageCard>
 
-        <FormSection title="User Configuration" columns={1}>
-          {linkedUser ? (
-            <Link
-              to="/users"
-              // params={{ id: String(linkedUser.id) }}
-              className="text-sm text-blue-500"
-            >
-              MANAGE USER (Username: {linkedUser.username})
-            </Link>
-          ) : !isReadOnlyMode ? (
-            <>
-              <form.AppField
-                name="isCreateUser"
-                children={(f) => <f.CCheckbox label="Create User Account" />}
-              />
-              <form.Subscribe selector={(state) => state.values.isCreateUser}>
-                {(isCreateUser) =>
-                  isCreateUser ? (
-                    <>
-                      <form.AppField
-                        name="newUserUsername"
-                        validators={{
-                          onBlurAsync: validateUsernameUnique,
-                        }}
-                        children={(f) => (
-                          <f.CTextField
-                            readOnly={isReadOnlyMode}
-                            required
-                            label="Username"
-                            placeholder="Enter username for user account"
-                          />
-                        )}
-                      />
-                      <form.AppField
-                        name="newUserPassword"
-                        children={(f) => (
-                          <f.CTextField
-                            readOnly={isReadOnlyMode}
-                            required
-                            label="Password"
-                            placeholder="Enter password for user account"
-                          />
-                        )}
-                      />
-                    </>
-                  ) : null
-                }
-              </form.Subscribe>
-            </>
-          ) : null}
-        </FormSection>
-
-        {!isReadOnlyMode && (
-          <div className="flex justify-end gap-2 pt-2">
-            <LinkButton to="/personnel" variant="outline">
-              Cancel
-            </LinkButton>
+      {!isReadOnlyMode && (
+        <PageCard className="mt-4">
+          <PageCardContent>
             <form.AppForm>
               <form.SubscribeButton
                 label={mode === 'create' ? 'Create' : 'Save'}
               />
             </form.AppForm>
-          </div>
-        )}
-      </div>
+          </PageCardContent>
+        </PageCard>
+      )}
+
+      <BlockingLoaderOverlay
+        show={mutation.isPending}
+        message="Saving Personnel..."
+      />
     </>
   )
 }

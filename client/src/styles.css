@@ -54,7 +54,7 @@
 }
 
 :root {
-  --background: hsl(0 0% 100%);
+  --background: oklch(0.97 0 0);
   --foreground: oklch(0.145 0 0);
   --label-foreground: hsl(0 0% 8%);
   --card: oklch(1 0 0);
@@ -81,7 +81,8 @@
   --chart-3: oklch(0.439 0 0);
   --chart-4: oklch(0.371 0 0);
   --chart-5: oklch(0.269 0 0);
-  --radius: 0.625rem;
+  /* --radius: 0.625rem; */
+  --radius: 0.7rem;
   /* --sidebar: #E3D8F0;
   --sidebar-foreground: oklch(0.145 0 0);
   --sidebar-primary: oklch(0.546 0.245 262.881);

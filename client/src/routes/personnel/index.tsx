@@ -40,7 +40,10 @@ import { BlockingLoaderOverlay } from '@/components/loaders/BlockingLoader'
 import { getMedicalDisplayStatus } from './-components/personnel-form'
 import { PersonnelCard } from './-components/personnel-card'
 import { getMediaUrl } from '@/lib/media'
-import PageCard from '@/components/layout/PageCard'
+import PageCard, {
+  PageCardContent,
+  PageCardHeader,
+} from '@/components/layout/PageCard'
 import { useLocalStorage } from '@/hooks/use-local-storage'
 import RefreshButton from '@/components/table/refresh-button'
 import { protectRouteBeforeLoad } from '@/lib/utils'
@@ -255,16 +258,17 @@ function RouteComponent() {
   })
 
   return (
-    <PageCard className="space-y-4">
-      <div className="items-center gap-4 border-b mb-4 pb-1 flex justify-between">
+    <PageCard>
+      <PageCardHeader>
         <h1 className="text-xl font-bold mr-auto">Personnel</h1>
-        <RefreshButton query={personnelQ} />
-        <AccessControl permissionKey="personnel.create">
-          <LinkButton to="/personnel/create" newButton />
-        </AccessControl>
-      </div>
-      <ErrorAlert error={personnelQ.error} />
-      <div className=" mb-3 flex items-center justify-between gap-3">
+        <div className="flex items-center gap-4">
+          <RefreshButton query={personnelQ} />
+          <AccessControl permissionKey="personnel.create">
+            <LinkButton to="/personnel/create" newButton />
+          </AccessControl>
+        </div>
+      </PageCardHeader>
+      <PageCardContent className="flex items-center justify-between gap-4">
         <div className="flex items-center gap-3 min-w-0">
           <SearchInput
             value={table.state.globalFilter ?? ''}
@@ -297,7 +301,7 @@ function RouteComponent() {
             </SelectContent>
           </Select>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
           <div className="inline-flex rounded-lg border p-0.5">
             <Button
               type="button"
@@ -322,11 +326,15 @@ function RouteComponent() {
           </div>
           {viewMode === 'table' ? <ColumnVisibility table={table} /> : null}
         </div>
-      </div>
+      </PageCardContent>
       {viewMode === 'table' ? (
-        <AppTable table={table} />
+        <AppTable
+          table={table}
+          rounded={false}
+          className="border-l-0 border-r-0"
+        />
       ) : (
-        <div className="min-h-40">
+        <PageCardContent>
           {table.getRowModel().rows.length === 0 ? (
             <p className="py-12 text-center text-sm text-muted-foreground">
               No personnel found
@@ -347,9 +355,12 @@ function RouteComponent() {
               ))}
             </div>
           )}
-        </div>
+        </PageCardContent>
       )}
-      <TablePagination table={table} />
+
+      <PageCardContent>
+        <TablePagination table={table} />
+      </PageCardContent>
       <BlockingLoaderOverlay show={deleteMutation.isPending} />
     </PageCard>
   )

@@ -376,7 +376,10 @@ export default function EvaluatePersonnelModal({
               <div>
                 <p className="text-sm font-semibold">Grading</p>
               </div>
-              <Table className="border rounded-md shadow-sm" fullGridLine>
+              <Table
+                className="border rounded-md shadow-sm border-l-0 border-r-0"
+                fullGridLine
+              >
                 <TableHeader>
                   <TableRow className="bg-muted/30">
                     <TableHead className="w-full">Category</TableHead>

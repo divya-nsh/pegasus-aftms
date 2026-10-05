@@ -9,6 +9,7 @@ import { createFileRoute } from '@tanstack/react-router'
 import { useMutation } from '@tanstack/react-query'
 import { Plane, ShieldCheck } from 'lucide-react'
 import { z } from 'zod'
+import { APP_PRODUCT_CODE, APP_VERSION, RELEASE_DATE } from '@/config/constants'
 
 export const Route = createFileRoute('/login')({
   component: LoginPage,
@@ -31,6 +32,8 @@ function LoginPage() {
     mutationFn: (data: LoginFormData) => trpcClient.auth.login.mutate(data),
     onSuccess: async () => {
       window.location.href = redirectTo
+      // Trick to keep mutation in pending state until the page is redirected
+      return new Promise(() => {})
     },
   })
 
@@ -89,7 +92,7 @@ function LoginPage() {
       </aside>
 
       {/* Form panel */}
-      <main className="flex items-center justify-center bg-neutral-50 p-6 sm:p-10">
+      <main className="flex items-center justify-center bg-white p-6 sm:p-10">
         <div className="w-full max-w-sm space-y-8">
           {/* Mobile brand */}
           <div className="flex items-center gap-3 lg:hidden">
@@ -152,9 +155,20 @@ function LoginPage() {
             </form.AppForm>
           </form>
 
-          <p className="text-center text-xs text-muted-foreground">
-            Having trouble signing in? Contact your administrator.
-          </p>
+          <div className="space-y-3">
+            <p className="text-center text-xs text-muted-foreground">
+              Having trouble signing in? Contact your administrator.
+            </p>
+
+            {/* Version info */}
+            <div className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 border-t pt-3 text-[11px] text-muted-foreground">
+              <span>V{APP_VERSION}</span>
+              <span aria-hidden="true">•</span>
+              <span>Release Date: {RELEASE_DATE}</span>
+              <span aria-hidden="true">•</span>
+              <span>Code: {APP_PRODUCT_CODE}</span>
+            </div>
+          </div>
         </div>
       </main>
     </div>

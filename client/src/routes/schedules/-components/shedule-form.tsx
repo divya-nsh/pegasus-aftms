@@ -22,6 +22,12 @@ import { ArrowLeftIcon } from 'lucide-react'
 import promptConfirm from '@/lib/confirm'
 import type { ScheduleFormData } from './type'
 import AssignmentLine from './assignment-line'
+import PageCard, {
+  ListTitle,
+  PageCardContent,
+  PageCardHeader,
+} from '@/components/layout/PageCard'
+import LinkButton from '@/components/ui/link-button'
 
 // ----------------------------------------------------
 // --------------------- Form Component ---------------------
@@ -129,246 +135,246 @@ export default function ScheduleForm3({
 
   return (
     <>
-      <BlockingLoaderOverlay
-        show={mutation.isPending || statusChangeMutation.isPending}
-      />
-      <Link
-        to="/schedules"
-        className="text-muted-foreground mb-2 flex items-center gap-2 text-sm hover:text-primary hover:underline"
-      >
-        <ArrowLeftIcon className="w-4 h-4" />
-        Go Back
-      </Link>
-      {/* Form Header */}
-      <div className="border-b pb-2 flex items-center gap-3">
-        <h1 className="text-lg font-bold">
-          {mode === 'create'
-            ? 'New Schedule'
-            : `Edit Schedule > #${defaultValues.scheduleNumber}`}
-        </h1>
-        <MissionStatusBadge status={defaultValues.status || 'draft'} />
-      </div>
-
-      {mode === 'edit' && (
-        <div className="pb-3 border-b flex items-center gap-2 -mt-2">
-          <Button variant="secondary" size="sm" disabled>
-            Draft
-          </Button>
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={async () => {
-              if (
-                await promptConfirm(
-                  'Are you sure you want to publish this schedule?',
-                )
-              ) {
-                statusChangeMutation.mutate('published')
-              }
-            }}
-            disabled={defaultValues.status === 'published'}
-          >
-            Publish Schedule
-          </Button>
-
-          <Button
-            variant="secondary"
-            size="sm"
-            onClick={async () => {
-              if (await promptConfirm('This Will Mark the Completed Status')) {
-                statusChangeMutation.mutate('completed')
-              }
-            }}
-            disabled={defaultValues.status === 'completed'}
-          >
-            Mark as Complete
-          </Button>
-
-          <Button
-            variant="secondary"
-            size="sm"
-            className="ml-auto"
-            onClick={async () => {
-              if (
-                await promptConfirm(
-                  'This Will Mark the Cancelled Status and its irreversible.',
-                )
-              ) {
-                statusChangeMutation.mutate('cancelled')
-              }
-            }}
-            disabled={defaultValues.status === 'cancelled'}
-          >
-            Mark as Cancelled
-          </Button>
-        </div>
-      )}
-
-      {/* Form Body */}
-      <div className="mt-4 space-y-6">
-        <form.AppField
-          validators={{
-            onDynamic: ({ value }) => required(value),
-          }}
-          name="mission.label"
-          children={(f) => (
-            <f.CTextField disabled placeholder="Select Event" label="Event" />
-          )}
+      <PageCard>
+        <BlockingLoaderOverlay
+          show={mutation.isPending || statusChangeMutation.isPending}
         />
+        <PageCardHeader>
+          <ListTitle>
+            {mode === 'create'
+              ? 'Create Schedule'
+              : `Edit Schedule > #${defaultValues.scheduleNumber}`}
+            <MissionStatusBadge status={defaultValues.status || 'draft'} />
+          </ListTitle>
+          <LinkButton to="/schedules" variant="ghost" size="sm">
+            Go Back
+          </LinkButton>
+        </PageCardHeader>
 
-        <FieldColumns>
-          <form.AppField
-            name="name"
-            validators={{
-              onDynamic: ({ value }) => required(value),
-            }}
-            children={(f) => (
-              <f.CTextField
-                label="Schedule Name"
-                placeholder="Enter name"
-                required
-              />
-            )}
-          />
-          <form.AppField
-            name="scheduleNumber"
-            children={(f) => (
-              <f.CTextField
-                disabled={mode !== 'create'}
-                label="Schedule Number"
-                placeholder="Leave blank to auto-generate SCH-{id}"
-              />
-            )}
-          />
-
-          <form.AppField
-            name="startDateTime"
-            validators={{
-              onDynamic: ({ value }) => required(value),
-            }}
-            children={(f) => (
-              <f.CDateField
-                time={true}
-                required
-                label="Start DateTime"
-                onAfterCommit={(value) => {
-                  if (!value || typeof value !== 'string') return
-                  form.setFieldValue(
-                    'endDateTime',
-                    addMinutesToDateTimeLocal(
-                      value,
-                      selectedMission.durationMinutes,
-                    ),
-                  )
-                }}
-              />
-            )}
-          />
-
-          <form.AppField
-            name="endDateTime"
-            validators={{
-              onDynamic: ({ value }) => {
-                if (!value) return 'This is Required'
+        {mode === 'edit' && (
+          <PageCardContent className="border-b flex items-center gap-2 py-2 bg-muted/20">
+            <Button variant="secondary" size="sm" disabled>
+              Draft
+            </Button>
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={async () => {
                 if (
-                  startDateTime &&
-                  new Date(value) < new Date(startDateTime)
+                  await promptConfirm(
+                    'Are you sure you want to publish this schedule?',
+                  )
                 ) {
-                  return 'End datetime must be after start datetime'
+                  statusChangeMutation.mutate('published')
                 }
-              },
-            }}
-            children={(f) => (
-              <f.CDateField
-                time
-                required
-                placeholder={
-                  !startDateTime ? 'Pick start datetime first' : 'Pick a date'
+              }}
+              disabled={defaultValues.status === 'published'}
+            >
+              Publish Schedule
+            </Button>
+
+            <Button
+              variant="secondary"
+              size="sm"
+              onClick={async () => {
+                if (
+                  await promptConfirm('This Will Mark the Completed Status')
+                ) {
+                  statusChangeMutation.mutate('completed')
                 }
-                label="End DateTime"
-                disabled={!startDateTime}
-              />
-            )}
-          />
+              }}
+              disabled={defaultValues.status === 'completed'}
+            >
+              Mark as Complete
+            </Button>
 
-          <TextField
-            readOnly
-            value={(
-              formatDateDifference(startDateTime, endDateTime) ??
-              selectedMission.durationMinutes
-            ).toString()}
-            label="Duration"
-          />
+            <Button
+              variant="secondary"
+              size="sm"
+              className="ml-auto"
+              onClick={async () => {
+                if (
+                  await promptConfirm(
+                    'This Will Mark the Cancelled Status and its irreversible.',
+                  )
+                ) {
+                  statusChangeMutation.mutate('cancelled')
+                }
+              }}
+              disabled={defaultValues.status === 'cancelled'}
+            >
+              Mark as Cancelled
+            </Button>
+          </PageCardContent>
+        )}
 
+        {/* Form Body */}
+        <PageCardContent className="space-y-6">
           <form.AppField
-            name="area"
             validators={{
               onDynamic: ({ value }) => required(value),
             }}
+            name="mission.label"
             children={(f) => (
-              <f.CComboboxField
-                label="Area"
-                placeholder="Select Area"
-                items={areasQ.data.items.map((area) => ({
-                  label: area.name,
-                  value: area.id,
-                }))}
-              />
+              <f.CTextField disabled placeholder="Select Event" label="Event" />
             )}
           />
-        </FieldColumns>
-        <FieldColumns>
-          <form.AppField
-            name="description"
-            children={(f) => (
-              <f.CTextAreaField
-                label="Description"
-                placeholder="Enter Details of the event which will be shown to the user"
-              />
-            )}
-          />
-          <form.AppField
-            name="remarks"
-            children={(f) => (
-              <f.CTextAreaField label="Remarks" placeholder="Enter remarks" />
-            )}
-          />
-        </FieldColumns>
 
-        <div>
-          <form.Field
-            validators={{
-              onDynamic: ({ value }) => required(value),
-            }}
-            name="assignments"
-            children={(f) => (
-              <>
-                {f.state.meta.errors.length > 0 && (
-                  <FieldError errors={f.state.meta.errors} />
-                )}
-                <AssignmentLine
-                  gradingTemplateId={selectedMission.gradingTemplateId}
-                  startDateTime={startDateTime}
-                  endDateTime={endDateTime}
-                  mode={mode}
-                  values={f.state.value}
-                  onChange={f.handleChange}
+          <FieldColumns>
+            <form.AppField
+              name="name"
+              validators={{
+                onDynamic: ({ value }) => required(value),
+              }}
+              children={(f) => (
+                <f.CTextField
+                  label="Schedule Name"
+                  placeholder="Enter name"
+                  required
                 />
-              </>
-            )}
-          />
-        </div>
+              )}
+            />
+            <form.AppField
+              name="scheduleNumber"
+              children={(f) => (
+                <f.CTextField
+                  disabled={mode !== 'create'}
+                  label="Schedule Number"
+                  placeholder="Leave blank to auto-generate SCH-{id}"
+                />
+              )}
+            />
 
-        {mode !== 'view' && (
-          <div className="mt-6">
+            <form.AppField
+              name="startDateTime"
+              validators={{
+                onDynamic: ({ value }) => required(value),
+              }}
+              children={(f) => (
+                <f.CDateField
+                  time={true}
+                  required
+                  label="Start DateTime"
+                  onAfterCommit={(value) => {
+                    if (!value || typeof value !== 'string') return
+                    form.setFieldValue(
+                      'endDateTime',
+                      addMinutesToDateTimeLocal(
+                        value,
+                        selectedMission.durationMinutes,
+                      ),
+                    )
+                  }}
+                />
+              )}
+            />
+
+            <form.AppField
+              name="endDateTime"
+              validators={{
+                onDynamic: ({ value }) => {
+                  if (!value) return 'This is Required'
+                  if (
+                    startDateTime &&
+                    new Date(value) < new Date(startDateTime)
+                  ) {
+                    return 'End datetime must be after start datetime'
+                  }
+                },
+              }}
+              children={(f) => (
+                <f.CDateField
+                  time
+                  required
+                  placeholder={
+                    !startDateTime ? 'Pick start datetime first' : 'Pick a date'
+                  }
+                  label="End DateTime"
+                  disabled={!startDateTime}
+                />
+              )}
+            />
+
+            <TextField
+              readOnly
+              value={(
+                formatDateDifference(startDateTime, endDateTime) ??
+                selectedMission.durationMinutes
+              ).toString()}
+              label="Duration"
+            />
+
+            <form.AppField
+              name="area"
+              validators={{
+                onDynamic: ({ value }) => required(value),
+              }}
+              children={(f) => (
+                <f.CComboboxField
+                  label="Area"
+                  placeholder="Select Area"
+                  items={areasQ.data.items.map((area) => ({
+                    label: area.name,
+                    value: area.id,
+                  }))}
+                />
+              )}
+            />
+          </FieldColumns>
+          <FieldColumns>
+            <form.AppField
+              name="description"
+              children={(f) => (
+                <f.CTextAreaField
+                  label="Description"
+                  placeholder="Enter Details of the event which will be shown to the user"
+                />
+              )}
+            />
+            <form.AppField
+              name="remarks"
+              children={(f) => (
+                <f.CTextAreaField label="Remarks" placeholder="Enter remarks" />
+              )}
+            />
+          </FieldColumns>
+
+          <div>
+            <form.Field
+              validators={{
+                onDynamic: ({ value }) => required(value),
+              }}
+              name="assignments"
+              children={(f) => (
+                <>
+                  {f.state.meta.errors.length > 0 && (
+                    <FieldError errors={f.state.meta.errors} />
+                  )}
+                  <AssignmentLine
+                    gradingTemplateId={selectedMission.gradingTemplateId}
+                    startDateTime={startDateTime}
+                    endDateTime={endDateTime}
+                    mode={mode}
+                    values={f.state.value}
+                    onChange={f.handleChange}
+                  />
+                </>
+              )}
+            />
+          </div>
+        </PageCardContent>
+      </PageCard>
+      {mode !== 'view' && (
+        <PageCard className="mt-4">
+          <PageCardContent>
             <form.AppForm>
               <form.SubscribeButton
                 label={mode === 'create' ? 'Create & Publish' : 'Save'}
               />
             </form.AppForm>
-          </div>
-        )}
-      </div>
+          </PageCardContent>
+        </PageCard>
+      )}
     </>
   )
 }

@@ -25,7 +25,11 @@ import FullPageSpinner from '@/components/loaders/page-loader'
 import { ActionMenu } from '@/components/table/action-menu'
 import { toast } from '@/components/ui/toast'
 import { BlockingLoaderOverlay } from '@/components/loaders/BlockingLoader'
-import PageCard from '@/components/layout/PageCard'
+import PageCard, {
+  ListTitle,
+  PageCardContent,
+  PageCardHeader,
+} from '@/components/layout/PageCard'
 import NewButton from '@/components/buttons/new-button'
 import RefreshButton from '@/components/table/refresh-button'
 import { AccessControl, useUserCan } from '@/context/auth-context'
@@ -188,30 +192,38 @@ function RouteComponent() {
   })
 
   return (
-    <PageCard className="space-y-4">
-      <div className="items-center gap-1 border-b mb-4 pb-1 flex justify-between">
-        <h1 className="text-xl font-bold">Grading Scale</h1>
+    <PageCard>
+      <PageCardHeader>
+        <ListTitle>Grading Scale</ListTitle>
         <div className="flex items-center gap-4">
           <RefreshButton query={gradingScaleQ} />
           <AccessControl permissionKey={'gradingScale.create'}>
             <NewButton onClick={() => openModal()} />
           </AccessControl>
         </div>
-      </div>
-      <ErrorAlert error={gradingScaleQ.error} />
-      <div className=" mb-3 flex items-center justify-between">
+      </PageCardHeader>
+
+      <PageCardContent className="flex items-center justify-between">
         <SearchInput
           value={table.state.globalFilter ?? ''}
           onValueChange={(value) => table.setGlobalFilter(value)}
           placeholder="Search..."
           className="shadow-none max-w-75"
         />
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
           <ColumnVisibility table={table} />
         </div>
-      </div>
-      <AppTable table={table} coverFullWidth />
-      <TablePagination table={table} />
+      </PageCardContent>
+
+      <AppTable
+        table={table}
+        rounded={false}
+        className="border-l-0 border-r-0"
+      />
+
+      <PageCardContent>
+        <TablePagination table={table} />
+      </PageCardContent>
 
       {modalState.open && (
         <GradingScaleDialog

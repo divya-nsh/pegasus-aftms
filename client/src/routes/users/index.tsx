@@ -27,7 +27,11 @@ import FullPageSpinner from '@/components/loaders/page-loader'
 import { toast } from '@/components/ui/toast'
 import { BlockingLoaderOverlay } from '@/components/loaders/BlockingLoader'
 import RefreshButton from '@/components/table/refresh-button'
-import PageCard from '@/components/layout/PageCard'
+import PageCard, {
+  ListTitle,
+  PageCardContent,
+  PageCardHeader,
+} from '@/components/layout/PageCard'
 import NewButton from '@/components/buttons/new-button'
 import UserForm from './-components/user-form'
 import type { UserFormData } from './-components/user-form'
@@ -216,29 +220,38 @@ function RouteComponent() {
   })
 
   return (
-    <PageCard className="space-y-4">
-      <div className="items-center gap-1 border-b mb-4 pb-1 flex justify-between">
-        <h1 className="text-xl font-bold">Users</h1>
+    <PageCard>
+      <PageCardHeader>
+        <ListTitle>Users</ListTitle>
         <div className="flex items-center gap-4">
           <RefreshButton query={usersQ} />
           <AccessControl permissionKey="user.create">
             <NewButton onClick={() => openModal()} />
           </AccessControl>
         </div>
-      </div>
-      <div className=" mb-3 flex items-center justify-between">
+      </PageCardHeader>
+
+      <PageCardContent className="flex items-center justify-between">
         <SearchInput
           value={searchText}
           onValueChange={setSearchText}
           placeholder="Search..."
           className="shadow-none max-w-75"
         />
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
           <ColumnVisibility table={table} />
         </div>
-      </div>
-      <AppTable table={table} />
-      <TablePagination table={table} />
+      </PageCardContent>
+
+      <AppTable
+        table={table}
+        rounded={false}
+        className="border-l-0 border-r-0"
+      />
+
+      <PageCardContent>
+        <TablePagination table={table} />
+      </PageCardContent>
 
       {modal?.mode === 'create' && (
         <UserForm mode="create" onClose={closeModal} />

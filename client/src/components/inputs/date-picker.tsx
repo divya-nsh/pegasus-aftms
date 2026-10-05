@@ -102,7 +102,7 @@ export default function DatePicker({
             aria-invalid={rest['aria-invalid']}
             variant="outline"
             data-empty={!value}
-            className="justify-between hover:bg-transparent gap-4 text-left font-normal data-[empty=true]:text-muted-foreground"
+            className="justify-between bg-transparent hover:bg-transparent gap-4 text-left font-normal data-[empty=true]:text-muted-foreground"
             disabled={disabled}
           />
         }

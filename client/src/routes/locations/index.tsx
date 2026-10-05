@@ -25,13 +25,17 @@ import type { TrpcRouterOutputs } from 'server/router'
 import FullPageSpinner from '@/components/loaders/page-loader'
 import { ActionMenu } from '@/components/table/action-menu'
 import { toast } from '@/components/ui/toast'
-import { BlockingLoaderOverlay } from '@/components/loaders/BlockingLoader'
-import PageCard from '@/components/layout/PageCard'
+import PageCard, {
+  ListTitle,
+  PageCardContent,
+  PageCardHeader,
+} from '@/components/layout/PageCard'
 import { protectRouteBeforeLoad } from '@/lib/utils'
 import NewButton from '@/components/buttons/new-button'
 import RefreshButton from '@/components/table/refresh-button'
 import { AccessControl, useUserCan } from '@/context/auth-context'
 import { useModalForm } from '@/hooks/use-form-modal'
+import { BlockingLoaderOverlay } from '@/components/loaders/BlockingLoader'
 
 export const Route = createFileRoute('/locations/')({
   component: RouteComponent,
@@ -215,37 +219,38 @@ function RouteComponent() {
   })
 
   return (
-    <PageCard className="space-y-4 bg-neutral-100 px-0 md:px-4">
-      <div className="bg-card rounded-lg shadow-xs">
-        <div className="items-center gap-4 border-b px-5 pt-4 mb-4 pb-2 flex justify-between">
-          {/* <SidebarTrigger /> */}
-          {/* <Separator orientation="vertical" className="mx-2" /> */}
-          <h1 className="text-xl font-bold mr-auto">Locations</h1>
+    <PageCard>
+      <PageCardHeader>
+        <ListTitle>Locations</ListTitle>
+        <div className="flex items-center gap-4">
           <RefreshButton query={locationsQ} />
           <AccessControl permissionKey={'location.create'}>
             <NewButton onClick={() => openModal()} />
           </AccessControl>
         </div>
-        <ErrorAlert error={locationsQ.error} />
-        <div className=" mb-3 flex items-center justify-between px-5">
-          <SearchInput
-            value={table.state.globalFilter ?? ''}
-            onValueChange={(value) => table.setGlobalFilter(value)}
-            placeholder="Search..."
-            className="shadow-none max-w-75"
-          />
-          <div className="flex items-center gap-2">
-            <ColumnVisibility table={table} />
-          </div>
-        </div>
-        <AppTable
-          table={table}
-          className="mt-4 rounded-none border-l-0 border-r-0"
+      </PageCardHeader>
+      <PageCardContent className="flex items-center justify-between">
+        <SearchInput
+          value={table.state.globalFilter ?? ''}
+          onValueChange={(value) => table.setGlobalFilter(value)}
+          placeholder="Search..."
+          className="shadow-none max-w-75"
         />
-        <TablePagination table={table} className="px-4 p-4" />
-      </div>
+        <div className="flex items-center gap-4">
+          <ColumnVisibility table={table} />
+        </div>
+      </PageCardContent>
 
-      {/* Form Modal */}
+      <AppTable
+        table={table}
+        rounded={false}
+        className="border-l-0 border-r-0"
+      />
+
+      <PageCardContent>
+        <TablePagination table={table} />
+      </PageCardContent>
+
       {modalState.open && (
         <LocationForm
           mode={modalState.mode}

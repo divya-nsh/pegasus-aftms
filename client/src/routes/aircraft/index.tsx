@@ -26,7 +26,11 @@ import FullPageSpinner from '@/components/loaders/page-loader'
 import { toast } from '@/components/ui/toast'
 import { BlockingLoaderOverlay } from '@/components/loaders/BlockingLoader'
 import { protectRouteBeforeLoad } from '@/lib/utils'
-import PageCard from '@/components/layout/PageCard'
+import PageCard, {
+  ListTitle,
+  PageCardContent,
+  PageCardHeader,
+} from '@/components/layout/PageCard'
 import RefreshButton from '@/components/table/refresh-button'
 import NewButton from '@/components/buttons/new-button'
 import AircraftForm from './-components/aircraft-form'
@@ -211,17 +215,16 @@ function RouteComponent() {
 
   return (
     <PageCard>
-      <div className="items-center gap-1 border-b mb-4 pb-1 flex justify-between">
-        <h1 className="text-xl font-bold">Aircraft</h1>
+      <PageCardHeader>
+        <ListTitle>Aircraft</ListTitle>
         <div className="flex items-center gap-4">
           <RefreshButton query={aircraftQ} />
           <AccessControl permissionKey={'aircraft.create'}>
             <NewButton onClick={() => openModal()} />
           </AccessControl>
         </div>
-      </div>
-      <ErrorAlert error={aircraftQ.error} />
-      <div className=" mb-3 flex items-center justify-between">
+      </PageCardHeader>
+      <PageCardContent className="flex items-center justify-between">
         <SearchInput
           value={table.state.globalFilter ?? ''}
           onValueChange={(value) => table.setGlobalFilter(value)}
@@ -231,9 +234,15 @@ function RouteComponent() {
         <div className="flex items-center gap-2">
           <ColumnVisibility table={table} />
         </div>
-      </div>
-      <AppTable table={table} />
-      <TablePagination table={table} />
+      </PageCardContent>
+      <AppTable
+        table={table}
+        rounded={false}
+        className="border-l-0 border-r-0"
+      />
+      <PageCardContent>
+        <TablePagination table={table} />
+      </PageCardContent>
 
       {formModel?.open && (
         <AircraftForm

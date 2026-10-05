@@ -85,7 +85,7 @@ function RouteComponent() {
   ).length
 
   return (
-    <PageCard className="bg-slate-50">
+    <>
       <div className="flex justify-between items-center mb-4">
         <h2 className="text-lg">Instructor Dashboard</h2>
       </div>
@@ -136,8 +136,8 @@ function RouteComponent() {
         />
       </div>
 
-      <div className="py-4 pb-0 rounded-md bg-white mt-4 border shadow-xs">
-        <div className="flex items-center justify-between gap-3 border-b pb-2 px-4">
+      <div className="pb-0 rounded-md bg-white mt-4 border shadow-xs">
+        <div className="flex items-center justify-between gap-3 py-4 px-4">
           <h3 className="text-sm font-semibold">
             {isSameDay(selectedDate, today) ? 'Today Schedules' : 'Schedules'}
           </h3>
@@ -277,7 +277,7 @@ function RouteComponent() {
       {/* <div className="mt-4">
         <FlyingHoursChartCard />
       </div> */}
-    </PageCard>
+    </>
   )
 }
 

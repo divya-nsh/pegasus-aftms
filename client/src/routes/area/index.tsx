@@ -9,11 +9,9 @@ import {
   // eslint-disable-next-line import/consistent-type-specifier-style
   type TTableFeatures,
 } from '@/components/table/table.tsx'
-import { Button } from '@/components/ui/button'
 import { createFileRoute } from '@tanstack/react-router'
 import { createColumnHelper, useTable } from '@tanstack/react-table'
 import type { ColumnDef } from '@tanstack/react-table'
-import { PlusIcon } from 'lucide-react'
 import { useState } from 'react'
 import AreaForm from './-components/area-form'
 import type { AreaFormData } from './-components/area-form'
@@ -28,7 +26,11 @@ import FullPageSpinner from '@/components/loaders/page-loader'
 import { ActionMenu } from '@/components/table/action-menu'
 import { toast } from '@/components/ui/toast'
 import { BlockingLoaderOverlay } from '@/components/loaders/BlockingLoader'
-import PageCard from '@/components/layout/PageCard'
+import PageCard, {
+  ListTitle,
+  PageCardHeader,
+  PageCardContent,
+} from '@/components/layout/PageCard'
 import RefreshButton from '@/components/table/refresh-button'
 import { protectRouteBeforeLoad } from '@/lib/utils'
 import NewButton from '@/components/buttons/new-button'
@@ -204,30 +206,35 @@ function RouteComponent() {
   })
 
   return (
-    <PageCard className="space-y-4">
-      <div className="items-center gap-1 border-b mb-4 pb-1 flex justify-between">
-        <h1 className="text-xl font-bold">Areas</h1>
+    <PageCard>
+      <PageCardHeader>
+        <ListTitle>Areas</ListTitle>
         <div className="flex items-center gap-4">
           <RefreshButton query={areasQ} />
           <AccessControl permissionKey={'area.create'}>
             <NewButton onClick={() => openModal()} />
           </AccessControl>
         </div>
-      </div>
-      <ErrorAlert error={areasQ.error} />
-      <div className=" mb-3 flex items-center justify-between">
+      </PageCardHeader>
+      <PageCardContent className="flex items-center justify-between">
         <SearchInput
           value={table.state.globalFilter ?? ''}
           onValueChange={(value) => table.setGlobalFilter(value)}
           placeholder="Search..."
           className="shadow-none max-w-75"
         />
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
           <ColumnVisibility table={table} />
         </div>
-      </div>
-      <AppTable table={table} />
-      <TablePagination table={table} />
+      </PageCardContent>
+      <AppTable
+        table={table}
+        rounded={false}
+        className="border-l-0 border-r-0"
+      />
+      <PageCardContent>
+        <TablePagination table={table} />
+      </PageCardContent>
 
       {formModel?.open && (
         <AreaForm

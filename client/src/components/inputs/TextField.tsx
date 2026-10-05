@@ -11,6 +11,7 @@ import type { DatePickerProps } from './date-picker'
 import DatePicker from './date-picker'
 import type { AppComboboxProps, ComboOption } from './combox2'
 import AppCombobox from './combox2'
+import PasswordInput from './password-input'
 
 export type TextFieldProps = {
   label: string
@@ -31,12 +32,15 @@ export default function TextField({
   const generatedId = useId()
   const _id = id ?? generatedId
 
+  const InputComponent = rest.type === 'password' ? PasswordInput : Input
+
   return (
     <Field className={cn(className)} data-invalid={!!errors}>
       <FieldLabel htmlFor={_id} required={rest.required}>
         {label}
       </FieldLabel>
-      <Input
+
+      <InputComponent
         aria-invalid={!!errors}
         className={cn('w-full')}
         id={_id}
@@ -47,6 +51,7 @@ export default function TextField({
         }}
         {...rest}
       />
+
       {errors && <FieldError errors={errors} />}
     </Field>
   )

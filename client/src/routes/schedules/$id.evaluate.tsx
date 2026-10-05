@@ -57,7 +57,7 @@ function RouteComponent() {
   const isAllGraded = pendingGradingCount === 0
 
   return (
-    <PageCard className="bg-gray-100">
+    <>
       <Link
         to="/schedules"
         className="text-muted-foreground mb-2 flex items-center gap-2 text-sm hover:text-primary hover:underline"
@@ -120,7 +120,7 @@ function RouteComponent() {
       </div>
 
       <div className="border bg-white mb-4 rounded-md relative shadow-sm">
-        <div className="font-bold px-4 py-3 text-gray-900">
+        <div className="font-bold px-4 py-4 text-gray-900">
           Personnel
           {schedule.assignments.length > 0
             ? ` (${schedule.assignments.length})`
@@ -248,7 +248,7 @@ function RouteComponent() {
           onClose={() => setEditingId(null)}
         />
       )}
-    </PageCard>
+    </>
   )
 }
 

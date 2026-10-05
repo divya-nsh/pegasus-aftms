@@ -11,7 +11,7 @@ import {
 import { createFileRoute } from '@tanstack/react-router'
 import { createColumnHelper, useTable } from '@tanstack/react-table'
 import type { ColumnDef } from '@tanstack/react-table'
-import { Suspense, useState } from 'react'
+import { useState } from 'react'
 import { ActionMenu } from '@/components/table/action-menu'
 import trpc, { trpcClient } from '@/trpc'
 import {
@@ -23,7 +23,11 @@ import type { TrpcRouterOutputs } from 'server/router'
 import FullPageSpinner from '@/components/loaders/page-loader'
 import { toast } from '@/components/ui/toast'
 import { BlockingLoaderOverlay } from '@/components/loaders/BlockingLoader'
-import PageCard from '@/components/layout/PageCard'
+import PageCard, {
+  ListTitle,
+  PageCardContent,
+  PageCardHeader,
+} from '@/components/layout/PageCard'
 import RefreshButton from '@/components/table/refresh-button'
 import NewButton from '@/components/buttons/new-button'
 import { RoleModelForm } from './-role-model-form'
@@ -111,7 +115,6 @@ const columns: ColumnDef<TTableFeatures, TRoleListItem>[] = ch.columns([
 ])
 
 const moduleName = 'role'
-const title = 'Roles'
 
 function RouteComponent() {
   const listQuery = useSuspenseQuery(trpc.rolesV2.getAll.queryOptions())
@@ -202,26 +205,34 @@ function RouteComponent() {
 
   return (
     <PageCard>
-      <div className="items-center gap-1 border-b mb-4 pb-1 flex justify-between">
-        <h1 className="text-xl font-bold">{title}</h1>
+      <PageCardHeader>
+        <ListTitle>Roles</ListTitle>
         <div className="flex items-center gap-4">
           <RefreshButton query={listQuery} />
           <NewButton onClick={() => openModal()} />
         </div>
-      </div>
-      <div className=" mb-3 flex items-center justify-between">
+      </PageCardHeader>
+      <PageCardContent className="flex items-center justify-between">
         <SearchInput
           value={table.state.globalFilter ?? ''}
           onValueChange={(value) => table.setGlobalFilter(value)}
           placeholder="Search..."
           className="shadow-none max-w-75"
         />
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-4">
           <ColumnVisibility table={table} />
         </div>
-      </div>
-      <AppTable table={table} />
-      <TablePagination table={table} className="mt-4" />
+      </PageCardContent>
+
+      <AppTable
+        table={table}
+        rounded={false}
+        className="border-l-0 border-r-0"
+      />
+
+      <PageCardContent>
+        <TablePagination table={table} />
+      </PageCardContent>
 
       {formModelState.open && (
         <RoleModelForm

@@ -5,7 +5,7 @@ import trpc from '@/trpc'
 import { useSuspenseQuery } from '@tanstack/react-query'
 import { createFileRoute } from '@tanstack/react-router'
 import PersonnelForm from './-components/personnel-form'
-import PageCard from '@/components/layout/PageCard'
+import PageCard, { PageCardContent } from '@/components/layout/PageCard'
 import { protectRouteBeforeLoad } from '@/lib/utils'
 import { useUserCan } from '@/context/auth-context'
 
@@ -33,39 +33,33 @@ function RouteComponent() {
   const person = personnelQ.data
 
   return (
-    <PageCard>
-      <PageHeader
-        title={canEdit ? 'Edit Personnel' : `Personnel ${person.code}`}
-        backTo="/personnel"
-      />
-      <PersonnelForm
-        mode={canEdit ? 'edit' : 'view'}
-        toEditId={person.id}
-        initialFormData={{
-          personnelType: person.personnelType,
-          batchNo: person.batchNo ?? '',
-          code: person.code ?? '',
-          firstName: person.firstName,
-          lastName: person.lastName ?? '',
-          gender: person.gender,
-          dateOfBirth: person.dateOfBirth ?? '',
-          dateOfJoin: person.dateOfJoin ?? '',
-          rank: person.rank ?? '',
-          qualification: person.qualification ?? '',
-          phone: person.phone ?? '',
-          email: person.email ?? '',
-          address: person.address ?? '',
-          medicalStatus: person.medicalStatus,
-          medicalExamDate: person.medicalExamDate ?? '',
-          medicalValidUntil: person.medicalValidUntil ?? '',
-          imageId: person.imageId ?? null,
-        }}
-        linkedUser={
-          person.userId && person.user
-            ? { id: person.userId, username: person.user.username }
-            : null
-        }
-      />
-    </PageCard>
+    <PersonnelForm
+      mode={canEdit ? 'edit' : 'view'}
+      toEditId={person.id}
+      initialFormData={{
+        personnelType: person.personnelType,
+        batchNo: person.batchNo ?? '',
+        code: person.code ?? '',
+        firstName: person.firstName,
+        lastName: person.lastName ?? '',
+        gender: person.gender,
+        dateOfBirth: person.dateOfBirth ?? '',
+        dateOfJoin: person.dateOfJoin ?? '',
+        rank: person.rank ?? '',
+        qualification: person.qualification ?? '',
+        phone: person.phone ?? '',
+        email: person.email ?? '',
+        address: person.address ?? '',
+        medicalStatus: person.medicalStatus,
+        medicalExamDate: person.medicalExamDate ?? '',
+        medicalValidUntil: person.medicalValidUntil ?? '',
+        imageId: person.imageId ?? null,
+      }}
+      linkedUser={
+        person.userId && person.user
+          ? { id: person.userId, username: person.user.username }
+          : null
+      }
+    />
   )
 }

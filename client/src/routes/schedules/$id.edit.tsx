@@ -44,75 +44,71 @@ export function EditScheduleRouteComponent({
   const schedule = scheduleQ.data
 
   return (
-    <PageCard className="space-y-6">
-      <ScheduleForm
-        mode={viewOnly ? 'view' : 'edit'}
-        defaultValues={{
-          id: schedule.id,
-          mission: {
-            label: schedule.mission!.name,
-            value: schedule.mission!.id,
-            gradingTemplateId: schedule.mission!.gradingTemplateId!,
-            durationMinutes: schedule.mission!.durationMinutes,
+    <ScheduleForm
+      mode={viewOnly ? 'view' : 'edit'}
+      defaultValues={{
+        id: schedule.id,
+        mission: {
+          label: schedule.mission!.name,
+          value: schedule.mission!.id,
+          gradingTemplateId: schedule.mission!.gradingTemplateId!,
+          durationMinutes: schedule.mission!.durationMinutes,
+        },
+        name: schedule.name,
+        description: schedule.description || '',
+        startDateTime: schedule.startDateTime || '',
+        endDateTime: schedule.endDateTime || '',
+        area: {
+          label: schedule.area!.name,
+          value: schedule.area!.id,
+        },
+        status: schedule.status,
+        scheduleNumber: schedule.scheduleNumber,
+        remarks: schedule.remarks || '',
+        assignments: schedule.assignments.map((assignment) => ({
+          personnel: {
+            label: `${assignment.personnel!.firstName} ${assignment.personnel!.lastName}`,
+            value: assignment.personnel!.id,
+            type: assignment.personnel!.personnelType,
+            qualification: assignment.personnel!.qualification,
           },
-          name: schedule.name,
-          description: schedule.description || '',
-          startDateTime: schedule.startDateTime || '',
-          endDateTime: schedule.endDateTime || '',
-          area: {
-            label: schedule.area!.name,
-            value: schedule.area!.id,
-          },
-          status: schedule.status,
-          scheduleNumber: schedule.scheduleNumber,
-          remarks: schedule.remarks || '',
-          assignments: schedule.assignments.map((assignment) => ({
-            personnel: {
-              label: `${assignment.personnel!.firstName} ${assignment.personnel!.lastName}`,
-              value: assignment.personnel!.id,
-              type: assignment.personnel!.personnelType,
-              qualification: assignment.personnel!.qualification,
+          aircraft: assignment.aircraft
+            ? {
+                label: assignment.aircraft.name,
+                value: assignment.aircraft.id,
+              }
+            : null,
+          remarks: assignment.remarks || '',
+          attendanceStatus: assignment.attendanceStatus,
+          takeoffTime: assignment.takeoffTime,
+          landingTime: assignment.landingTime,
+          aircraftTime: assignment.aircraftTime,
+          briefingTime: assignment.briefingTime,
+          obtainedGrade: assignment.obtainedGrade
+            ? {
+                label: assignment.obtainedGrade.label,
+                value: assignment.obtainedGrade.id,
+              }
+            : null,
+          obtainedScoreValue: toNumber(assignment.obtainedScoreValue),
+          obtainedScorePercentage: toNumber(assignment.obtainedScorePercentage),
+          participantGradings: assignment.participantGradings.map((item) => ({
+            templateAttribute: {
+              label: item.gradingTemplateAttribute!.gradingAttribute!.name,
+              value: item.gradingTemplateAttribute!.gradingAttribute!.id,
             },
-            aircraft: assignment.aircraft
+            gradingScaleOption: item.gradingScaleOption
               ? {
-                  label: assignment.aircraft.name,
-                  value: assignment.aircraft.id,
+                  label: item.gradingScaleOption.label,
+                  value: item.gradingScaleOption.id,
                 }
               : null,
-            remarks: assignment.remarks || '',
-            attendanceStatus: assignment.attendanceStatus,
-            takeoffTime: assignment.takeoffTime,
-            landingTime: assignment.landingTime,
-            aircraftTime: assignment.aircraftTime,
-            briefingTime: assignment.briefingTime,
-            obtainedGrade: assignment.obtainedGrade
-              ? {
-                  label: assignment.obtainedGrade.label,
-                  value: assignment.obtainedGrade.id,
-                }
-              : null,
-            obtainedScoreValue: toNumber(assignment.obtainedScoreValue),
-            obtainedScorePercentage: toNumber(
-              assignment.obtainedScorePercentage,
-            ),
-            participantGradings: assignment.participantGradings.map((item) => ({
-              templateAttribute: {
-                label: item.gradingTemplateAttribute!.gradingAttribute!.name,
-                value: item.gradingTemplateAttribute!.gradingAttribute!.id,
-              },
-              gradingScaleOption: item.gradingScaleOption
-                ? {
-                    label: item.gradingScaleOption.label,
-                    value: item.gradingScaleOption.id,
-                  }
-                : null,
-              obtainedScoreValue: toNumber(item.obtainedScoreValue),
-              status: item.status,
-            })),
+            obtainedScoreValue: toNumber(item.obtainedScoreValue),
+            status: item.status,
           })),
-        }}
-      />
-    </PageCard>
+        })),
+      }}
+    />
   )
 }
 

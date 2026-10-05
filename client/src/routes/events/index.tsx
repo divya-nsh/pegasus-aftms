@@ -18,7 +18,11 @@ import type { TrpcRouterOutputs } from 'server/router'
 import FullPageSpinner from '@/components/loaders/page-loader'
 import { toast } from '@/components/ui/toast'
 import { BlockingLoaderOverlay } from '@/components/loaders/BlockingLoader'
-import PageCard from '@/components/layout/PageCard'
+import PageCard, {
+  ListTitle,
+  PageCardContent,
+  PageCardHeader,
+} from '@/components/layout/PageCard'
 import RefreshButton from '@/components/table/refresh-button'
 import NewButton from '@/components/buttons/new-button'
 import columns from './-components/columns'
@@ -135,10 +139,10 @@ function RouteComponent() {
   const readOnly = !isUserCan('event.update')
 
   return (
-    <PageCard className="space-y-4">
-      <div className="items-center gap-1 mt-1 border-b mb-4 pb-2 flex justify-between">
+    <PageCard>
+      <PageCardHeader>
         <div>
-          <h2 className="text-xl font-bold">Events</h2>
+          <ListTitle>Events</ListTitle>
           <p className="text-sm text-muted-foreground max-w-xl">
             Define training activities for the training program
           </p>
@@ -149,9 +153,8 @@ function RouteComponent() {
             <NewButton onClick={() => openModal()} />
           </AccessControl>
         </div>
-      </div>
-      <ErrorAlert error={missionsQ.error} />
-      <div className=" mb-3 flex items-center justify-between">
+      </PageCardHeader>
+      <PageCardContent className="flex items-center justify-between">
         <SearchInput
           value={table.state.globalFilter ?? ''}
           onValueChange={(value) => table.setGlobalFilter(value)}
@@ -161,9 +164,16 @@ function RouteComponent() {
         <div className="flex items-center gap-2">
           <ColumnVisibility table={table} />
         </div>
-      </div>
-      <AppTable table={table} className="mt-4" />
-      <TablePagination table={table} />
+      </PageCardContent>
+      <AppTable
+        table={table}
+        className="border-l-0 border-r-0"
+        rounded={false}
+      />
+
+      <PageCardContent>
+        <TablePagination table={table} className="px-0" />
+      </PageCardContent>
 
       {formModel?.open && (
         <MissionForm

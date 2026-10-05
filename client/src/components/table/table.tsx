@@ -129,7 +129,10 @@ export function AppTable<TData extends RowData>({
       >
         <TableHeader>
           {table.getHeaderGroups().map((group) => (
-            <TableRow key={group.id} className="top-0 z-10 sticky">
+            <TableRow
+              key={group.id}
+              className="top-0 z-10 sticky bg-[hsl(156_33%_35%)]"
+            >
               {group.headers.map((header) => {
                 const isSorted = header.column.getIsSorted()
                 const canSort = header.column.getCanSort()
@@ -139,7 +142,7 @@ export function AppTable<TData extends RowData>({
                     key={header.id}
                     colSpan={header.colSpan}
                     className={cn(
-                      'font-medium text-sm text-neutral-800 bg-muted/60 backdrop-blur-lg top-0 relative min-w-0 overflow-visible border-b first:border-l-0 hover:border-l hover:border-r last:border-r-0',
+                      'font-medium text-sm bg-[hsl(156_33%_35%)] text-white backdrop-blur-lg top-0 relative min-w-0 overflow-visible border-b first:border-l-0 hover:border-l hover:border-r last:border-r-0',
                     )}
                     style={{
                       width: header.getSize(),
@@ -307,12 +310,14 @@ export function AppTableWrapper<TData extends Record<string, unknown>>({
   tableLayout = 'fixed',
   className,
   disableSorting = false,
+  rounded = false,
 }: {
   columns: TAppColumnDef<TData>[]
   data?: TData[]
   tableLayout?: 'fixed' | 'auto'
   className?: string
   disableSorting?: boolean
+  rounded?: boolean
 }) {
   const table = useTable({
     ...baseTableOptions<TData>(),
@@ -322,7 +327,12 @@ export function AppTableWrapper<TData extends Record<string, unknown>>({
   })
 
   return (
-    <AppTable table={table} tableLayout={tableLayout} className={className} />
+    <AppTable
+      table={table}
+      tableLayout={tableLayout}
+      className={className}
+      rounded={rounded}
+    />
   )
 }
 

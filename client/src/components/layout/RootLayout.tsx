@@ -70,7 +70,9 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <SidebarTrigger />
           <span className="text-sm font-semibold md:hidden">Pegasus AFTMS</span>
         </header>
-        <div className="flex-1 overflow-x-hidden">{children}</div>
+        <div className="flex-1 overflow-x-hidden px-4 md:px-6 py-4">
+          {children}
+        </div>
       </SidebarInset>
     </SidebarProvider>
   )
