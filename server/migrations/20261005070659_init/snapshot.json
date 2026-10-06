@@ -1,7 +1,7 @@
 {
   "version": "8",
   "dialect": "postgres",
-  "id": "8fbbe214-c632-4cd2-864a-fa8ede799a07",
+  "id": "27e861ce-4287-4045-99e6-39eca87e1b5e",
   "prevIds": [
     "00000000-0000-0000-0000-000000000000"
   ],
@@ -2494,7 +2494,7 @@
       "with": "",
       "method": "btree",
       "concurrently": false,
-      "name": "unique_mission_schedule_participant_id_grading_template_attribute_id_idx",
+      "name": "unique_participant_id_grading_template_attribute_id_idx",
       "entityType": "indexes",
       "schema": "public",
       "table": "mission_schedule_participant_grading"

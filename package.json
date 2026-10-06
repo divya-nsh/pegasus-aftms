@@ -1,6 +1,6 @@
 {
   "name": "Pegasus-FTMS",
-  "version": "1.0.0",
+  "version": "0.0.1",
   "description": "",
   "private": true,
   "main": "index.js",
@@ -12,7 +12,8 @@
     "typecheck": "pnpm -r --parallel typecheck",
     "start": "pnpm --filter server start",
     "build": "pnpm -r run build",
-    "build-pkg": "pnpm run build && pnpm --filter server make:exe"
+    "build-pkg": "pnpm run build && pnpm --filter server make:exe",
+    "generate:deploy": "rm -rf out && pnpm --filter server deploy --prod ./out"
   },
   "keywords": [],
   "author": "",

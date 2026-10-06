@@ -33,6 +33,7 @@ import {
 import { ChevronRight } from 'lucide-react'
 import type { FileRouteTypes } from '@/routeTree.gen'
 import { useMemo } from 'react'
+import { APP_VERSION } from '@/config/constants'
 
 function isNavActive(pathname: string, url: string, mode?: 'exact' | 'prefix') {
   if (mode === 'exact') {
@@ -70,7 +71,7 @@ export default function Layout({ children }: { children: React.ReactNode }) {
           <SidebarTrigger />
           <span className="text-sm font-semibold md:hidden">Pegasus AFTMS</span>
         </header>
-        <div className="flex-1 overflow-x-hidden px-4 md:px-6 py-4">
+        <div className="flex-1 overflow-x-hidden px-4 md:px-5 py-4">
           {children}
         </div>
       </SidebarInset>
@@ -107,7 +108,7 @@ export function AppSidebar() {
                     Pegasus AFTMS
                   </span>
                   <span className="truncate text-xs text-sidebar-foreground/70">
-                    Flight training
+                    Flight training - v{APP_VERSION}
                   </span>
                 </span>
               </SidebarMenuButton>

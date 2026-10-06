@@ -195,7 +195,7 @@ export function SchedulePrintReportDocument({
   })
 
   return (
-    <div className="bg-background p-6 text-xs leading-snug text-foreground print:bg-white print:p-0 print:text-black [print-color-adjust:exact] [-webkit-print-color-adjust:exact]">
+    <div className="p-6 text-xs leading-snug text-foreground print:bg-white print:p-0 print:text-black [print-color-adjust:exact] [-webkit-print-color-adjust:exact]">
       <div className="mb-4 border-b pb-3">
         <h1 className="text-lg font-bold tracking-tight">Event Schedule</h1>
         <p className="mt-1 text-muted-foreground">

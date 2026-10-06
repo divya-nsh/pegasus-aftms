@@ -1,0 +1,637 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <title>AFTMS Server Setup</title>
+
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      :root {
+        font-family:
+          Inter,
+          system-ui,
+          -apple-system,
+          BlinkMacSystemFont,
+          "Segoe UI",
+          sans-serif;
+        color: #18181b;
+        background: #f4f4f5;
+      }
+
+      body {
+        margin: 0;
+        min-height: 100vh;
+        display: grid;
+        place-items: center;
+        padding: 20px;
+        background: #f4f4f5;
+      }
+
+      .card {
+        width: 100%;
+        max-width: 580px;
+        padding: 30px;
+        background: #fff;
+        border: 1px solid #e4e4e7;
+        border-radius: 14px;
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.05);
+      }
+
+      .header {
+        margin-bottom: 20px;
+      }
+
+      .header h1 {
+        margin: 0 0 5px;
+        font-size: 22px;
+        line-height: 1.3;
+        font-weight: 650;
+        letter-spacing: -0.01em;
+      }
+
+      .header p {
+        margin: 0;
+        color: #71717a;
+        font-size: 13px;
+        line-height: 1.5;
+      }
+
+      /* ---------- info boxes ---------- */
+      .guide {
+        margin-bottom: 20px;
+        padding: 12px 14px;
+        border: 1px solid #dbeafe;
+        border-radius: 8px;
+        background: #eff6ff;
+        color: #1e40af;
+        font-size: 12.5px;
+        line-height: 1.55;
+      }
+
+      .guide strong {
+        display: block;
+        margin-bottom: 4px;
+        font-weight: 600;
+      }
+
+      .guide ul {
+        margin: 0;
+        padding-left: 18px;
+      }
+
+      .guide a {
+        color: #1d4ed8;
+        font-weight: 600;
+        text-decoration: underline;
+        text-underline-offset: 2px;
+      }
+
+      .guide a:hover {
+        color: #1e3a8a;
+      }
+
+      .hint {
+        margin-top: 5px;
+        color: #71717a;
+        font-size: 11.5px;
+        line-height: 1.45;
+      }
+
+      .hint.note {
+        padding: 8px 10px;
+        border-radius: 7px;
+        background: #f4f4f5;
+        border: 1px solid #e4e4e7;
+        color: #52525b;
+      }
+
+      /* ---------- form ---------- */
+      .section-title {
+        margin: 6px 0 12px;
+        padding-top: 4px;
+        font-size: 13px;
+        font-weight: 600;
+      }
+
+      .field {
+        margin-bottom: 12px;
+      }
+
+      .row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+
+      label {
+        display: block;
+        margin-bottom: 5px;
+        font-size: 12px;
+        font-weight: 500;
+        color: #3f3f46;
+      }
+
+      input[type="text"],
+      input[type="number"],
+      input[type="password"] {
+        width: 100%;
+        height: 38px;
+        padding: 0 10px;
+        border: 1px solid #d4d4d8;
+        border-radius: 7px;
+        outline: none;
+        background: #fff;
+        color: #18181b;
+        font: inherit;
+        font-size: 13px;
+        transition:
+          border-color 0.15s,
+          box-shadow 0.15s;
+      }
+
+      input::placeholder {
+        color: #a1a1aa;
+      }
+
+      input:focus-visible {
+        border-color: #6366f1;
+        box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.12);
+      }
+
+      input:disabled {
+        background: #f4f4f5;
+        color: #71717a;
+        cursor: not-allowed;
+        opacity: 1;
+      }
+
+      .password-wrap {
+        position: relative;
+      }
+
+      .password-wrap input {
+        padding-right: 58px;
+      }
+
+      .toggle-password {
+        position: absolute;
+        top: 4px;
+        right: 4px;
+        width: auto;
+        height: 30px;
+        margin: 0;
+        padding: 0 10px;
+        border-radius: 5px;
+        background: transparent;
+        color: #52525b;
+        font-size: 11.5px;
+        font-weight: 600;
+      }
+
+      .toggle-password:hover:not(:disabled) {
+        background: #f4f4f5;
+        color: #18181b;
+      }
+
+      .checkbox {
+        display: flex;
+        align-items: flex-start;
+        gap: 8px;
+        margin: 2px 0 14px;
+      }
+
+      .checkbox input {
+        margin: 2px 0 0;
+        width: 15px;
+        height: 15px;
+        accent-color: #18181b;
+      }
+
+      .checkbox label {
+        margin: 0;
+        font-size: 12.5px;
+        font-weight: 500;
+      }
+
+      .checkbox .hint {
+        margin-top: 2px;
+      }
+
+      /* ---------- buttons ---------- */
+      button {
+        width: 100%;
+        height: 40px;
+        margin-top: 4px;
+        border: 0;
+        border-radius: 7px;
+        background: #18181b;
+        color: #fff;
+        font: inherit;
+        font-size: 13px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+
+      button:hover:not(:disabled) {
+        background: #27272a;
+      }
+
+      button:focus-visible {
+        outline: 3px solid rgba(99, 102, 241, 0.35);
+        outline-offset: 2px;
+      }
+
+      button:disabled {
+        opacity: 0.65;
+        cursor: not-allowed;
+      }
+
+      /* ---------- messages ---------- */
+      .message {
+        display: none;
+        margin-bottom: 14px;
+        padding: 10px 12px;
+        border-radius: 7px;
+        font-size: 12.5px;
+        line-height: 1.45;
+      }
+
+      .message.error {
+        display: block;
+        font-size: 0.9rem;
+        font-weight: 500;
+        color: #b91c1c;
+        background: #fef2f2;
+        border: 1px solid #fecaca;
+      }
+
+      .message.success {
+        display: block;
+        color: #166534;
+        background: #f0fdf4;
+        border: 1px solid #bbf7d0;
+      }
+
+      .message.progress {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        color: #3f3f46;
+        background: #fafafa;
+        border: 1px solid #e4e4e7;
+      }
+
+      .spinner {
+        flex: none;
+        width: 14px;
+        height: 14px;
+        border: 2px solid #d4d4d8;
+        border-top-color: #18181b;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .spinner {
+          animation-duration: 2s;
+        }
+      }
+
+      @media (max-width: 520px) {
+        .card {
+          padding: 22px;
+        }
+
+        .row {
+          grid-template-columns: 1fr;
+          gap: 0;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <main class="card">
+      <header class="header">
+        <h1>AFTMS Server Setup</h1>
+        <p>Connect the server to PostgreSQL to finish installation.</p>
+      </header>
+
+      <div class="guide">
+        <strong>Before you continue</strong>
+        <ul>
+          <li>
+            PostgreSQL must be installed and running (version 18 recommended).
+            Don't have it yet?
+            <a
+              href="https://www.postgresql.org/download/"
+              target="_blank"
+              rel="noopener noreferrer"
+              >PostgreSQL: Downloads</a
+            >
+          </li>
+          <li>
+            Keep your connection details ready: host, port, username and
+            password.
+          </li>
+          <li>
+            Use an existing AFTMS database, or enter a new name and it will be
+            created for you.
+          </li>
+          <li>Default App User is Admin and Password admin.</li>
+        </ul>
+      </div>
+
+      <div id="message" class="message" role="status" aria-live="polite"></div>
+
+      <form id="setup-form">
+        <div class="section-title">Server</div>
+
+        <div class="field">
+          <label for="appDataDir">App Data Directory</label>
+          <input
+            id="appDataDir"
+            name="appDataDir"
+            type="text"
+            value="{{APP_DATA_DIR}}"
+            disabled
+          />
+          <div class="hint">
+            Settings, logs and data are stored here. Keep it when upgrading.
+          </div>
+        </div>
+
+        <div class="section-title">Database (PostgreSQL)</div>
+
+        <div class="row">
+          <div class="field">
+            <label for="host">Host</label>
+            <input
+              autofocus
+              id="host"
+              name="host"
+              type="text"
+              value="localhost"
+              autocomplete="off"
+              spellcheck="false"
+              required
+            />
+          </div>
+
+          <div class="field">
+            <label for="port">Port</label>
+            <input
+              id="port"
+              name="port"
+              type="number"
+              value="5432"
+              min="1"
+              max="65535"
+              required
+            />
+          </div>
+        </div>
+
+        <div class="field">
+          <label for="database">Database name</label>
+          <input
+            id="database"
+            name="database"
+            type="text"
+            value="AFTMS"
+            placeholder="AFTMS"
+            autocomplete="off"
+            spellcheck="false"
+            required
+          />
+          <div class="hint note">
+            If this database doesn't exist, it will be created automatically.
+            That needs a user with the <b>CREATEDB</b> permission (the default
+            <b>postgres</b> user has it). If you use a restricted user, create
+            the empty database first.
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="field">
+            <label for="username">Username</label>
+            <input
+              id="username"
+              name="username"
+              value="postgres"
+              type="text"
+              placeholder="postgres"
+              autocomplete="username"
+              spellcheck="false"
+              required
+            />
+          </div>
+
+          <div class="field">
+            <label for="password">Password</label>
+            <div class="password-wrap">
+              <input
+                id="password"
+                name="password"
+                type="password"
+                placeholder="PostgreSQL password"
+                autocomplete="current-password"
+                required
+              />
+              <button
+                type="button"
+                id="toggle-password"
+                class="toggle-password"
+                aria-controls="password"
+                aria-label="Show password"
+              >
+                Show
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- <div class="checkbox">
+          <input id="ssl" name="ssl" type="checkbox" />
+          <div>
+            <label for="ssl">Use SSL</label>
+            <div class="hint">
+              Turn on for cloud or remote databases that require encrypted
+              connections (AWS RDS, Azure, etc.). Leave off for a local
+              PostgreSQL.
+            </div>
+          </div>
+        </div> -->
+
+        <button id="submit-button" type="submit">Save &amp; Continue</button>
+      </form>
+    </main>
+
+    <script>
+      const form = document.getElementById("setup-form");
+      const button = document.getElementById("submit-button");
+      const message = document.getElementById("message");
+      const passwordInput = document.getElementById("password");
+      const togglePassword = document.getElementById("toggle-password");
+
+      const RESTART_TIMEOUT_MS = 120_000;
+      const POLL_INTERVAL_MS = 1_000;
+
+      const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
+
+      function clearMessage() {
+        message.textContent = "";
+        message.className = "message";
+      }
+
+      function showError(text) {
+        message.textContent = text;
+        message.className = "message error";
+      }
+
+      function showSuccess(text) {
+        message.textContent = text;
+        message.className = "message success";
+      }
+
+      function showProgress(text) {
+        message.className = "message progress";
+        message.innerHTML = '<span class="spinner" aria-hidden="true"></span>';
+        const span = document.createElement("span");
+        span.textContent = text;
+        message.appendChild(span);
+      }
+
+      function setFormDisabled(disabled) {
+        form
+          .querySelectorAll("input:not(#appDataDir), button")
+          .forEach((el) => (el.disabled = disabled));
+      }
+
+      togglePassword.addEventListener("click", () => {
+        const show = passwordInput.type === "password";
+        passwordInput.type = show ? "text" : "password";
+        togglePassword.textContent = show ? "Hide" : "Show";
+        togglePassword.setAttribute(
+          "aria-label",
+          show ? "Hide password" : "Show password",
+        );
+      });
+
+      async function parseResponse(response) {
+        try {
+          return await response.json();
+        } catch {
+          throw new Error(
+            `Server returned an invalid response (${response.status}).`,
+          );
+        }
+      }
+
+      // After setup the process exits and the service manager restarts it.
+      // The setup server answers 404 once setup is done, the service is
+      // unreachable while restarting, and the real app answers 200 when ready.
+      async function waitForApp() {
+        const deadline = Date.now() + RESTART_TIMEOUT_MS;
+        await sleep(1500); // let the old process exit first
+
+        while (Date.now() < deadline) {
+          try {
+            const response = await fetch("/", { cache: "no-store" });
+            if (response.ok) return true;
+          } catch {
+            // service is down while restarting, keep waiting
+          }
+          await sleep(POLL_INTERVAL_MS);
+        }
+        return false;
+      }
+
+      form.addEventListener("submit", async (event) => {
+        event.preventDefault();
+        clearMessage();
+
+        const formData = new FormData(form);
+        const data = {
+          host: String(formData.get("host") ?? "").trim(),
+          port: Number(formData.get("port")),
+          database: String(formData.get("database") ?? "").trim(),
+          username: String(formData.get("username") ?? "").trim(),
+          password: String(formData.get("password") ?? ""),
+          ssl: formData.get("ssl") === "on", // unchecked checkboxes are absent from FormData
+        };
+
+        setFormDisabled(true);
+        button.textContent = "Setting up...";
+        showProgress(
+          "Connecting, preparing the database and running migrations. This can take a few seconds...",
+        );
+
+        try {
+          // One call: test connection, create database if missing, migrate,
+          // save settings. The server restarts itself when this succeeds.
+          const response = await fetch("/api/complete", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data),
+          });
+
+          const result = await parseResponse(response);
+
+          if (!response.ok) {
+            throw new Error(
+              result?.error ||
+                result?.message ||
+                `Setup failed (${response.status}).`,
+            );
+          }
+        } catch (error) {
+          showError(
+            error instanceof TypeError
+              ? "Could not reach the setup server. Make sure the AFTMS service is running."
+              : error instanceof Error
+                ? error.message
+                : "Something went wrong. Please try again.",
+          );
+
+          scrollTo({ top: 0, behavior: "smooth" });
+          setFormDisabled(false);
+          button.textContent = "Save & Continue";
+          return;
+        }
+
+        // Setup saved. Wait for the restarted service, then open the app.
+        button.textContent = "Restarting service...";
+        showProgress("Setup complete. Restarting the service, please wait...");
+
+        const ready = await waitForApp();
+
+        if (ready) {
+          showSuccess("Ready! Opening the application...");
+          button.textContent = "Setup Complete";
+          setTimeout(() => window.location.assign("/"), 600);
+        } else {
+          showError(
+            "Setup was saved, but the service did not come back within 120 seconds. Check that the AFTMS service is running in Windows Services, then reload this page.",
+          );
+          button.disabled = false;
+          button.textContent = "Reload";
+          button.type = "button";
+          button.onclick = () => window.location.reload();
+        }
+      });
+    </script>
+  </body>
+</html>

@@ -218,7 +218,7 @@ CREATE TABLE "user" (
 CREATE UNIQUE INDEX "unique_grading_scale_id_label_idx" ON "grading_scale_option" ("grading_scale_id","label");--> statement-breakpoint
 CREATE UNIQUE INDEX "unique_template_id_attribute_id_idx" ON "grading_template_attribute" ("grading_template_id","attribute_id");--> statement-breakpoint
 CREATE INDEX "media_status_created_idx" ON "media" ("status","created_at");--> statement-breakpoint
-CREATE UNIQUE INDEX "unique_mission_schedule_participant_id_grading_template_attribute_id_idx" ON "mission_schedule_participant_grading" ("mission_schedule_participant_id","grading_template_attribute_id");--> statement-breakpoint
+CREATE UNIQUE INDEX "unique_participant_id_grading_template_attribute_id_idx" ON "mission_schedule_participant_grading" ("mission_schedule_participant_id","grading_template_attribute_id");--> statement-breakpoint
 CREATE UNIQUE INDEX "unique_mission_schedule_id_personnel_id_idx" ON "mission_schedule_participant" ("mission_schedule_id","personnel_id");--> statement-breakpoint
 ALTER TABLE "grading_scale_option" ADD CONSTRAINT "grading_scale_option_grading_scale_id_grading_scale_id_fkey" FOREIGN KEY ("grading_scale_id") REFERENCES "grading_scale"("id") ON DELETE CASCADE;--> statement-breakpoint
 ALTER TABLE "grading_template_attribute" ADD CONSTRAINT "grading_template_attribute_L3ECrgtWIsa4_fkey" FOREIGN KEY ("grading_template_id") REFERENCES "grading_template"("id") ON DELETE CASCADE;--> statement-breakpoint

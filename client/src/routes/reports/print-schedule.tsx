@@ -1,6 +1,9 @@
 import ErrorAlert from '@/components/errors/ErrorAlert'
 import { BasicSelectField, DateField } from '@/components/inputs/TextField'
-import PageCard from '@/components/layout/PageCard'
+import PageCard, {
+  PageCardContent,
+  PageCardHeader,
+} from '@/components/layout/PageCard'
 import { BlockingLoaderOverlay } from '@/components/loaders/BlockingLoader'
 import FullPageSpinner from '@/components/loaders/page-loader'
 import { Button } from '@/components/ui/button'
@@ -189,122 +192,126 @@ function RouteComponent() {
   }
 
   return (
-    <PageCard className="max-w-6xl space-y-5">
-      <div className="flex items-start justify-between gap-4 border-b pb-4">
-        <div className="space-y-1">
-          <h1 className="text-xl font-bold">Print Schedule</h1>
-          <p className="max-w-xl text-sm text-muted-foreground">
-            Preview and print events grouped by start date, including weekday
-            and event type.
-          </p>
-        </div>
-        <Button
-          type="button"
-          variant="outline"
-          onClick={handlePrint}
-          disabled={!applied || schedulesQ.isFetching}
-        >
-          <PrinterIcon />
-          Print
-        </Button>
-      </div>
-
-      <div className="space-y-4 rounded-xl border bg-muted/20 p-4">
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          <DateField
-            label="Start date"
-            required
-            value={startDate}
-            onChange={(value) => {
-              setStartDate(value)
-              if (value && endDate && value > endDate) {
-                setEndDate(value)
-              }
-            }}
-            placeholder="Start date"
-          />
-          <DateField
-            label="End date"
-            value={endDate}
-            onChange={(value) => {
-              setEndDate(value)
-              if (value && startDate && value < startDate) {
-                setStartDate(value)
-              }
-            }}
-            placeholder="End date"
-          />
-          <BasicSelectField
-            label="Pilot"
-            placeholder="All"
-            allowClear={false}
-            options={personnelOptions}
-            value={personnelId?.toString() ?? 'all'}
-            onValueChange={(value) => {
-              setPersonnelId(value && value !== 'all' ? Number(value) : null)
-            }}
-          />
-          <BasicSelectField
-            label="Status"
-            allowClear={false}
-            options={statusFilterOptions}
-            value={statusFilter}
-            onValueChange={(value) => {
-              if (!value) return
-              setStatusFilter(value as PrintableStatusFilter)
-            }}
-          />
-        </div>
-        <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-3">
-          <Field className="max-w-md gap-2" orientation="horizontal">
-            <Checkbox
-              id={includeParticipantsId}
-              checked={includeParticipants}
-              onCheckedChange={(checked) =>
-                setIncludeParticipants(checked === true)
-              }
-            />
-            <div className="space-y-0.5">
-              <FieldLabel htmlFor={includeParticipantsId}>
-                Include participants
-              </FieldLabel>
-              <FieldDescription>
-                Print assigned names under each event
-              </FieldDescription>
-            </div>
-          </Field>
-          <Button type="button" onClick={handleGenerate}>
-            Generate
-          </Button>
-        </div>
-      </div>
-
-      <ErrorAlert error={schedulesQ.error} />
-
-      {!applied ? (
-        <div className="flex flex-col items-center justify-center rounded-xl border border-dashed px-6 py-16 text-center">
-          <CalendarDaysIcon className="mb-3 size-8 text-muted-foreground" />
-          <p className="text-sm font-medium">No preview yet</p>
-          <p className="mt-1 max-w-sm text-sm text-muted-foreground">
-            Choose a start date and generate the report to preview the printed
-            schedule.
-          </p>
-        </div>
-      ) : schedulesQ.isFetching ? null : (
-        <div className="overflow-hidden rounded-xl border bg-background shadow-sm">
-          <div ref={printRef}>
-            {reportMeta ? (
-              <SchedulePrintReportDocument
-                items={items}
-                includeParticipants={includeParticipants}
-                meta={reportMeta}
-              />
-            ) : null}
+    <div className="space-y-4">
+      <PageCard>
+        <PageCardHeader>
+          <div className="space-y-1">
+            <h1 className="text-xl font-bold">Print Schedule</h1>
+            <p className="max-w-xl text-sm text-muted-foreground">
+              Preview and print events grouped by start date, including weekday
+              and event type.
+            </p>
           </div>
-        </div>
-      )}
+          <Button
+            type="button"
+            variant="outline"
+            onClick={handlePrint}
+            disabled={!applied || schedulesQ.isFetching}
+          >
+            <PrinterIcon />
+            Print
+          </Button>
+        </PageCardHeader>
 
-      <BlockingLoaderOverlay show={schedulesQ.isFetching} />
-    </PageCard>
+        <PageCardContent className="space-y-4">
+          <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
+            <DateField
+              label="Start date"
+              required
+              value={startDate}
+              onChange={(value) => {
+                setStartDate(value)
+                if (value && endDate && value > endDate) {
+                  setEndDate(value)
+                }
+              }}
+              placeholder="Start date"
+            />
+            <DateField
+              label="End date"
+              value={endDate}
+              onChange={(value) => {
+                setEndDate(value)
+                if (value && startDate && value < startDate) {
+                  setStartDate(value)
+                }
+              }}
+              placeholder="End date"
+            />
+            <BasicSelectField
+              label="Pilot"
+              placeholder="All"
+              allowClear={false}
+              options={personnelOptions}
+              value={personnelId?.toString() ?? 'all'}
+              onValueChange={(value) => {
+                setPersonnelId(value && value !== 'all' ? Number(value) : null)
+              }}
+            />
+            <BasicSelectField
+              label="Status"
+              allowClear={false}
+              options={statusFilterOptions}
+              value={statusFilter}
+              onValueChange={(value) => {
+                if (!value) return
+                setStatusFilter(value as PrintableStatusFilter)
+              }}
+            />
+          </div>
+          <div className="flex flex-wrap items-center justify-between gap-3 pt-3">
+            <Field className="max-w-md gap-2" orientation="horizontal">
+              <Checkbox
+                id={includeParticipantsId}
+                checked={includeParticipants}
+                onCheckedChange={(checked) =>
+                  setIncludeParticipants(checked === true)
+                }
+              />
+              <div className="space-y-0.5">
+                <FieldLabel htmlFor={includeParticipantsId}>
+                  Include participants
+                </FieldLabel>
+                <FieldDescription>
+                  Print assigned names under each event
+                </FieldDescription>
+              </div>
+            </Field>
+            <Button type="button" onClick={handleGenerate}>
+              Generate
+            </Button>
+          </div>
+        </PageCardContent>
+
+        <ErrorAlert error={schedulesQ.error} />
+
+        <BlockingLoaderOverlay show={schedulesQ.isFetching} />
+      </PageCard>
+
+      <PageCard>
+        {!applied ? (
+          <div className="flex flex-col items-center justify-center rounded-xl border border-dashed px-6 py-16 text-center">
+            <CalendarDaysIcon className="mb-3 size-8 text-muted-foreground" />
+            <p className="text-sm font-medium">No preview yet</p>
+            <p className="mt-1 max-w-sm text-sm text-muted-foreground">
+              Choose a start date and generate the report to preview the printed
+              schedule.
+            </p>
+          </div>
+        ) : schedulesQ.isFetching ? null : (
+          <div className="overflow-hidden">
+            <div ref={printRef}>
+              {reportMeta ? (
+                <SchedulePrintReportDocument
+                  items={items}
+                  includeParticipants={includeParticipants}
+                  meta={reportMeta}
+                />
+              ) : null}
+            </div>
+          </div>
+        )}
+      </PageCard>
+    </div>
   )
 }

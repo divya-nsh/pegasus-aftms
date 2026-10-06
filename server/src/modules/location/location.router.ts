@@ -20,7 +20,7 @@ const deleteSchema = z.object({
   toDeleteId: z.number(),
 });
 
-const locaitonRouter = router({
+const locationRouter = router({
   getAll: protectedProcedure.query(async () => {
     const locations = await db.select().from(locationTable);
 
@@ -85,4 +85,4 @@ const locaitonRouter = router({
   }),
 });
 
-export default locaitonRouter;
+export default locationRouter;

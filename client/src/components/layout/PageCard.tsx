@@ -3,14 +3,17 @@ import { cn } from '@/lib/utils'
 export default function PageCard({
   children,
   className,
+  contentIncluded = false,
 }: {
   children: React.ReactNode
   className?: string
+  contentIncluded?: boolean
 }) {
   return (
     <div
       className={cn(
-        'shadow-xs rounded-xl bg-card border max-w-7xl mx-auto',
+        'shadow-xs rounded-lg bg-card border max-w-7xl mx-auto',
+        contentIncluded ? 'px-4 py-4 md:px-6' : '',
         className,
       )}
     >

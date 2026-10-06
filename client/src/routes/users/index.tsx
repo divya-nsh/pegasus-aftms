@@ -37,6 +37,7 @@ import UserForm from './-components/user-form'
 import type { UserFormData } from './-components/user-form'
 import { protectRouteBeforeLoad } from '@/lib/utils'
 import { AccessControl } from '@/context/auth-context'
+import { Badge } from '@/components/ui/badge'
 
 export const Route = createFileRoute('/users/')({
   component: RouteComponent,
@@ -103,7 +104,11 @@ const columns: ColumnDef<TTableFeatures, TUserListItem>[] = ch.columns([
   }),
   ch.accessor('role.name', {
     header: 'Role',
-    cell: (info) => info.getValue() ?? '-',
+    cell: (info) => (
+      <Badge variant="outline" size="sm">
+        {info.getValue() ?? '-'}
+      </Badge>
+    ),
   }),
   ch.accessor('isActive', {
     header: 'Active',

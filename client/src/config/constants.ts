@@ -9,6 +9,6 @@ export const WEEKDAY_FORMAT = 'EEE'
 
 export const APP_VERSION = '0.0.1'
 
-export const APP_PRODUCT_CODE = 'AFTMS-001'
+export const APP_PRODUCT_CODE = 'KW-210'
 
 export const RELEASE_DATE = '5 OCT 2026'

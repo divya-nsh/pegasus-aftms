@@ -1,5 +1,6 @@
-import type db from "#/db/db.js";
+import type Tdb from "#/db/db.js";
 import { sessionTable } from "#/db/schema.js";
+import db from "#/db/db.js";
 import { Store, type SessionData } from "express-session";
 import { and, eq, gt, lt } from "drizzle-orm";
 
@@ -8,18 +9,14 @@ type Database = typeof db;
 const PRUNE_INTERVAL_IN_MINUTES = 15; // 15 minutes
 // const ONE_DAY = 86400;
 
-export class DrizzleSessionStore extends Store {
+class DrizzleSessionStore extends Store {
+  private cleanupJob: NodeJS.Timeout | null = null;
   constructor(
     private db: Database,
     // IT Represent Session Data Schema Version as its store jsonb schema may change in the future
     public readonly version: number,
   ) {
     super();
-    console.log("✔ Session Cleanup Job is Initiated!!");
-    setInterval(
-      () => this.pruneSessions(),
-      PRUNE_INTERVAL_IN_MINUTES * 60 * 1000,
-    );
   }
 
   async get(
@@ -109,4 +106,21 @@ export class DrizzleSessionStore extends Store {
       console.error("Error pruning sessions:", error);
     }
   }
+
+  async startCleanupJob() {
+    if (this.cleanupJob) return;
+    console.log("✔ Session Cleanup Job is Initiated!!");
+
+    this.pruneSessions();
+    this.cleanupJob = setTimeout(
+      () => {
+        this.startCleanupJob();
+      },
+      PRUNE_INTERVAL_IN_MINUTES * 60 * 1000,
+    );
+  }
 }
+
+const drizzleSessionStore = new DrizzleSessionStore(db, 3);
+
+export default drizzleSessionStore;

@@ -1,8 +1,9 @@
 node_modules
 .env
+.config.jsonc
 .DS_Store
-client
 dist
 client-dist
-uploads
+data
 bin
+out

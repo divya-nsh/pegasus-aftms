@@ -7,13 +7,16 @@ import db from "#/db/db.js";
 import { mediaTable } from "#/db/schema.js";
 import { and, eq, inArray, lt, or } from "drizzle-orm";
 
-export const MEDIA_FOLDER_PATH = path.join(process.cwd(), "uploads");
+export const MEDIA_FOLDER_PATH = path.join(process.cwd(), "./data", "uploads");
 const CLEANUP_JOB_INTERVAL_MS = 1000 * 60 * 30; // 30 minutes
 const CLEANUP_BATCH_SIZE = 1000; // 1000 media records per batch
 const DRAFT_MEDIA_RETENTION_INTERVAL_MS = 1000 * 60 * 60 * 4; // 4 hours
 const ARCHIVED_MEDIA_RETENTION_INTERVAL_MS = 1000 * 60 * 30; // 30 minutes
 
 type DBTransaction = Parameters<Parameters<(typeof db)["transaction"]>[0]>[0];
+if (!fs.existsSync(MEDIA_FOLDER_PATH)) {
+  fs.mkdirSync(MEDIA_FOLDER_PATH, { recursive: true });
+}
 
 function getUploadPath(fileMimeType: string) {
   let resolvedPath = MEDIA_FOLDER_PATH;
@@ -34,9 +37,10 @@ function getUploadPath(fileMimeType: string) {
 }
 
 class MediaService {
-  constructor() {
-    this.startCleanupJob(CLEANUP_BATCH_SIZE);
-  }
+  private cleanupJob: NodeJS.Timeout | null = null;
+  // constructor() {
+  //   this.startCleanupJob(CLEANUP_BATCH_SIZE);
+  // }
 
   async uploadFile(
     stream: NodeJS.ReadableStream | ReadableStream,
@@ -137,7 +141,9 @@ class MediaService {
     return mediaRecord;
   }
 
-  async startCleanupJob(batchSize: number) {
+  async startCleanupJob() {
+    // If cleanup job is already running, Skip it
+    if (this.cleanupJob) return;
     console.log("✔ Media Cleanup Job is Initiated!!");
     const mediaRecords = await db
       .select()
@@ -160,7 +166,7 @@ class MediaService {
           ),
         ),
       )
-      .limit(batchSize);
+      .limit(CLEANUP_BATCH_SIZE);
 
     for (const mediaRecord of mediaRecords) {
       await this.deleteMediaFromDiskIfExists(mediaRecord.path);
@@ -170,8 +176,8 @@ class MediaService {
 
     // console.log("Cleanup job completed");
 
-    setTimeout(() => {
-      this.startCleanupJob(batchSize);
+    this.cleanupJob = setTimeout(() => {
+      this.startCleanupJob();
     }, CLEANUP_JOB_INTERVAL_MS);
   }
 }
