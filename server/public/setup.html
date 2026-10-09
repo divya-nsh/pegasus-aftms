@@ -359,7 +359,7 @@
       <form id="setup-form">
         <div class="section-title">Server</div>
 
-        <div class="field">
+        <!-- <div class="field">
           <label for="appDataDir">App Data Directory</label>
           <input
             id="appDataDir"
@@ -371,7 +371,7 @@
           <div class="hint">
             Settings, logs and data are stored here. Keep it when upgrading.
           </div>
-        </div>
+        </div> -->
 
         <div class="section-title">Database (PostgreSQL)</div>
 
@@ -624,7 +624,7 @@
           setTimeout(() => window.location.assign("/"), 600);
         } else {
           showError(
-            "Setup was saved, but the service did not come back within 120 seconds. Check that the AFTMS service is running in Windows Services, then reload this page.",
+            "Setup was saved, but the service did not come back within 120 seconds. Check that the AFTMS service is running in Windows Services, then reload this page. Or Check Logs if there is any error.",
           );
           button.disabled = false;
           button.textContent = "Reload";

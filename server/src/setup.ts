@@ -1,7 +1,7 @@
 import path from "path";
 import express from "express";
 import configStore from "./config/config-store.js";
-import { getAppDirname } from "./lib/utils.js";
+import { getAppDirname } from "./dirname.js";
 import fs from "fs";
 import morgan from "morgan";
 import { logger } from "./lib/logger.js";
@@ -10,6 +10,22 @@ import pg from "pg";
 import { runMigrations } from "./db/migrate.js";
 import { drizzle } from "drizzle-orm/node-postgres";
 import { testConnectionAndEnsureDatabase } from "./db/ensure-db-exists.js";
+
+const RUN_AUTO_MIGRATION = true;
+const SKIP_MIGRATION_IF_DATABASE_NOT_EMPTY = true;
+const SETUP_HTML_PATH = path.join(getAppDirname(), "public", "setup.html");
+
+async function checkIfDatabaseIsEmpty(client: pg.Client): Promise<boolean> {
+  const result = await client.query(`
+    SELECT NOT EXISTS (
+      SELECT 1
+      FROM pg_catalog.pg_tables
+      WHERE schemaname NOT IN ('pg_catalog', 'information_schema')
+    ) AS "isEmpty";
+  `);
+
+  return result.rows[0].isEmpty;
+}
 
 export async function runSetupServer() {
   // ---------------------------------------------------------------------------
@@ -92,7 +108,7 @@ export async function runSetupServer() {
 
   app.get("/", (_req, res) => {
     const htmlContent = fs
-      .readFileSync(path.join(getAppDirname(), "public", "setup.html"), "utf8")
+      .readFileSync(SETUP_HTML_PATH, "utf8")
       .replace("{{APP_DATA_DIR}}", PROGRAM_DATA_DIR);
     res.setHeader("Content-Type", "text/html").status(200).send(htmlContent);
   });
@@ -136,14 +152,24 @@ export async function runSetupServer() {
       }
 
       // 3. Migrations (failure must NOT mark setup as done)
-      try {
-        await runMigrations(drizzle({ client }) as any);
-      } catch (error) {
-        const pgError = (error as any)?.cause ?? error;
-        logger.error({ msg: "DATABASE MIGRATION FAILED", error: pgError });
-        return res.status(500).json({
-          error: `Database migration failed: ${toFriendlyMessage(pgError)}`,
-        });
+      if (RUN_AUTO_MIGRATION) {
+        const isDatabaseEmpty = await checkIfDatabaseIsEmpty(client);
+        if (SKIP_MIGRATION_IF_DATABASE_NOT_EMPTY && !isDatabaseEmpty) {
+          logger.info("Database is not empty. Skipping migrations.");
+          // return res.status(200).json({
+          //   message: "Database is not empty. Migration skipped.",
+          // });
+        } else {
+          try {
+            await runMigrations(drizzle({ client }) as any);
+          } catch (error) {
+            const pgError = (error as any)?.cause ?? error;
+            logger.error({ msg: "DATABASE MIGRATION FAILED", error: pgError });
+            return res.status(500).json({
+              error: `Database migration failed: ${toFriendlyMessage(pgError)}`,
+            });
+          }
+        }
       }
 
       // 4. Save config only after everything succeeded

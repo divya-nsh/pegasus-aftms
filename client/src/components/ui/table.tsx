@@ -52,6 +52,7 @@ function Table({
 
 function TableHeader({ className, ...props }: React.ComponentProps<'thead'>) {
   const { fullGridLine } = React.useContext(tableContext)
+  // bg-[hsl(156_33%_35%)]
   return (
     <thead
       data-slot="table-header"
@@ -103,7 +104,8 @@ function TableHead({ className, ...props }: React.ComponentProps<'th'>) {
     <th
       data-slot="table-head"
       className={cn(
-        'h-10 px-4 text-left align-middle font-medium whitespace-nowrap text-foreground [&:has([role=checkbox])]:pr-0',
+        'h-10 px-4 text-left align-middle font-medium whitespace-nowrap text-foreground has-[[role=checkbox]]:pr-0',
+        ' bg-blue-200 border-slate-300',
         fullGridLine && 'border',
         className,
       )}

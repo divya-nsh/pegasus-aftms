@@ -211,15 +211,15 @@ function RouteComponent() {
                 return formatDate(firstAssignment.landingTime, true) || '-'
               },
             }),
-            ch.display({
-              id: 'aircraft-time',
-              header: 'AIRCRAFT TIME',
-              cell: ({ row }) => {
-                const firstAssignment = row.original.assignments[0]
-                if (!firstAssignment) return '-'
-                return formatDate(firstAssignment.aircraftTime, true) || '-'
-              },
-            }),
+            // ch.display({
+            //   id: 'aircraft-time',
+            //   header: 'AIRCRAFT TIME',
+            //   cell: ({ row }) => {
+            //     const firstAssignment = row.original.assignments[0]
+            //     if (!firstAssignment) return '-'
+            //     return formatDate(firstAssignment.aircraftTime, true) || '-'
+            //   },
+            // }),
             ch.accessor('remarks', {
               header: 'REMARKS',
               cell: ({ row }) => {

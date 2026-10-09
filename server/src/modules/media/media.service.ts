@@ -6,8 +6,14 @@ import { pipeline } from "stream/promises";
 import db from "#/db/db.js";
 import { mediaTable } from "#/db/schema.js";
 import { and, eq, inArray, lt, or } from "drizzle-orm";
+import { getAppDirname } from "#/dirname.js";
 
-export const MEDIA_FOLDER_PATH = path.join(process.cwd(), "./data", "uploads");
+export const MEDIA_FOLDER_PATH = path.join(
+  getAppDirname(false),
+  "./data",
+  "uploads",
+);
+
 const CLEANUP_JOB_INTERVAL_MS = 1000 * 60 * 30; // 30 minutes
 const CLEANUP_BATCH_SIZE = 1000; // 1000 media records per batch
 const DRAFT_MEDIA_RETENTION_INTERVAL_MS = 1000 * 60 * 60 * 4; // 4 hours

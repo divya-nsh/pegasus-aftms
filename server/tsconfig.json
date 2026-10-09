@@ -7,29 +7,29 @@
     "outDir": "./dist",
     "composite": true,
     "tsBuildInfoFile": "./dist/tsconfig.tsbuildinfo",
-
     // Environment Settings
     // See also https://aka.ms/tsconfig/module
     "module": "NodeNext",
     "moduleResolution": "nodenext" /* Specify how TypeScript looks up a file from a given module specifier. */,
-
     "target": "esnext",
-    "lib": ["ESNext"],
+    "lib": [
+      "ESNext"
+    ],
+    "types": [
+      "node"
+    ],
     // "types": [],
     // For nodejs:
     // "lib": ["esnext"],
     // "types": ["node"],
     // and npm install -D @types/node
-
     // Other Outputs
     "sourceMap": true,
     "declaration": true,
     "declarationMap": false,
-
     // Stricter Typechecking Options
     "noUncheckedIndexedAccess": true,
     "exactOptionalPropertyTypes": true,
-
     // Style Options
     // "noImplicitReturns": true,
     // "noImplicitOverride": true,
@@ -37,7 +37,6 @@
     "noUnusedParameters": false,
     "noFallthroughCasesInSwitch": true,
     // "noPropertyAccessFromIndexSignature": true,
-
     // Recommended Options
     "strict": true,
     "jsx": "react-jsx",
@@ -47,10 +46,22 @@
     "moduleDetection": "force",
     "skipLibCheck": true,
     "paths": {
-      "#/*": ["./src/*"]
+      "#/*": [
+        "./src/*"
+      ]
     }
   },
-  "include": ["src/**/*.ts"],
-  "exclude": ["node_modules", "dist"],
-  "references": [{ "path": "../shared" }]
+  "include": [
+    "src/**/*.ts",
+    "pkg.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ],
+  "references": [
+    {
+      "path": "../shared"
+    }
+  ]
 }

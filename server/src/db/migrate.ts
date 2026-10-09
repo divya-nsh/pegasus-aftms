@@ -1,7 +1,7 @@
 import { migrate } from "drizzle-orm/node-postgres/migrator";
 import db from "./db.js";
 import path from "node:path";
-import { getAppDirname } from "#/lib/utils.js";
+import { getAppDirname } from "#/dirname.js";
 import { logger } from "#/lib/logger.js";
 import fs from "node:fs";
 

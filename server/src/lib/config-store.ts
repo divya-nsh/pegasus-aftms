@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { parse, type ParseError } from "jsonc-parser";
-import { z } from "zod";
+import { prettifyError, z } from "zod";
 
 type Migrations = Record<number, (data: any) => any>; // key = version it migrates TO
 
@@ -51,7 +51,12 @@ export class ConfigStore<S extends z.ZodObject> {
       data = migrate(data);
     }
 
-    this.config = this.schema.parse(data);
+    const result = this.schema.safeParse(data);
+    if (!result.success) {
+      throw new Error(`Invalid config file: ${prettifyError(result.error)}`);
+    }
+
+    this.config = result.data;
     if (fileVersion < this.version) this.save(); // persist the migrated config
   }
 

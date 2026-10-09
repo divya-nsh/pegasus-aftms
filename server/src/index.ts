@@ -20,12 +20,27 @@ import { IS_DEVELOPMENT } from "./lib/env.js";
 import { populateData } from "./populate.js";
 import runMigrations from "./db/migrate.js";
 import configStore from "./config/config-store.js";
-import { isPortAvailable } from "./lib/utils.js";
+import { getAppDirname } from "./dirname.js";
 import { logger } from "./lib/logger.js";
 import { runSetupServer } from "./setup.js";
+import { isPortAvailable } from "./lib/utils.js";
 
-// console.log(fs.readdirSync(getAppDirname()));
-// console.log(fs.readdirSync(path.join(getAppDirname(), "node_modules")));
+if (process.argv.includes("--list-files")) {
+  const modulePath = fileURLToPath(import.meta.url);
+  const moduleDir = path.dirname(modulePath);
+
+  console.log({
+    modulePath,
+    moduleDir,
+  });
+  console.log("Snapshot Path:", getAppDirname());
+  console.log("App Dirname Actuall", getAppDirname(false));
+  console.log("Assets files:", fs.readdirSync(getAppDirname()));
+  console.log(
+    "node_modules:",
+    fs.readdirSync(path.join(getAppDirname(), "node_modules")),
+  );
+}
 
 const appDirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -90,12 +105,14 @@ app.use(
   }),
 );
 
+console.log("System Info:", {
+  NODE_ENV: process.env.NODE_ENV,
+  UPLOADS_DIR: MEDIA_FOLDER_PATH,
+  NODE_VERSION: process.version,
+});
+
 // !!!!!!!!!!!!!!!!!!! Run Migration in Production only temporary comment out
 async function bootstrap() {
-  console.log({
-    NODE_ENV: process.env.NODE_ENV,
-    UPLOADS_DIR: MEDIA_FOLDER_PATH,
-  });
   await testDBConnection();
   if (!IS_DEVELOPMENT || IS_PACKAGED) {
     // await runMigrations(db);
@@ -128,11 +145,11 @@ async function bootstrap() {
 }
 
 bootstrap();
-// if (configStore.config.isSetUpDone) {
-//   await bootstrap();
-// } else {
-//   await runSetupServer();
-// }
+if (configStore.config.isSetUpDone) {
+  await bootstrap();
+} else {
+  await runSetupServer();
+}
 
 function resolveClientPath(entryDir: string) {
   const besideEntry = path.join(entryDir, "client-dist");

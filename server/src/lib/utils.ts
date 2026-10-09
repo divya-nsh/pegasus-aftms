@@ -1,10 +1,4 @@
-import path from "node:path";
-import { fileURLToPath } from "node:url";
 import net from "node:net";
-
-export function getAppDirname() {
-  return path.join(path.dirname(fileURLToPath(import.meta.url)), "../../");
-}
 
 export function isPortAvailable(port: number): Promise<boolean> {
   return new Promise((resolve) => {

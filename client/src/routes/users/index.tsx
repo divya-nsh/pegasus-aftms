@@ -104,11 +104,7 @@ const columns: ColumnDef<TTableFeatures, TUserListItem>[] = ch.columns([
   }),
   ch.accessor('role.name', {
     header: 'Role',
-    cell: (info) => (
-      <Badge variant="outline" size="sm">
-        {info.getValue() ?? '-'}
-      </Badge>
-    ),
+    cell: (info) => <Badge variant="secondary">{info.getValue() ?? '-'}</Badge>,
   }),
   ch.accessor('isActive', {
     header: 'Active',

@@ -6,6 +6,7 @@ await esbuild.build({
   platform: "node",
   format: "esm",
   packages: "external",
-  minify: true,
+  sourcemap: true,
+  minify: false,
   outfile: "dist/index.js",
 });

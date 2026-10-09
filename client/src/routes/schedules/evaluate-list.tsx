@@ -54,11 +54,6 @@ import PageCard, {
   PageCardContent,
 } from '@/components/layout/PageCard'
 import RefetchButton from '@/components/table/refresh-button'
-import { AccessControl } from '@/context/auth-context'
-import {
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-} from '@/components/ui/dropdown-menu'
 import {
   EventSchedulePrintDocument,
   fetchScheduleForPrint,

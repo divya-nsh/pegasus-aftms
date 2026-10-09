@@ -1,5 +1,4 @@
 import ErrorAlert from '@/components/errors/ErrorAlert'
-import PageCard from '@/components/layout/PageCard'
 import FullPageSpinner from '@/components/loaders/page-loader'
 import trpc from '@/trpc'
 import { useSuspenseQuery } from '@tanstack/react-query'

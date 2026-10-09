@@ -165,9 +165,9 @@ export function RoleModelForm({
                       return (
                         <div
                           key={group.resource}
-                          className="rounded-lg border bg-muted/20"
+                          className="rounded-lg border shadow-xs"
                         >
-                          <label className="flex items-center gap-2 border-b px-3 py-2">
+                          <label className="flex items-center gap-2 border-b bg-muted/70 px-3 py-2">
                             <Checkbox
                               checked={groupState === true}
                               indeterminate={groupState === 'indeterminate'}

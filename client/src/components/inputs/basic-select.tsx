@@ -57,6 +57,8 @@ export default function BasicSelect({
     }))
   }, [options])
 
+  console.log('value', value)
+
   return (
     <Select
       open={readOnly ? false : open}
@@ -69,7 +71,13 @@ export default function BasicSelect({
       required={required}
       disabled={disabled}
       readOnly={readOnly}
-      value={value ? value.toString() : undefined}
+      value={
+        value === undefined
+          ? null
+          : typeof value === 'number'
+            ? value.toString()
+            : value
+      }
       onValueChange={(_value) => {
         if (readOnly) return
         setOpen(false)

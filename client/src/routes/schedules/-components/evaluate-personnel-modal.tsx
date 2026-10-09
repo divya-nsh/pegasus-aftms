@@ -29,47 +29,38 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { BlockingLoaderOverlay } from '@/components/loaders/BlockingLoader'
 import { ATTENDANCE_STATUS_OPTIONS } from '@/config/attendance'
 import { cn, formatStartEndTime, makeFullName } from '@/lib/utils'
 import { trpc, trpcClient } from '@/trpc'
 import type { TrpcRouterOutputs } from '@/trpc'
-import type { ScheduleFormAssignment } from './type'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import {
+  MAX_CATEGORY_MARKS,
+  applyGradeOption,
+  calcGradeTotals,
+  formatMarks,
+  setRowExempt,
+} from './grade-helpers'
+import type { GradeRowData, GradeTotals } from './grade-helpers'
 
 type Assignment =
   TrpcRouterOutputs['schedules']['getById']['assignments'][number]
 type GradingTemplate = TrpcRouterOutputs['gradingTemplate']['getById']
 type AircraftItem = TrpcRouterOutputs['aircraft']['getAll']['items'][number]
-
-type GradeRow = ScheduleFormAssignment['participantGradings'][number]
+type AttendanceStatus = 'present' | 'absent' | 'excused'
 
 type FormValues = {
   aircraft: { label: string; value: number } | null
-  attendanceStatus: 'present' | 'absent' | 'excused' | null
+  attendanceStatus: AttendanceStatus | null
   remarks: string
   takeoffTime: string | null
   landingTime: string | null
   aircraftTime: string | null
-  grades: TGradingRowData[]
+  grades: GradeRowData[]
 
-  // For Future Use
+  // For future use
   briefingTime: string | null
-}
-
-type TGradingRowData = {
-  gradingTemplateAttributeId: number
-  gradingScaleOptionId: number | null
-  obtainedScoreValue: number | null
-  status: 'pending' | 'scored' | 'exempt'
-}
-
-const notApplicableGradeOption = {
-  label: 'Not Applicable',
-  value: -1,
-  _style: {
-    color: 'oklch(55.3% 0.195 38.402)',
-  },
 }
 
 export default function EvaluatePersonnelModal({
@@ -90,14 +81,22 @@ export default function EvaluatePersonnelModal({
   onClose: () => void
 }) {
   const queryClient = useQueryClient()
+
   const gradingScaleOptions = gradingTemplate.gradingScale?.options
   const scaleOptions = useMemo(
     () => gradingScaleOptions ?? [],
     [gradingScaleOptions],
   )
 
+  const gradeSelectOptions = useMemo(
+    () => scaleOptions.map((o) => ({ label: o.label, value: o.id })),
+    [scaleOptions],
+  )
+
   const mutation = useMutation({
     mutationFn: async (value: FormValues) => {
+      // Totals come from the submitted values, not from render state.
+      const totals = calcGradeTotals(value.grades, scaleOptions)
       const hasAircraft = value.aircraft != null
 
       await trpcClient.schedules.updateAssignment.mutate({
@@ -110,15 +109,10 @@ export default function EvaluatePersonnelModal({
         landingTime: hasAircraft ? value.landingTime : null,
         briefingTime: value.briefingTime,
         remarks: value.remarks,
-        obtainedGradeId: totals.incompleteCount > 0 ? null : totals.gradeId,
-        obtainedScoreValue:
-          totals.obtainedMarks === null || totals.incompleteCount > 0
-            ? null
-            : Number(totals.obtainedMarks.toFixed(2)),
-        obtainedScorePercentage:
-          totals.percentage === null || totals.incompleteCount > 0
-            ? null
-            : Number(totals.percentage.toFixed(2)),
+        obtainedGradeId: totals.gradeId,
+        // Overall score is always out of 100, so score === percentage.
+        obtainedScoreValue: totals.overall,
+        obtainedScorePercentage: totals.overall,
         grades: value.grades,
       })
     },
@@ -134,43 +128,39 @@ export default function EvaluatePersonnelModal({
     },
   })
 
-  const existingGradingAttributeMap = useMemo(() => {
-    const map = new Map<number, TGradingRowData>()
-    for (const grading of assignment.participantGradings) {
-      map.set(grading.gradingTemplateAttributeId, {
-        ...grading,
-        obtainedScoreValue: grading.obtainedScoreValue
-          ? Number(grading.obtainedScoreValue)
-          : null,
-      })
-    }
+  const defaultValues = useMemo<FormValues>(() => {
+    const existingByAttributeId = new Map(
+      assignment.participantGradings.map((g) => [
+        g.gradingTemplateAttributeId,
+        g,
+      ]),
+    )
 
-    return map
-  }, [assignment])
-
-  const defaultValues: FormValues = {
-    aircraft: assignment.aircraft
-      ? {
-          label: assignment.aircraft.name,
-          value: assignment.aircraft.id,
+    return {
+      aircraft: assignment.aircraft
+        ? { label: assignment.aircraft.name, value: assignment.aircraft.id }
+        : null,
+      attendanceStatus: assignment.attendanceStatus,
+      remarks: assignment.remarks ?? '',
+      takeoffTime: assignment.takeoffTime,
+      landingTime: assignment.landingTime,
+      aircraftTime: assignment.aircraftTime,
+      briefingTime: assignment.briefingTime,
+      grades: gradingTemplate.gradingTemplateAttributes.map((attribute) => {
+        const existing = existingByAttributeId.get(attribute.id)
+        return {
+          gradingTemplateAttributeId: attribute.id,
+          gradingScaleOptionId: existing?.gradingScaleOptionId ?? null,
+          // `!= null` so a saved score of 0 is kept.
+          obtainedScoreValue:
+            existing?.obtainedScoreValue != null
+              ? Number(existing.obtainedScoreValue)
+              : null,
+          status: existing?.status ?? 'pending',
         }
-      : null,
-    attendanceStatus: assignment.attendanceStatus,
-    remarks: assignment.remarks ?? '',
-    takeoffTime: assignment.takeoffTime,
-    landingTime: assignment.landingTime,
-    aircraftTime: assignment.aircraftTime,
-    grades: gradingTemplate.gradingTemplateAttributes.map((attribute) => {
-      const existing = existingGradingAttributeMap.get(attribute.id)
-      return {
-        gradingTemplateAttributeId: attribute.id,
-        gradingScaleOptionId: existing?.gradingScaleOptionId ?? null,
-        obtainedScoreValue: existing?.obtainedScoreValue ?? null,
-        status: existing?.status ?? ('pending' as const),
-      }
-    }),
-    briefingTime: assignment.briefingTime,
-  }
+      }),
+    }
+  }, [assignment, gradingTemplate])
 
   const form = useAppForm({
     defaultValues,
@@ -178,66 +168,36 @@ export default function EvaluatePersonnelModal({
     ...baseFormOptions,
   })
 
-  const takeoffTime = useSelector(
-    form.store,
-    (state) => state.values.takeoffTime,
-  )
   const isHasAircraft = useSelector(
     form.store,
     (state) => !!state.values.aircraft,
   )
 
-  const grades = useSelector(form.store, (state) => state.values.grades)
-
-  // eslint-disable-next-line react-hooks/preserve-manual-memoization
-  const totals = useMemo(
-    () => calcGradeTotals(grades, scaleOptions),
-    [grades, scaleOptions],
-  )
-
-  const gradesOptions = useMemo(() => {
-    const options =
-      gradingTemplate.gradingScale?.options.map((option) => ({
-        label: option.label,
-        value: option.id,
-      })) ?? []
-
-    options.push(notApplicableGradeOption)
-    return options
-  }, [gradingTemplate])
-
-  const handleGradeChange = (
+  const updateRow = (
     rowIndex: number,
-    gradingOptionId: number | null,
+    update: (row: GradeRowData) => GradeRowData,
   ) => {
-    if (gradingOptionId === notApplicableGradeOption.value) {
-      form.setFieldValue(`grades[${rowIndex}]`, (p) => ({
-        ...p,
-        gradingScaleOptionId: null,
-        obtainedScoreValue: null,
-        status: 'exempt',
-      }))
-      return
-    }
-    const option = scaleOptions.find(
-      (_option) => _option.id === gradingOptionId,
+    form.setFieldValue(
+      `grades[${rowIndex}]`,
+      update(form.state.values.grades[rowIndex]),
     )
-    if (!option) {
-      form.setFieldValue(`grades[${rowIndex}]`, (p) => ({
-        ...p,
-        gradingScaleOptionId: null,
-        obtainedScoreValue: null,
-        status: 'pending',
-      }))
-      return
-    } else {
-      form.setFieldValue(`grades[${rowIndex}]`, (p) => ({
-        ...p,
-        gradingScaleOptionId: gradingOptionId,
-        obtainedScoreValue: +option.point || 0,
-        status: 'scored',
-      }))
-    }
+  }
+
+  /** Apply one grade to every row that isn't Not Applicable. */
+  const setAllGrades = (optionId: number) => {
+    form.setFieldValue(
+      'grades',
+      form.state.values.grades.map((row) =>
+        applyGradeOption(row, optionId, scaleOptions),
+      ),
+    )
+  }
+
+  const setAllExempt = () => {
+    form.setFieldValue(
+      'grades',
+      form.state.values.grades.map((row) => setRowExempt(row, true)),
+    )
   }
 
   return (
@@ -255,6 +215,7 @@ export default function EvaluatePersonnelModal({
               {formatStartEndTime(startDateTime, endDateTime)}
             </DialogDescription>
           </DialogHeader>
+
           <DialogMain className="space-y-5">
             <FieldColumns className="gap-5" cols={2}>
               <form.AppField
@@ -278,58 +239,65 @@ export default function EvaluatePersonnelModal({
                   />
                 )}
               />
+
               <form.AppField
                 name="attendanceStatus"
                 children={(field) => (
                   <FieldSet>
                     <FieldLabel>Attendance</FieldLabel>
                     <RadioGroup
-                      className="flex gap-6 items-center"
-                      value={field.state.value}
-                      onValueChange={field.handleChange}
+                      className="flex items-center gap-6"
+                      value={field.state.value ?? ''}
+                      onValueChange={(value) =>
+                        field.handleChange(value as AttendanceStatus)
+                      }
                     >
-                      {ATTENDANCE_STATUS_OPTIONS.map((option) => (
-                        <Field
-                          key={option.value}
-                          orientation="horizontal"
-                          className="w-max"
-                        >
-                          <RadioGroupItem
-                            id={option.value}
-                            value={option.value}
-                          />
-                          <FieldLabel htmlFor={option.value}>
-                            {option.label}
-                          </FieldLabel>
-                        </Field>
-                      ))}
+                      {ATTENDANCE_STATUS_OPTIONS.map((option) => {
+                        const id = `attendance-${option.value}`
+                        return (
+                          <Field
+                            key={option.value}
+                            orientation="horizontal"
+                            className="w-max"
+                          >
+                            <RadioGroupItem id={id} value={option.value} />
+                            <FieldLabel htmlFor={id}>{option.label}</FieldLabel>
+                          </Field>
+                        )
+                      })}
                     </RadioGroup>
                     <FieldError errors={field.state.meta.errors} />
                   </FieldSet>
                 )}
               />
+
               <form.AppField
                 name="briefingTime"
                 children={(field) => (
                   <field.CDateField time label="Briefing Time" />
                 )}
               />
+
               {isHasAircraft ? (
                 <>
                   <form.AppField
+                    name="takeoffTime"
                     validators={{
                       onDynamic({ value }) {
+                        if (!value) return undefined
+                        if (!startDateTime) return 'Start time is not set'
+                        const takeoff = new Date(value)
+                        if (Number.isNaN(takeoff.getTime())) {
+                          return 'Invalid takeoff time'
+                        }
                         if (
-                          value &&
-                          (!startDateTime ||
-                            new Date(startDateTime) > new Date(value))
+                          takeoff.getTime() < new Date(startDateTime).getTime()
                         ) {
-                          return 'Takeoff time must be greater than start time'
+                          return 'Takeoff time must be after schedule start time'
                         }
                         return undefined
                       },
                     }}
-                    name="takeoffTime"
                     children={(field) => (
                       <field.CDateField time label="Takeoff Time" />
                     )}
@@ -337,11 +305,14 @@ export default function EvaluatePersonnelModal({
                   <form.AppField
                     name="landingTime"
                     validators={{
-                      onDynamic({ value }) {
+                      // Re-run when takeoff changes, so stale errors clear.
+                      onDynamic({ value, fieldApi }) {
+                        const takeoff =
+                          fieldApi.form.getFieldValue('takeoffTime')
                         if (
                           value &&
-                          takeoffTime &&
-                          new Date(takeoffTime) > new Date(value)
+                          takeoff &&
+                          new Date(takeoff) > new Date(value)
                         ) {
                           return 'Landing time must be after takeoff time'
                         }
@@ -350,12 +321,6 @@ export default function EvaluatePersonnelModal({
                     }}
                     children={(field) => (
                       <field.CDateField time label="Landing Time" />
-                    )}
-                  />
-                  <form.AppField
-                    name="aircraftTime"
-                    children={(field) => (
-                      <field.CDateField time label="Aircraft Time" />
                     )}
                   />
                 </>
@@ -373,17 +338,41 @@ export default function EvaluatePersonnelModal({
             />
 
             <div className="space-y-3 border-t pt-4">
-              <div>
+              <div className="flex flex-wrap items-center justify-between gap-4">
                 <p className="text-sm font-semibold">Grading</p>
+                <div className="flex gap-3">
+                  {gradeSelectOptions.map((option) => (
+                    <Button
+                      key={option.value}
+                      type="button"
+                      variant="secondary"
+                      size="sm"
+                      onClick={() => setAllGrades(option.value)}
+                    >
+                      {option.label}
+                    </Button>
+                  ))}
+                  <Button
+                    type="button"
+                    variant="secondary"
+                    size="sm"
+                    className="text-orange-700"
+                    onClick={setAllExempt}
+                  >
+                    Not Applicable
+                  </Button>
+                </div>
               </div>
+
               <Table
-                className="border rounded-md shadow-sm border-l-0 border-r-0"
+                className="rounded-md border border-l-0 border-r-0 shadow-sm"
                 fullGridLine
               >
                 <TableHeader>
                   <TableRow className="bg-muted/30">
                     <TableHead className="w-full">Category</TableHead>
                     <TableHead className="min-w-0">Grade</TableHead>
+                    <TableHead className="w-16 text-center">N/A</TableHead>
                     <TableHead className="w-28 text-center">Marks</TableHead>
                   </TableRow>
                 </TableHeader>
@@ -397,9 +386,8 @@ export default function EvaluatePersonnelModal({
                             name={`grades[${rowIndex}]`}
                             validators={{
                               onDynamic({ value }) {
-                                if (value.status === 'pending') {
+                                if (value.status === 'pending')
                                   return 'Required'
-                                }
                                 if (
                                   value.status === 'scored' &&
                                   !value.gradingScaleOptionId
@@ -409,36 +397,59 @@ export default function EvaluatePersonnelModal({
                                 return undefined
                               },
                             }}
-                            children={(f) => {
-                              return (
+                            children={(f) =>
+                              f.state.value.status === 'exempt' ? (
+                                <span className="flex h-9 w-42 items-center text-sm text-muted-foreground">
+                                  Not applicable
+                                </span>
+                              ) : (
                                 <f.CBasicSelect
                                   value={f.state.value.gradingScaleOptionId}
-                                  onValueChange={(value) => {
-                                    handleGradeChange(
-                                      rowIndex,
-                                      value === null ? null : Number(value),
+                                  onValueChange={(value) =>
+                                    updateRow(rowIndex, (r) =>
+                                      applyGradeOption(
+                                        r,
+                                        value === null ? null : Number(value),
+                                        scaleOptions,
+                                      ),
                                     )
-                                  }}
+                                  }
                                   placeholder="Select grade"
-                                  options={gradesOptions}
-                                  className={cn(
-                                    'w-42',
-                                    f.state.value.status === 'exempt' &&
-                                      `text-orange-700`,
-                                  )}
+                                  options={gradeSelectOptions}
+                                  className="w-42"
                                 />
                               )
-                            }}
+                            }
+                          />
+                        </TableCell>
+                        <TableCell className="text-center">
+                          <form.Subscribe
+                            selector={(state) =>
+                              state.values.grades[rowIndex]?.status === 'exempt'
+                            }
+                            children={(isExempt) => (
+                              <input
+                                type="checkbox"
+                                className="size-4 cursor-pointer accent-primary"
+                                aria-label={`Not applicable: ${row.gradingAttribute?.name ?? ''}`}
+                                checked={isExempt}
+                                onChange={(e) =>
+                                  updateRow(rowIndex, (r) =>
+                                    setRowExempt(r, e.target.checked),
+                                  )
+                                }
+                              />
+                            )}
                           />
                         </TableCell>
                         <TableCell className="text-center tabular-nums">
                           <form.Subscribe
                             selector={(state) =>
-                              state.values.grades[rowIndex].obtainedScoreValue
+                              state.values.grades[rowIndex]?.obtainedScoreValue
                             }
-                            children={(value) => {
-                              return value != null ? formatMarks(value) : '—'
-                            }}
+                            children={(value) =>
+                              value != null ? formatMarks(value) : '—'
+                            }
                           />
                         </TableCell>
                       </TableRow>
@@ -447,35 +458,17 @@ export default function EvaluatePersonnelModal({
                 </TableBody>
               </Table>
 
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <SummaryCard
-                  label="Obtained"
-                  value={
-                    totals.obtainedMarks === null
-                      ? '—'
-                      : `${formatMarks(totals.obtainedMarks)}/${formatMarks(totals.remainingMarks)}`
-                  }
-                />
-                <SummaryCard
-                  label="Exempted"
-                  value={formatMarks(totals.exemptMarks)}
-                />
-                <SummaryCard
-                  label="Percentage"
-                  value={
-                    totals.roundedPercentage === null
-                      ? '—'
-                      : `${totals.roundedPercentage}%`
-                  }
-                />
-                <SummaryCard
-                  label="Overall grade"
-                  value={totals.gradeLabel === null ? '—' : totals.gradeLabel}
-                  highlight
-                />
-              </div>
+              <form.Subscribe
+                selector={(state) => state.values.grades}
+                children={(grades) => (
+                  <GradingSummary
+                    totals={calcGradeTotals(grades, scaleOptions)}
+                  />
+                )}
+              />
             </div>
           </DialogMain>
+
           <DialogFooter className="py-2">
             <Button type="button" variant="outline" onClick={onClose}>
               Cancel
@@ -490,45 +483,26 @@ export default function EvaluatePersonnelModal({
   )
 }
 
-function calcGradeTotals(
-  rowsArray: FormValues['grades'],
-  scaleOptions: NonNullable<GradingTemplate['gradingScale']>['options'],
-) {
-  const categoryMarks = 100
-  const paperMarks = rowsArray.length * categoryMarks
-  const exemptCount = rowsArray.filter((row) => row.status === 'exempt').length
-  const exemptMarks = exemptCount * categoryMarks
-  const remainingMarks = paperMarks - exemptMarks
-  const obtainedMarks = rowsArray
-    .filter((row) => row.status !== 'exempt')
-    .reduce((sum, row) => sum + (row.obtainedScoreValue ?? 0), 0)
-  const percentage =
-    remainingMarks === 0 ? 0 : (obtainedMarks / remainingMarks) * 100
-  const roundedPercentage = Math.round(percentage)
-  const grade = scaleOptions.find(
-    (item) =>
-      roundedPercentage >= Number(item.lowerBound) &&
-      roundedPercentage <= Number(item.upperBound),
+function GradingSummary({ totals }: { totals: GradeTotals }) {
+  const { overall, gradedCount, totalCount, exemptCount, gradeLabel } = totals
+  return (
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+      <SummaryCard
+        label="Overall score"
+        value={
+          overall === null
+            ? '—'
+            : `${formatMarks(overall)}/${MAX_CATEGORY_MARKS}`
+        }
+      />
+      <SummaryCard
+        label="Graded"
+        value={`${gradedCount}/${totalCount - exemptCount}`}
+      />
+      <SummaryCard label="Exempted" value={String(exemptCount)} />
+      <SummaryCard label="Overall grade" value={gradeLabel ?? '—'} highlight />
+    </div>
   )
-  const incompleteCount = rowsArray.filter(
-    (row) => row.status !== 'exempt' && row.gradingScaleOptionId == null,
-  ).length
-
-  const isAllGraded = incompleteCount === 0
-
-  return {
-    paperMarks,
-    exemptMarks,
-    remainingMarks,
-    incompleteCount,
-
-    //
-    obtainedMarks: isAllGraded ? obtainedMarks : null,
-    percentage: isAllGraded ? percentage : null,
-    roundedPercentage: isAllGraded ? roundedPercentage : null,
-    gradeLabel: isAllGraded ? (grade?.label ?? 'N/A') : null,
-    gradeId: isAllGraded ? (grade?.id ?? null) : null,
-  }
 }
 
 function SummaryCard({
@@ -551,8 +525,4 @@ function SummaryCard({
       <p className="mt-0.5 font-semibold tabular-nums">{value}</p>
     </div>
   )
-}
-
-function formatMarks(value: number) {
-  return Number.isInteger(value) ? String(value) : value.toFixed(2)
 }

@@ -129,10 +129,7 @@ export function AppTable<TData extends RowData>({
       >
         <TableHeader>
           {table.getHeaderGroups().map((group) => (
-            <TableRow
-              key={group.id}
-              className="top-0 z-10 sticky bg-[hsl(156_33%_35%)]"
-            >
+            <TableRow key={group.id} className="top-0 z-10 sticky">
               {group.headers.map((header) => {
                 const isSorted = header.column.getIsSorted()
                 const canSort = header.column.getCanSort()
@@ -142,8 +139,8 @@ export function AppTable<TData extends RowData>({
                     key={header.id}
                     colSpan={header.colSpan}
                     className={cn(
-                      'font-medium text-sm bg-[hsl(156_33%_35%)] text-neutral-800 backdrop-blur-lg top-0 relative min-w-0 overflow-visible border-b first:border-l-0 hover:border-l hover:border-r last:border-r-0',
-                      'bg-blue-300',
+                      'font-medium text-sm backdrop-blur-lg top-0 relative min-w-0 overflow-visible border-b first:border-l-0 hover:border-l hover:border-r last:border-r-0',
+                      // bg-[hsl(156_33%_35%)]
                     )}
                     style={{
                       width: header.getSize(),
@@ -161,7 +158,7 @@ export function AppTable<TData extends RowData>({
                       <>
                         {canSort ? (
                           <button
-                            className="font-medium hover:font-bold hover:text-primary flex w-full min-w-0 items-center overflow-hidden py-1"
+                            className="font-medium hover:text-primary flex w-full min-w-0 items-center overflow-hidden py-1"
                             style={{
                               justifyContent:
                                 header.column.columnDef.meta?.align === 'center'

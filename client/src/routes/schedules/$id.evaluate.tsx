@@ -36,6 +36,7 @@ function RouteComponent() {
 
   const templateQ = useSuspenseQuery(
     trpc.gradingTemplate.getById.queryOptions(
+      // eslint-disable-next-line @typescript-eslint/no-unnecessary-type-assertion
       schedule.mission!.gradingTemplateId!,
     ),
   )
@@ -183,17 +184,17 @@ function RouteComponent() {
                           </span>
                           <div className="flex flex-col gap-0.5 text-xs text-muted-foreground">
                             <TimeLine
-                              label="Takeoff"
+                              label="Takeoff Time "
                               value={assignment.takeoffTime}
                             />
                             <TimeLine
-                              label="Landing"
+                              label="Landing Time"
                               value={assignment.landingTime}
                             />
-                            <TimeLine
+                            {/* <TimeLine
                               label="Aircraft"
                               value={assignment.aircraftTime}
-                            />
+                            /> */}
                           </div>
                         </div>
                       ) : (

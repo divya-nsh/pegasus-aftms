@@ -29,12 +29,11 @@ import {
   TrashIcon,
   AlertTriangleIcon,
   ClockIcon,
-  ClipboardCheckIcon,
   ArrowUpIcon,
   ArrowDownIcon,
 } from 'lucide-react'
 import { ActionMenu } from '@/components/table/action-menu'
-import GradeModal, { GradeStatusCell } from './grade-modal'
+import { GradeStatusCell } from './grade-modal'
 import { getPersonnelType, getQualificationLabel } from '@repo/shared'
 import toast from 'react-hot-toast'
 import { trpc } from '@/trpc'
@@ -225,14 +224,14 @@ export default function AssignmentLine({
                                   : '—'}
                               </span>
                             </div>
-                            <div className="flex items-center justify-between gap-2">
+                            {/* <div className="flex items-center justify-between gap-2">
                               <span>Aircraft</span>
                               <span className="tabular-nums text-foreground">
                                 {assignment.aircraftTime
                                   ? formatDate(assignment.aircraftTime, true)
                                   : '—'}
                               </span>
-                            </div>
+                            </div> */}
                           </div>
                         </div>
                       ) : (
@@ -326,7 +325,7 @@ export default function AssignmentLine({
           onSave={handleSave}
         />
       )}
-      {gradeIndex != null && values[gradeIndex] && (
+      {/* {gradeIndex != null && values[gradeIndex] && (
         <GradeModal
           key={gradeIndex}
           gradingTemplateId={gradingTemplateId}
@@ -342,7 +341,7 @@ export default function AssignmentLine({
             toast.success('Grade saved on line')
           }}
         />
-      )}
+      )} */}
     </div>
   )
 }
@@ -568,7 +567,7 @@ function AssignmentsModal({
             )}
           />
           <>
-            {isHasAircraft ? (
+            {/* {isHasAircraft ? (
               <FieldColumns className="gap-5 border-t pt-4" cols={2}>
                 <form.AppField
                   name="takeoffTime"
@@ -612,9 +611,9 @@ function AssignmentsModal({
                   )}
                 />
               </FieldColumns>
-            ) : null}
+            ) : null} */}
 
-            <form.AppField
+            {/* <form.AppField
               name="attendanceStatus"
               children={(f) => (
                 <f.CBasicSelect
@@ -628,7 +627,7 @@ function AssignmentsModal({
                   ]}
                 />
               )}
-            />
+            /> */}
           </>
         </DialogMain>
         <DialogFooter className="py-2" hidden={formMode === 'view'}>

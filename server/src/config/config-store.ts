@@ -2,16 +2,20 @@ import { ConfigStore } from "#/lib/config-store.js";
 import { z } from "zod";
 import { IS_PACKAGED } from "./constants.js";
 import crypto from "node:crypto";
+import path from "node:path";
+import { getAppDirname } from "#/dirname.js";
 
 const appConfigSchema = z.object({
-  port: z.number().default(3000),
+  port: z.number().default(6001),
   databaseUrl: z.url(),
   sessionSecret: z.string().default("bad63b1911121e20ff4d"),
   isSetUpDone: z.boolean().optional(),
 });
 
 const configStore = new ConfigStore({
-  file: IS_PACKAGED ? "./data/config.jsonc" : "./.config.jsonc",
+  file: IS_PACKAGED
+    ? path.join(getAppDirname(false), "config.jsonc")
+    : path.join(getAppDirname(false), ".config.jsonc"),
   schema: appConfigSchema,
   version: 1,
   description: `
@@ -22,7 +26,7 @@ Guide:
 
   `.trim(),
   initial: {
-    databaseUrl: "postgresql://postgres:123@localhost:5432/AFTMS",
+    databaseUrl: "postgresql://postgres:<your_password>@localhost:5432/AFTMS",
     port: IS_PACKAGED ? 7001 : 6001,
     sessionSecret: crypto.randomBytes(16).toString("hex"),
   },

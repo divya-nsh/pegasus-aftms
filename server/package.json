@@ -9,20 +9,13 @@
   },
   "private": true,
   "pkg": {
-    "scripts": [],
     "assets": [
       "node_modules/drizzle-orm/**/*",
       "client-dist/**/*",
       "dist/client-dist/**/*",
       "public/**/*",
       "migrations/**/*"
-    ],
-    "targets": [
-      "node24-win-x64"
-    ],
-    "public": true,
-    "bytecode": false,
-    "outputPath": "bin"
+    ]
   },
   "scripts": {
     "start": "node ./dist/index.js",
@@ -34,7 +27,7 @@
     "db:push": "drizzle-kit push",
     "db:generate": "drizzle-kit generate",
     "db:studio": "drizzle-kit studio",
-    "pkg": "pnpm build && pkg ."
+    "pkg": "pnpm build && tsx pkg.config.ts"
   },
   "keywords": [],
   "author": "",
@@ -48,6 +41,7 @@
     "@types/mime-types": "^3.0.1",
     "@types/morgan": "^1.9.10",
     "@types/node": "^22.20.1",
+    "@yao-pkg/pkg": "^6.23.0",
     "drizzle-kit": "1.0.0-rc.4",
     "esbuild": "^0.28.2",
     "prettier": "3.9.6",

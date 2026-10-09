@@ -303,7 +303,7 @@ const scheduleRouter = router({
         // aircraftId: data.aircraftId,
         // instructorId: data.instructorId,
         // pilotId: data.pilotId,
-        status: "draft",
+        status: data.status === "published" ? "published" : "draft",
         remarks: data.remarks,
         areaId: data.areaId,
       };
