@@ -1,4 +1,5 @@
 import db from "#/db/db.js";
+import { withAuditColumns } from "#/db/query-utilts.js";
 import {
   aircraftTable,
   missionScheduleTable,
@@ -28,23 +29,10 @@ const updateSchema = createSchema.extend({
 
 const missionRouter = router({
   getAll: protectedProcedure.query(async () => {
-    const items = await db
-      .select({
-        id: missionTable.id,
-        name: missionTable.name,
-        description: missionTable.description,
-        aircraftId: missionTable.aircraftId,
-        gradingTemplateId: missionTable.gradingTemplateId,
-        durationMinutes: missionTable.durationMinutes,
-        createdAt: missionTable.createdAt,
-        updatedAt: missionTable.updatedAt,
-        aircraftName: aircraftTable.name,
-        aircraftTailNumber: aircraftTable.tailNumber,
-        missionType: missionTable.missionType,
-      })
-      .from(missionTable)
-      .leftJoin(aircraftTable, eq(missionTable.aircraftId, aircraftTable.id))
-      .orderBy(desc(missionTable.id));
+    const items = await db.query.missionTable.findMany({
+      with: withAuditColumns(),
+      orderBy: { id: "desc" },
+    });
 
     return {
       items,

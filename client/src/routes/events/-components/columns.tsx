@@ -7,6 +7,7 @@ import type { TrpcRouterOutputs } from 'server/router'
 import { getMissionType } from '@repo/shared'
 import { ActionMenu } from '@/components/table/action-menu'
 import { linkOptions } from '@tanstack/react-router'
+import { metaColumns } from '@/components/table/columns-utilts'
 
 type TMissionListItem = TrpcRouterOutputs['missions']['getAll']['items'][number]
 
@@ -58,6 +59,7 @@ const columns: ColumnDef<TTableFeatures, TMissionListItem>[] = ch.columns([
       preventDefaultRowClick: true,
     },
     minSize: 70,
+    enableHiding: false,
   }),
   ch.accessor('name', {
     header: 'Name',
@@ -90,6 +92,14 @@ const columns: ColumnDef<TTableFeatures, TMissionListItem>[] = ch.columns([
   ch.accessor('description', {
     header: 'Description',
   }),
+  ...metaColumns<TMissionListItem>(),
 ])
+
+export const initialColumnVisibility = {
+  createdById: false,
+  updatedById: false,
+  createdAt: false,
+  updatedAt: false,
+}
 
 export default columns

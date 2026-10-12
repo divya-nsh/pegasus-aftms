@@ -18,6 +18,7 @@ import {
 } from "./schedule.schema.js";
 import type { TMissionStatus } from "./schedule.schema.js";
 import scheduleService from "./schedule.service.js";
+import { withAuditColumns } from "#/db/query-utilts.js";
 
 async function getScheduleOrThrow(id: number) {
   const [row] = await db
@@ -136,7 +137,14 @@ const scheduleRouter = router({
       const items = await db.query.missionScheduleTable.findMany({
         with: {
           mission: true,
-          area: true,
+          area: {
+            columns: {
+              id: true,
+              name: true,
+              code: true,
+            },
+          },
+          ...withAuditColumns(),
         },
         orderBy: {
           id: "desc",
@@ -288,6 +296,40 @@ const scheduleRouter = router({
 
       return data;
     }),
+
+  getDasbhoardStats: protectedProcedure
+    .input(
+      z.object({
+        personnelId: z.number().optional(),
+        today: z.coerce.date(),
+      }),
+    )
+    .query(async ({ ctx, input }) => {
+      return scheduleService.getPilotDashboardStats(
+        input.personnelId || ctx.user.personnelId || 0,
+        input.today.toISOString(),
+      );
+    }),
+
+  checkConflictingSchedule: protectedProcedure
+    .input(
+      z.object({
+        personnelId: z.number(),
+        startDateTime: z.coerce.date(),
+        endDateTime: z.coerce.date(),
+      }),
+    )
+    .query(async ({ input }) => {
+      const { personnelId, startDateTime, endDateTime } = input;
+
+      return scheduleService.chechConflictingSchedule(
+        personnelId,
+        startDateTime,
+        endDateTime,
+      );
+    }),
+
+  // ---------- Mutations ---------------------------
 
   create: protectedProcedure.input(createSchema).mutation(async ({ input }) => {
     const { assignments, ...data } = input;
@@ -481,24 +523,6 @@ const scheduleRouter = router({
       return deleted;
     }),
 
-  checkConflictingSchedule: protectedProcedure
-    .input(
-      z.object({
-        personnelId: z.number(),
-        startDateTime: z.coerce.date(),
-        endDateTime: z.coerce.date(),
-      }),
-    )
-    .query(async ({ input }) => {
-      const { personnelId, startDateTime, endDateTime } = input;
-
-      return scheduleService.chechConflictingSchedule(
-        personnelId,
-        startDateTime,
-        endDateTime,
-      );
-    }),
-
   setStatus: protectedProcedure
     .input(
       z.object({
@@ -545,20 +569,6 @@ const scheduleRouter = router({
         });
 
       return updated;
-    }),
-
-  getDasbhoardStats: protectedProcedure
-    .input(
-      z.object({
-        personnelId: z.number().optional(),
-        today: z.coerce.date(),
-      }),
-    )
-    .query(async ({ ctx, input }) => {
-      return scheduleService.getPilotDashboardStats(
-        input.personnelId || ctx.user.personnelId || 0,
-        input.today.toISOString(),
-      );
     }),
 });
 

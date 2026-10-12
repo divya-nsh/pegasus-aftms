@@ -1,5 +1,6 @@
 import db from "#/db/db.js";
 import { areaTable } from "#/db/schema.js";
+import { withAuditColumns } from "#/db/query-utilts.js";
 import { protectedProcedure, router } from "#/trpc.js";
 import { and, eq, ne, sql } from "drizzle-orm";
 import { z } from "zod";
@@ -20,8 +21,12 @@ const deleteSchema = z.object({
 });
 
 const areaMasterRouter = router({
+  // ---------- Queries Goes Below ---------------------------
   getAll: protectedProcedure.query(async () => {
-    const areas = await db.select().from(areaTable);
+    const areas = await db.query.areaTable.findMany({
+      with: withAuditColumns(),
+      orderBy: { id: "desc" },
+    });
 
     return {
       items: areas,
@@ -46,16 +51,11 @@ const areaMasterRouter = router({
       return area?.id ?? false;
     }),
 
+  // ---------- Mutations Goes Below ---------------------------
   create: protectedProcedure.input(createSchema).mutation(async ({ input }) => {
-    const { name, code, address, description } = input;
     const area = await db
       .insert(areaTable)
-      .values({
-        name,
-        code,
-        address,
-        description,
-      })
+      .values(input)
       .returning({ id: areaTable.id });
     return area;
   }),
@@ -69,6 +69,7 @@ const areaMasterRouter = router({
       .returning({ id: areaTable.id });
     return area;
   }),
+
   delete: protectedProcedure.input(deleteSchema).mutation(async ({ input }) => {
     const { toDeleteId } = input;
     const area = await db

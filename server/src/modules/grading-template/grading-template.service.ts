@@ -3,6 +3,7 @@ import {
   gradingTemplateAttributeTable,
   gradingTemplateTable,
 } from "#/db/schema.js";
+import { withAuditColumns } from "#/db/query-utilts.js";
 import { diffIds } from "#/lib/diffIds.js";
 import { TRPCError } from "@trpc/server";
 import { and, eq, inArray, ne, sql } from "drizzle-orm";
@@ -24,6 +25,7 @@ const templateWith = {
     with: { gradingAttribute: true },
     orderBy: { sortOrder: "asc" },
   },
+  ...withAuditColumns(),
 } as const;
 
 class GradingTemplateService {
@@ -82,6 +84,8 @@ class GradingTemplateService {
 
     return template?.id ?? false;
   }
+
+  // ---------- Mutations Goes Below ---------------------------
 
   async create(values: TCreateGradingTemplate) {
     const nameExists = await this.isNameExists(values.name);

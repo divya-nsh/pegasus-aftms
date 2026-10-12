@@ -35,6 +35,10 @@ import RefreshButton from '@/components/table/refresh-button'
 import { AccessControl, useUserCan } from '@/context/auth-context'
 import { protectRouteBeforeLoad } from '@/lib/utils'
 import { useModalForm } from '@/hooks/use-form-modal'
+import {
+  metaColumns,
+  metaHiddenColumns,
+} from '@/components/table/columns-utilts'
 
 export const Route = createFileRoute('/grading-scale/')({
   component: RouteComponent,
@@ -87,6 +91,7 @@ const columns: ColumnDef<TTableFeatures, TGradingScaleListItem>[] = ch.columns([
       align: 'center',
     },
     minSize: 70,
+    enableHiding: false,
   }),
   ch.accessor('name', {
     header: 'Name',
@@ -107,6 +112,7 @@ const columns: ColumnDef<TTableFeatures, TGradingScaleListItem>[] = ch.columns([
       align: 'center',
     },
   }),
+  ...metaColumns<TGradingScaleListItem>(),
 ])
 
 function RouteComponent() {
@@ -168,10 +174,7 @@ function RouteComponent() {
     getRowId: (row) => row.id.toString(),
     columns,
     initialState: {
-      pagination: {
-        pageIndex: 0,
-        pageSize: 50,
-      },
+      columnVisibility: metaHiddenColumns,
     },
     meta: {
       onRowAction: (action, rowId) => {

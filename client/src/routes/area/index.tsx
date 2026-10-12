@@ -35,6 +35,10 @@ import RefreshButton from '@/components/table/refresh-button'
 import { protectRouteBeforeLoad } from '@/lib/utils'
 import NewButton from '@/components/buttons/new-button'
 import { AccessControl, useUserCan } from '@/context/auth-context'
+import {
+  metaColumns,
+  metaHiddenColumns,
+} from '@/components/table/columns-utilts'
 
 export const Route = createFileRoute('/area/')({
   component: RouteComponent,
@@ -86,12 +90,12 @@ const columns: ColumnDef<TTableFeatures, TAreaListItem>[] = ch.columns([
       preventDefaultRowClick: true,
     },
     minSize: 70,
+    enableHiding: false,
   }),
   ch.accessor('code', {
     header: 'Code',
     size: 150,
   }),
-
   ch.accessor('name', {
     header: 'Name',
   }),
@@ -102,15 +106,7 @@ const columns: ColumnDef<TTableFeatures, TAreaListItem>[] = ch.columns([
     header: 'Description',
   }),
 
-  // ch.accessor('createdAt', {
-  //   header: 'Created At',
-  //   cell: (info) => formatDate(info.getValue<Date>(), true),
-  // }),
-
-  // ch.accessor('updatedAt', {
-  //   header: 'Updated At',
-  //   cell: (info) => formatDate(info.getValue<Date>(), true),
-  // }),
+  ...metaColumns<TAreaListItem>(),
 ])
 
 function RouteComponent() {
@@ -173,10 +169,7 @@ function RouteComponent() {
     getRowId: (row) => row.id.toString(),
     columns,
     initialState: {
-      pagination: {
-        pageIndex: 0,
-        pageSize: 50,
-      },
+      columnVisibility: metaHiddenColumns,
     },
     meta: {
       onRowAction: (action, rowId) => {
@@ -194,7 +187,6 @@ function RouteComponent() {
       },
       onRowDoubleClick: (rowId) => {
         const row = table.getRow(rowId).original
-        // eslint-disable-next-line @typescript-eslint/no-unnecessary-condition
         if (row) openModal(row)
       },
     },

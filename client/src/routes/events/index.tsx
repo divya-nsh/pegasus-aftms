@@ -25,7 +25,7 @@ import PageCard, {
 } from '@/components/layout/PageCard'
 import RefreshButton from '@/components/table/refresh-button'
 import NewButton from '@/components/buttons/new-button'
-import columns from './-components/columns'
+import columns, { initialColumnVisibility } from './-components/columns'
 import z from 'zod'
 import { protectRouteBeforeLoad } from '@/lib/utils'
 import { AccessControl, useAuth } from '@/context/auth-context'
@@ -109,10 +109,7 @@ function RouteComponent() {
     getRowId: (row) => row.id.toString(),
     columns,
     initialState: {
-      pagination: {
-        pageIndex: 0,
-        pageSize: 50,
-      },
+      columnVisibility: initialColumnVisibility,
     },
     meta: {
       onRowAction: (action, rowId) => {

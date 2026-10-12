@@ -23,7 +23,13 @@ import configStore from "./config/config-store.js";
 import { getAppDirname } from "./dirname.js";
 import { logger } from "./lib/logger.js";
 import { runSetupServer } from "./setup.js";
-import { isPortAvailable } from "./lib/utils.js";
+import { isPortAvailable, openUrl } from "./lib/utils.js";
+
+if (process.argv.includes("--open-site")) {
+  // Utility to open site in browser , used when making installer setup
+  await openUrl(`http://localhost:${configStore.config.port}`);
+  process.exit(0);
+}
 
 if (process.argv.includes("--list-files")) {
   const modulePath = fileURLToPath(import.meta.url);
@@ -127,13 +133,6 @@ async function bootstrap() {
   await mediaService.startCleanupJob();
   await drizzleSessionStore.startCleanupJob();
 
-  // Check port is available
-  const port = configStore.config.port;
-  if (!(await isPortAvailable(port))) {
-    logger.error(`Port ${port} is already in use`);
-    process.exit(1);
-  }
-
   app.listen(configStore.config.port, () => {
     logger.info(`✔ Server Started at port ${configStore.config.port}!`);
     console.log(`> Site URL: http://localhost:${configStore.config.port}`);
@@ -144,7 +143,14 @@ async function bootstrap() {
   });
 }
 
-bootstrap();
+// Check port is available
+const port = configStore.config.port;
+if (!(await isPortAvailable(port))) {
+  throw new Error(
+    `Failed to start server, Port ${port} is already in use, try using a different port`,
+  );
+}
+
 if (configStore.config.isSetUpDone) {
   await bootstrap();
 } else {

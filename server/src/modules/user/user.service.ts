@@ -3,14 +3,15 @@ import { userTable } from "#/db/schema.js";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { TRPCError } from "@trpc/server";
+import { createdMeta, updatedMeta } from "#/lib/utils.js";
 
 type TCreateUser = {
   username: string;
   password: string;
   email?: string;
-  name: string;
+  name?: string | null;
   isActive: boolean;
-  roleId: number;
+  roleId?: number | null;
 };
 
 const hashPassword = async (password: string) => {
@@ -22,40 +23,58 @@ const comparePassword = async (password: string, hash: string) => {
 };
 
 class UserService {
-  async createUser(values: TCreateUser, tx?: DBTransaction) {
+  async createUser(
+    values: TCreateUser,
+    createdById: number | null,
+    tx?: DBTransaction,
+  ) {
+    const password = await hashPassword(values.password);
     const user = await (tx ?? db)
       .insert(userTable)
       .values({
         username: values.username,
-        password: await hashPassword(values.password),
+        password,
         email: values.email,
-        name: values.name,
+        name: values.name ?? "",
         isActive: values.isActive,
-        roleId: values.roleId,
+        roleId: values.roleId ?? null,
+        ...createdMeta(createdById),
       })
-      .returning();
+      .returning({ id: userTable.id });
     return user;
   }
 
   async updateUser(
     id: number,
     values: Partial<TCreateUser>,
+    updatedById: number,
     tx?: DBTransaction,
   ) {
-    await (tx ?? db)
+    const password = values.password
+      ? await hashPassword(values.password)
+      : undefined;
+    const [updated] = await (tx ?? db)
       .update(userTable)
       .set({
         username: values.username,
-        password: values.password
-          ? await hashPassword(values.password)
-          : undefined,
+        password,
         email: values.email,
         name: values.name,
         isActive: values.isActive ?? undefined,
         roleId: values.roleId ?? undefined,
+        ...updatedMeta(updatedById),
       })
       .where(eq(userTable.id, id))
       .returning();
+
+    if (!updated) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "User not found",
+      });
+    }
+
+    return updated;
   }
 
   async validateCredintials(username: string, password: string) {

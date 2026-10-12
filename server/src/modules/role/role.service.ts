@@ -1,8 +1,9 @@
 import db from "#/db/db.js";
-import { roleTable } from "#/db/schema.js";
+import { roleTable, runWithCtx } from "#/db/schema.js";
 import { TRPCError } from "@trpc/server";
 import { eq } from "drizzle-orm";
 import { PERMISSIONS_SET, type TPermissionKey } from "./permissions.js";
+import { createdMeta, updatedMeta } from "#/lib/utils.js";
 
 type TCreateRole = {
   name: string;
@@ -31,27 +32,41 @@ const roleService = new (class {
     const roles = await db.select().from(roleTable);
     return roles;
   }
-  async create(payload: TCreateRole) {
-    const { name, permissions } = payload;
-
-    this.validatePermissions(permissions);
-
-    const role = await db.insert(roleTable).values({ name, permissions });
-    return role;
-  }
 
   async getById(id: number) {
     const role = await db.select().from(roleTable).where(eq(roleTable.id, id));
     return role;
   }
 
-  async update(id: number, payload: TCreateRole) {
+  async getByName(name: string) {
+    const [role] = await db
+      .select()
+      .from(roleTable)
+      .where(eq(roleTable.name, name))
+      .limit(1);
+    return role;
+  }
+
+  // ---------- Mutations ---------------------------
+
+  async create(payload: TCreateRole, userId: number) {
+    const { name, permissions } = payload;
+
+    this.validatePermissions(permissions);
+
+    const role = await db
+      .insert(roleTable)
+      .values({ name, permissions, ...createdMeta(userId) });
+    return role;
+  }
+
+  async update(id: number, payload: TCreateRole, userId: number) {
     await this.assertNotSystemRole(id);
     const { name, permissions } = payload;
     this.validatePermissions(permissions);
     const role = await db
       .update(roleTable)
-      .set({ name, permissions })
+      .set({ name, permissions, ...updatedMeta(userId) })
       .where(eq(roleTable.id, id));
     return role;
   }
@@ -69,19 +84,19 @@ const roleService = new (class {
         .from(roleTable)
         .where(eq(roleTable.name, systemRole.name));
       if (existingRole.length > 0) continue;
-      await db.insert(roleTable).values({ ...systemRole, isSystem: true });
+      await runWithCtx(null, () =>
+        db.insert(roleTable).values({
+          ...systemRole,
+          isSystem: true,
+          // Null means created by system
+          createdById: null,
+          updatedById: null,
+        }),
+      );
     }
   }
 
-  async getByName(name: string) {
-    const [role] = await db
-      .select()
-      .from(roleTable)
-      .where(eq(roleTable.name, name))
-      .limit(1);
-    return role;
-  }
-
+  //  ---------- Helper Methods ---------------------------
   async assertNotSystemRole(id: number) {
     const [role] = await this.getById(id);
     if (!role) {

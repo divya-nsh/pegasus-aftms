@@ -12,10 +12,106 @@ export const relations = defineRelations({ ...schema }, (r) => ({
       from: r.userTable.roleId,
       to: r.roleTable.id,
     }),
+    createdBy: r.one.userTable({
+      from: r.userTable.createdById,
+      to: r.userTable.id,
+    }),
+    updatedBy: r.one.userTable({
+      from: r.userTable.updatedById,
+      to: r.userTable.id,
+    }),
+  },
+  roleTable: {
+    createdBy: r.one.userTable({
+      from: r.roleTable.createdById,
+      to: r.userTable.id,
+    }),
+    updatedBy: r.one.userTable({
+      from: r.roleTable.updatedById,
+      to: r.userTable.id,
+    }),
   },
   personnelTable: {
     user: r.one.userTable({
       from: r.personnelTable.userId,
+      to: r.userTable.id,
+    }),
+    createdBy: r.one.userTable({
+      from: r.personnelTable.createdById,
+      to: r.userTable.id,
+    }),
+    updatedBy: r.one.userTable({
+      from: r.personnelTable.updatedById,
+      to: r.userTable.id,
+    }),
+  },
+  missionTable: {
+    createdBy: r.one.userTable({
+      from: r.missionTable.createdById,
+      to: r.userTable.id,
+    }),
+    updatedBy: r.one.userTable({
+      from: r.missionTable.updatedById,
+      to: r.userTable.id,
+    }),
+  },
+  aircraftTable: {
+    createdBy: r.one.userTable({
+      from: r.aircraftTable.createdById,
+      to: r.userTable.id,
+    }),
+    updatedBy: r.one.userTable({
+      from: r.aircraftTable.updatedById,
+      to: r.userTable.id,
+    }),
+  },
+  mediaTable: {
+    createdBy: r.one.userTable({
+      from: r.mediaTable.createdById,
+      to: r.userTable.id,
+    }),
+    updatedBy: r.one.userTable({
+      from: r.mediaTable.updatedById,
+      to: r.userTable.id,
+    }),
+  },
+  locationTable: {
+    createdBy: r.one.userTable({
+      from: r.locationTable.createdById,
+      to: r.userTable.id,
+    }),
+    updatedBy: r.one.userTable({
+      from: r.locationTable.updatedById,
+      to: r.userTable.id,
+    }),
+  },
+  areaTable: {
+    createdBy: r.one.userTable({
+      from: r.areaTable.createdById,
+      to: r.userTable.id,
+    }),
+    updatedBy: r.one.userTable({
+      from: r.areaTable.updatedById,
+      to: r.userTable.id,
+    }),
+  },
+  gradingAttributeTable: {
+    createdBy: r.one.userTable({
+      from: r.gradingAttributeTable.createdById,
+      to: r.userTable.id,
+    }),
+    updatedBy: r.one.userTable({
+      from: r.gradingAttributeTable.updatedById,
+      to: r.userTable.id,
+    }),
+  },
+  gradingScaleOptionTable: {
+    createdBy: r.one.userTable({
+      from: r.gradingScaleOptionTable.createdById,
+      to: r.userTable.id,
+    }),
+    updatedBy: r.one.userTable({
+      from: r.gradingScaleOptionTable.updatedById,
       to: r.userTable.id,
     }),
   },
@@ -32,6 +128,14 @@ export const relations = defineRelations({ ...schema }, (r) => ({
     area: r.one.areaTable({
       from: r.missionScheduleTable.areaId,
       to: r.areaTable.id,
+    }),
+    createdBy: r.one.userTable({
+      from: r.missionScheduleTable.createdById,
+      to: r.userTable.id,
+    }),
+    updatedBy: r.one.userTable({
+      from: r.missionScheduleTable.updatedById,
+      to: r.userTable.id,
     }),
   },
 
@@ -56,6 +160,14 @@ export const relations = defineRelations({ ...schema }, (r) => ({
       from: r.missionScheduleParticipantTable.id,
       to: r.missionScheduleParticipantGradingTable.missionScheduleParticipantId,
     }),
+    createdBy: r.one.userTable({
+      from: r.missionScheduleParticipantTable.createdById,
+      to: r.userTable.id,
+    }),
+    updatedBy: r.one.userTable({
+      from: r.missionScheduleParticipantTable.updatedById,
+      to: r.userTable.id,
+    }),
   },
   missionScheduleParticipantGradingTable: {
     gradingScaleOption: r.one.gradingScaleOptionTable({
@@ -66,12 +178,28 @@ export const relations = defineRelations({ ...schema }, (r) => ({
       from: r.missionScheduleParticipantGradingTable.gradingTemplateAttributeId,
       to: r.gradingTemplateAttributeTable.id,
     }),
+    createdBy: r.one.userTable({
+      from: r.missionScheduleParticipantGradingTable.createdById,
+      to: r.userTable.id,
+    }),
+    updatedBy: r.one.userTable({
+      from: r.missionScheduleParticipantGradingTable.updatedById,
+      to: r.userTable.id,
+    }),
   },
 
   gradingScaleTable: {
     options: r.many.gradingScaleOptionTable({
       from: r.gradingScaleTable.id,
       to: r.gradingScaleOptionTable.gradingScaleId,
+    }),
+    createdBy: r.one.userTable({
+      from: r.gradingScaleTable.createdById,
+      to: r.userTable.id,
+    }),
+    updatedBy: r.one.userTable({
+      from: r.gradingScaleTable.updatedById,
+      to: r.userTable.id,
     }),
   },
   gradingTemplateTable: {
@@ -83,11 +211,27 @@ export const relations = defineRelations({ ...schema }, (r) => ({
       from: r.gradingTemplateTable.id,
       to: r.gradingTemplateAttributeTable.gradingTemplateId,
     }),
+    createdBy: r.one.userTable({
+      from: r.gradingTemplateTable.createdById,
+      to: r.userTable.id,
+    }),
+    updatedBy: r.one.userTable({
+      from: r.gradingTemplateTable.updatedById,
+      to: r.userTable.id,
+    }),
   },
   gradingTemplateAttributeTable: {
     gradingAttribute: r.one.gradingAttributeTable({
       from: r.gradingTemplateAttributeTable.attributeId,
       to: r.gradingAttributeTable.id,
+    }),
+    createdBy: r.one.userTable({
+      from: r.gradingTemplateAttributeTable.createdById,
+      to: r.userTable.id,
+    }),
+    updatedBy: r.one.userTable({
+      from: r.gradingTemplateAttributeTable.updatedById,
+      to: r.userTable.id,
     }),
   },
 }));

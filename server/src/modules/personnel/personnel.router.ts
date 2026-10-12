@@ -8,6 +8,7 @@ import { z } from "zod";
 import { mediaService } from "../media/media.service.js";
 import userService from "../user/user.service.js";
 import roleService, { TRAINEE_ROLE_NAME } from "../role/role.service.js";
+import { withAuditColumns } from "#/db/query-utilts.js";
 
 const optionalText = z.string().optional();
 const AUTO_CODE_PREFIX = "PRS-";
@@ -83,6 +84,7 @@ async function createLinkedUser(
     firstName?: string | undefined;
     lastName?: string | undefined;
   },
+  userId: number,
 ) {
   const username = input.username?.trim();
   const password = input.password?.trim();
@@ -139,7 +141,7 @@ async function createLinkedUser(
       isActive: true,
       roleId: role.id,
     },
-    tx,
+    userId,
   );
 
   return user!.id;
@@ -147,10 +149,10 @@ async function createLinkedUser(
 
 const personnelRouter = router({
   getAll: protectedProcedure.query(async () => {
-    const personnel = await db
-      .select()
-      .from(personnelTable)
-      .orderBy(desc(personnelTable.id));
+    const personnel = await db.query.personnelTable.findMany({
+      with: withAuditColumns(),
+      orderBy: { id: "desc" },
+    });
 
     return {
       items: personnel,
@@ -189,139 +191,152 @@ const personnelRouter = router({
       };
     }),
 
-  create: protectedProcedure.input(createSchema).mutation(async ({ input }) => {
-    const res = await db.transaction(async (tx) => {
-      const [person] = await tx
-        .insert(personnelTable)
-        .values(personnelValues(input))
-        .returning({ id: personnelTable.id });
+  create: protectedProcedure
+    .input(createSchema)
+    .mutation(async ({ input, ctx }) => {
+      return await db.transaction(async (tx) => {
+        const [person] = await tx
+          .insert(personnelTable)
+          .values(personnelValues(input))
+          .returning({ id: personnelTable.id });
 
-      if (!person) {
-        throw new TRPCError({
-          code: "INTERNAL_SERVER_ERROR",
-          message: "Failed to create personnel",
-        });
-      }
-
-      if (input.isCreateUser) {
-        const userId = await createLinkedUser(tx, {
-          username: input.newUserUsername,
-          email: input.email,
-          password: input.newUserPassword,
-          firstName: input.firstName,
-          lastName: input.lastName,
-        });
-
-        await tx
-          .update(personnelTable)
-          .set({ userId })
-          .where(eq(personnelTable.id, person.id));
-      }
-
-      if (input.imageId) {
-        // Activate Media to prevent automatic deletion
-        await mediaService.activateMedia(input.imageId, tx);
-      }
-
-      if (!input.code || !input.code.trim()) {
-        const code = AUTO_CODE_PREFIX + person.id;
-        await tx
-          .update(personnelTable)
-          .set({ code })
-          .where(eq(personnelTable.id, person.id));
-      }
-
-      return person;
-    });
-
-    return res;
-  }),
-
-  update: protectedProcedure.input(updateSchema).mutation(async ({ input }) => {
-    const {
-      toEditId,
-      isCreateUser,
-      newUserUsername,
-      newUserPassword,
-      ...data
-    } = input;
-
-    await db.transaction(async (tx) => {
-      const [oldData] = await tx
-        .select({
-          imageId: personnelTable.imageId,
-          userId: personnelTable.userId,
-          firstName: personnelTable.firstName,
-          lastName: personnelTable.lastName,
-        })
-        .from(personnelTable)
-        .where(eq(personnelTable.id, toEditId))
-        .limit(1);
-
-      if (!oldData) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Personnel not found",
-        });
-      }
-
-      const nextImageId = input.imageId ?? null;
-      if (oldData.imageId !== nextImageId) {
-        if (oldData.imageId) {
-          await mediaService.markForDeletion(oldData.imageId, tx);
+        if (!person) {
+          throw new TRPCError({
+            code: "INTERNAL_SERVER_ERROR",
+            message: "Failed to create personnel",
+          });
         }
-        if (nextImageId) {
-          await mediaService.activateMedia(nextImageId, tx);
+
+        if (input.isCreateUser) {
+          const userId = await createLinkedUser(
+            tx,
+            {
+              username: input.newUserUsername,
+              email: input.email,
+              password: input.newUserPassword,
+              firstName: input.firstName,
+              lastName: input.lastName,
+            },
+            ctx.user.id,
+          );
+
+          await tx
+            .update(personnelTable)
+            .set({ userId })
+            .where(eq(personnelTable.id, person.id));
         }
-      }
 
-      let nextUserId = oldData.userId;
-      if (isCreateUser && !oldData.userId) {
-        nextUserId = await createLinkedUser(tx, {
-          username: newUserUsername,
-          email: data.email,
-          password: newUserPassword,
-          firstName: data.firstName,
-          lastName: data.lastName,
-        });
-      }
+        if (input.imageId) {
+          // Activate Media to prevent automatic deletion
+          await mediaService.activateMedia(input.imageId, tx);
+        }
 
-      if (oldData.userId) {
-        // Keep name in sync with personnel
-        await userService.updateUser(
-          oldData.userId,
-          {
-            name: `${data.firstName ?? oldData.firstName} ${data.lastName ?? oldData.lastName}`,
-          },
-          tx,
-        );
-      }
+        if (!input.code || !input.code.trim()) {
+          const code = AUTO_CODE_PREFIX + person.id;
+          await tx
+            .update(personnelTable)
+            .set({ code })
+            .where(eq(personnelTable.id, person.id));
+        }
 
-      const person = await tx
-        .update(personnelTable)
-        .set({
-          ...personnelValues(data),
-          imageId: nextImageId,
-          userId: nextUserId,
-        })
-        .where(eq(personnelTable.id, toEditId))
-        .returning({ id: personnelTable.id });
+        return person;
+      });
+    }),
 
-      if (person.length === 0) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Personnel not found",
-        });
-      }
-    });
-  }),
+  update: protectedProcedure
+    .input(updateSchema)
+    .mutation(async ({ input, ctx }) => {
+      const {
+        toEditId,
+        isCreateUser,
+        newUserUsername,
+        newUserPassword,
+        ...data
+      } = input;
+
+      await db.transaction(async (tx) => {
+        const [oldData] = await tx
+          .select({
+            imageId: personnelTable.imageId,
+            userId: personnelTable.userId,
+            firstName: personnelTable.firstName,
+            lastName: personnelTable.lastName,
+          })
+          .from(personnelTable)
+          .where(eq(personnelTable.id, toEditId))
+          .limit(1);
+
+        if (!oldData) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Personnel not found",
+          });
+        }
+
+        const nextImageId = input.imageId ?? null;
+        if (oldData.imageId !== nextImageId) {
+          if (oldData.imageId) {
+            await mediaService.markForDeletion(oldData.imageId, tx);
+          }
+          if (nextImageId) {
+            await mediaService.activateMedia(nextImageId, tx);
+          }
+        }
+
+        let nextUserId = oldData.userId;
+        if (isCreateUser && !oldData.userId) {
+          nextUserId = await createLinkedUser(
+            tx,
+            {
+              username: newUserUsername,
+              email: data.email,
+              password: newUserPassword,
+              firstName: data.firstName,
+              lastName: data.lastName,
+            },
+            ctx.user.id,
+          );
+        }
+
+        if (oldData.userId) {
+          // Keep name in sync with personnel
+          await userService.updateUser(
+            oldData.userId,
+            {
+              name: `${data.firstName ?? oldData.firstName} ${data.lastName ?? oldData.lastName}`,
+            },
+            ctx.user.id,
+          );
+        }
+
+        const person = await tx
+          .update(personnelTable)
+          .set({
+            ...personnelValues(data),
+            imageId: nextImageId,
+            userId: nextUserId,
+          })
+          .where(eq(personnelTable.id, toEditId))
+          .returning({ id: personnelTable.id });
+
+        if (person.length === 0) {
+          throw new TRPCError({
+            code: "NOT_FOUND",
+            message: "Personnel not found",
+          });
+        }
+      });
+    }),
 
   delete: protectedProcedure.input(deleteSchema).mutation(async ({ input }) => {
-    await db.transaction(async (tx) => {
+    return db.transaction(async (tx) => {
       const person = await tx
         .delete(personnelTable)
         .where(eq(personnelTable.id, input.toDeleteId))
-        .returning({ id: personnelTable.id, imageId: personnelTable.imageId });
+        .returning({
+          id: personnelTable.id,
+          imageId: personnelTable.imageId,
+        });
 
       if (person.length === 0) {
         throw new TRPCError({

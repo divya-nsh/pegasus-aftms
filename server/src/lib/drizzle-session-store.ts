@@ -1,5 +1,5 @@
 import type Tdb from "#/db/db.js";
-import { sessionTable } from "#/db/schema.js";
+import { runWithCtx, sessionTable } from "#/db/schema.js";
 import db from "#/db/db.js";
 import { Store, type SessionData } from "express-session";
 import { and, eq, gt, lt } from "drizzle-orm";
@@ -60,24 +60,31 @@ class DrizzleSessionStore extends Store {
 
       const expireAt = new Date(sess.cookie.expires);
 
-      await this.db
-        .insert(sessionTable)
-        .values({
-          sid,
-          //   userId,
-          sess,
-          expireAt,
-          version: this.version,
-        })
-        .onConflictDoUpdate({
-          target: sessionTable.sid,
-          set: {
-            // userId,
+      await runWithCtx(sess.user?.id ?? null, () =>
+        this.db
+          .insert(sessionTable)
+          .values({
+            sid,
+            //   userId,
             sess,
             expireAt,
             version: this.version,
-          },
-        });
+            userId: sess.user?.id,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+          })
+          .onConflictDoUpdate({
+            target: sessionTable.sid,
+            set: {
+              // userId,
+              sess,
+              expireAt,
+              version: this.version,
+              userId: sess.user?.id,
+              updatedAt: new Date(),
+            },
+          }),
+      );
 
       callback?.(null);
     } catch (error) {

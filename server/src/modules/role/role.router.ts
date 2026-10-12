@@ -13,13 +13,15 @@ const roleRouter = router({
   getAll: protectedProcedure.query(() => roleService.getAll()),
   create: protectedProcedure
     .input(createRoleSchema)
-    .mutation(({ input }) => roleService.create(input)),
+    .mutation(({ input, ctx }) => roleService.create(input, ctx.user.id)),
   getById: protectedProcedure
     .input(z.number())
     .query(({ input }) => roleService.getById(input)),
   update: protectedProcedure
     .input(createRoleSchema.extend({ id: z.number() }))
-    .mutation(({ input }) => roleService.update(input.id, input)),
+    .mutation(({ input, ctx }) =>
+      roleService.update(input.id, input, ctx.user.id),
+    ),
   delete: protectedProcedure
     .input(z.number())
     .mutation(({ input }) => roleService.delete(input)),

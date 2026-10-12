@@ -36,6 +36,10 @@ import RefreshButton from '@/components/table/refresh-button'
 import { AccessControl, useUserCan } from '@/context/auth-context'
 import { useModalForm } from '@/hooks/use-form-modal'
 import { BlockingLoaderOverlay } from '@/components/loaders/BlockingLoader'
+import {
+  metaColumns,
+  metaHiddenColumns,
+} from '@/components/table/columns-utilts'
 
 export const Route = createFileRoute('/locations/')({
   component: RouteComponent,
@@ -118,6 +122,8 @@ const columns: ColumnDef<TTableFeatures, TLocationListItem>[] = ch.columns([
     header: 'Description',
   }),
 
+  ...metaColumns<TLocationListItem>(),
+
   // ch.accessor('createdAt', {
   //   header: 'Created At',
   //   cell: (info) => formatDate(info.getValue<Date>(), true),
@@ -186,10 +192,7 @@ function RouteComponent() {
     getRowId: (row) => row.id.toString(),
     columns,
     initialState: {
-      pagination: {
-        pageIndex: 0,
-        pageSize: 50,
-      },
+      columnVisibility: metaHiddenColumns,
     },
     meta: {
       onRowAction: (action, rowId) => {

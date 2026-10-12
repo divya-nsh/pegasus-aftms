@@ -62,6 +62,10 @@ import {
 import type { PrintableSchedule } from './-components/print-schedule'
 import { GraddingSheetModal } from './$id.grade'
 import { protectRouteBeforeLoad } from '@/lib/utils'
+import {
+  metaColumns,
+  metaHiddenColumns,
+} from '@/components/table/columns-utilts'
 
 export const Route = createFileRoute('/schedules/')({
   component: RouteComponent,
@@ -207,18 +211,7 @@ const columns: ColumnDef<TTableFeatures, TScheduleListItem>[] = ch.columns([
     cell: (info) => info.getValue() || '-',
   }),
 
-  ch.accessor('createdAt', {
-    header: 'Created At',
-    size: 130,
-    cell: (info) => {
-      const value = info.getValue()
-      return (
-        <span className="text-sm" title={formatDate(value, true)}>
-          {formatDate(value, false)}
-        </span>
-      )
-    },
-  }),
+  ...metaColumns<TScheduleListItem>(),
 ])
 
 function RouteComponent() {
@@ -336,10 +329,7 @@ function RouteComponent() {
     getRowId: (row) => row.id.toString(),
     columns,
     initialState: {
-      pagination: {
-        pageIndex: 0,
-        pageSize: 50,
-      },
+      columnVisibility: metaHiddenColumns,
     },
     meta: {
       onRowAction: (action, rowId) => {

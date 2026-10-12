@@ -38,6 +38,10 @@ import type { UserFormData } from './-components/user-form'
 import { protectRouteBeforeLoad } from '@/lib/utils'
 import { AccessControl } from '@/context/auth-context'
 import { Badge } from '@/components/ui/badge'
+import {
+  metaColumns,
+  metaHiddenColumns,
+} from '@/components/table/columns-utilts'
 
 export const Route = createFileRoute('/users/')({
   component: RouteComponent,
@@ -118,10 +122,11 @@ const columns: ColumnDef<TTableFeatures, TUserListItem>[] = ch.columns([
       return value ? formatDate(value, true) : '-'
     },
   }),
-  ch.accessor('createdAt', {
-    header: 'Created At',
-    cell: (info) => formatDate(info.getValue<Date>(), true),
-  }),
+  // ch.accessor('createdAt', {
+  //   header: 'Created At',
+  //   cell: (info) => formatDate(info.getValue<Date>(), true),
+  // }),
+  ...metaColumns<TUserListItem>(),
 ])
 
 function toUserFormData(row: TUserListItem): UserFormData {
@@ -191,10 +196,7 @@ function RouteComponent() {
     getRowId: (row) => row.id.toString(),
     columns,
     initialState: {
-      pagination: {
-        pageIndex: 0,
-        pageSize: 50,
-      },
+      columnVisibility: { ...metaHiddenColumns },
     },
     meta: {
       onRowAction: (action, rowId) => {

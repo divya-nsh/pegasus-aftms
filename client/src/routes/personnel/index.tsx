@@ -48,6 +48,10 @@ import { useLocalStorage } from '@/hooks/use-local-storage'
 import RefreshButton from '@/components/table/refresh-button'
 import { protectRouteBeforeLoad } from '@/lib/utils'
 import { AccessControl } from '@/context/auth-context'
+import {
+  metaColumns,
+  metaHiddenColumns,
+} from '@/components/table/columns-utilts'
 
 export const Route = createFileRoute('/personnel/')({
   component: RouteComponent,
@@ -172,10 +176,7 @@ const columns: ColumnDef<TTableFeatures, TPersonnelListItem>[] = ch.columns([
       return value ? formatDate(value) : '-'
     },
   }),
-  ch.accessor('createdAt', {
-    header: 'Created At',
-    cell: (info) => formatDate(info.getValue<Date>(), true),
-  }),
+  ...metaColumns<TPersonnelListItem>(),
 ])
 
 function RouteComponent() {
@@ -231,10 +232,7 @@ function RouteComponent() {
     getRowId: (row) => row.id.toString(),
     columns,
     initialState: {
-      pagination: {
-        pageIndex: 0,
-        pageSize: 50,
-      },
+      columnVisibility: metaHiddenColumns,
     },
     meta: {
       onRowAction: (action, rowId) => {

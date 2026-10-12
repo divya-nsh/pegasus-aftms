@@ -1,5 +1,5 @@
 import db from "#/db/db.js";
-import { userTable } from "#/db/schema.js";
+import { runWithCtx, userTable } from "#/db/schema.js";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 import roleService, { SUPER_ADMIN_ROLE_NAME } from "../role/role.service.js";
@@ -23,12 +23,17 @@ export async function ensureDefaultAdmin() {
   }
 
   if (!existing) {
-    await db.insert(userTable).values({
-      username: "admin",
-      password: hashedPassword,
-      isActive: true,
-      roleId: role.id,
-    });
+    await runWithCtx(null, () =>
+      db.insert(userTable).values({
+        username: "admin",
+        password: hashedPassword,
+        isActive: true,
+        roleId: role.id,
+        // Null means created by system
+        createdById: null,
+        updatedById: null,
+      }),
+    );
     console.log("✨ Seeded default user: admin / admin");
     return;
   }
@@ -42,9 +47,11 @@ export async function ensureDefaultAdmin() {
   }
 
   if (Object.keys(updates).length > 0) {
-    await db
-      .update(userTable)
-      .set(updates)
-      .where(eq(userTable.id, existing.id));
+    await runWithCtx(null, () =>
+      db
+        .update(userTable)
+        .set(updates)
+        .where(eq(userTable.id, existing.id)),
+    );
   }
 }

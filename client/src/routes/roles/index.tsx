@@ -34,6 +34,10 @@ import { RoleModelForm } from './-role-model-form'
 import type { RoleModelFormData } from './-role-model-form'
 import { formatDate } from '@/lib/date'
 import { protectRouteBeforeLoad } from '@/lib/utils'
+import {
+  metaColumns,
+  metaHiddenColumns,
+} from '@/components/table/columns-utilts'
 
 export const Route = createFileRoute('/roles/')({
   component: RouteComponent,
@@ -112,6 +116,7 @@ const columns: ColumnDef<TTableFeatures, TRoleListItem>[] = ch.columns([
     header: 'Created At',
     cell: (info) => formatDate(info.getValue(), true),
   }),
+  ...metaColumns<TRoleListItem>(),
 ])
 
 const moduleName = 'role'
@@ -174,10 +179,7 @@ function RouteComponent() {
     getRowId: (row) => row.id.toString(),
     columns,
     initialState: {
-      pagination: {
-        pageIndex: 0,
-        pageSize: 50,
-      },
+      columnVisibility: metaHiddenColumns,
     },
     meta: {
       onRowAction: (action, rowId) => {

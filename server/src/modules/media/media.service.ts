@@ -4,7 +4,7 @@ import path from "path";
 import mime from "mime-types";
 import { pipeline } from "stream/promises";
 import db from "#/db/db.js";
-import { mediaTable } from "#/db/schema.js";
+import { mediaTable, runWithCtx } from "#/db/schema.js";
 import { and, eq, inArray, lt, or } from "drizzle-orm";
 import { getAppDirname } from "#/dirname.js";
 
@@ -51,6 +51,7 @@ class MediaService {
   async uploadFile(
     stream: NodeJS.ReadableStream | ReadableStream,
     meta: { originalFileName: string },
+    createdById: number,
   ) {
     const { originalFileName } = meta;
     const ext = originalFileName.split(".").pop();
@@ -71,6 +72,7 @@ class MediaService {
         mimeType,
         size: 0,
         status: "draft",
+        createdById,
       })
       .returning({
         id: mediaTable.id,
@@ -84,6 +86,7 @@ class MediaService {
       .update(mediaTable)
       .set({
         size: stats.size,
+        updatedById: createdById,
       })
       .where(eq(mediaTable.id, mediaRecord!.id));
 
@@ -148,43 +151,45 @@ class MediaService {
   }
 
   async startCleanupJob() {
-    // If cleanup job is already running, Skip it
-    if (this.cleanupJob) return;
-    console.log("✔ Media Cleanup Job is Initiated!!");
-    const mediaRecords = await db
-      .select()
-      .from(mediaTable)
-      .where(
-        or(
-          and(
-            eq(mediaTable.status, "archived"),
-            lt(
-              mediaTable.statusUpdatedAt,
-              new Date(Date.now() - ARCHIVED_MEDIA_RETENTION_INTERVAL_MS),
+    return runWithCtx(null, async () => {
+      // If cleanup job is already running, Skip it
+      if (this.cleanupJob) return;
+      console.log("✔ Media Cleanup Job is Initiated!!");
+      const mediaRecords = await db
+        .select()
+        .from(mediaTable)
+        .where(
+          or(
+            and(
+              eq(mediaTable.status, "archived"),
+              lt(
+                mediaTable.statusUpdatedAt,
+                new Date(Date.now() - ARCHIVED_MEDIA_RETENTION_INTERVAL_MS),
+              ),
+            ),
+            and(
+              eq(mediaTable.status, "draft"),
+              lt(
+                mediaTable.statusUpdatedAt,
+                new Date(Date.now() - DRAFT_MEDIA_RETENTION_INTERVAL_MS),
+              ),
             ),
           ),
-          and(
-            eq(mediaTable.status, "draft"),
-            lt(
-              mediaTable.statusUpdatedAt,
-              new Date(Date.now() - DRAFT_MEDIA_RETENTION_INTERVAL_MS),
-            ),
-          ),
-        ),
-      )
-      .limit(CLEANUP_BATCH_SIZE);
+        )
+        .limit(CLEANUP_BATCH_SIZE);
 
-    for (const mediaRecord of mediaRecords) {
-      await this.deleteMediaFromDiskIfExists(mediaRecord.path);
-      // First make sure file is deleted from disk before deleting the media record
-      await db.delete(mediaTable).where(eq(mediaTable.id, mediaRecord.id));
-    }
+      for (const mediaRecord of mediaRecords) {
+        await this.deleteMediaFromDiskIfExists(mediaRecord.path);
+        // First make sure file is deleted from disk before deleting the media record
+        await db.delete(mediaTable).where(eq(mediaTable.id, mediaRecord.id));
+      }
 
-    // console.log("Cleanup job completed");
+      // console.log("Cleanup job completed");
 
-    this.cleanupJob = setTimeout(() => {
-      this.startCleanupJob();
-    }, CLEANUP_JOB_INTERVAL_MS);
+      this.cleanupJob = setTimeout(() => {
+        this.startCleanupJob();
+      }, CLEANUP_JOB_INTERVAL_MS);
+    });
   }
 }
 

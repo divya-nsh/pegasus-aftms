@@ -1,4 +1,6 @@
+import { logger } from "#/lib/logger.js";
 import { missionTypes } from "@repo/shared";
+import { sql } from "drizzle-orm";
 import {
   integer,
   snakeCase,
@@ -11,7 +13,9 @@ import {
   jsonb,
   uniqueIndex,
   numeric,
+  type AnyPgColumn,
 } from "drizzle-orm/pg-core";
+import { AsyncLocalStorage } from "node:async_hooks";
 
 export const genderEnum = pgEnum("gender", ["male", "female", "other"]);
 export const personnelTypeEnum = pgEnum("personnel_type", [
@@ -31,12 +35,53 @@ export const mediaStatusEnum = pgEnum("media_status", [
   "archived",
 ]);
 
+type Ctx = { userId: number | null };
+export const mutationQueryContext = new AsyncLocalStorage<Ctx>();
+
+export const currentUserId = () => {
+  const ctx = mutationQueryContext.getStore();
+  if (!ctx) {
+    throw new Error(
+      "Update or insert operation requires a user context: wrap this code in mutationQueryContext.run()",
+    );
+  }
+  // if (!ctx) {
+  //   const error = new Error(
+  //     "Warning: Insert or update Operation is being performed without a user context: wrap this code in runWithCtx()",
+  //   );
+  //   logger.error(error.message);
+  // }
+
+  return ctx?.userId ?? sql`null`;
+};
+
+export const runWithCtx = <T>(userId: number | null, fn: () => T) => {
+  // Without Promise.resolve requried becuase drizzle query is lazy thenables and context will not gone properly passed without it
+  return mutationQueryContext.run({ userId }, () => Promise.resolve(fn()));
+};
+
+// // for seeds, cron jobs, scripts: explicit and intentional
+// export const runAsSystem = <T>(fn: () => T) =>
+//   requestContext.run({ userId: null }, fn);
+
 const timeStampts = {
   createdAt: timestamp().defaultNow().notNull(),
   updatedAt: timestamp()
     .defaultNow()
     .notNull()
     .$onUpdate(() => new Date()),
+};
+
+const auditColumns = {
+  ...timeStampts,
+  /** User Who created the record */
+  createdById: integer()
+    .references((): AnyPgColumn => userTable.id)
+    .$defaultFn(() => currentUserId()),
+  /** User Who Last Updated the record */
+  updatedById: integer()
+    .references((): AnyPgColumn => userTable.id)
+    .$onUpdateFn(() => currentUserId()),
 };
 
 export const userTable = snakeCase.table("user", {
@@ -51,7 +96,7 @@ export const userTable = snakeCase.table("user", {
   lastLoginAt: timestamp(),
   passwordChangedAt: timestamp(),
   isActive: boolean().notNull().default(true),
-  ...timeStampts,
+  ...auditColumns,
 });
 
 export const roleTable = snakeCase.table("role", {
@@ -60,7 +105,7 @@ export const roleTable = snakeCase.table("role", {
   permissions: varchar().array().notNull().default([]),
   description: varchar(),
   isSystem: boolean().notNull().default(false),
-  ...timeStampts,
+  ...auditColumns,
 });
 
 export const personnelTable = snakeCase.table("personnel", {
@@ -86,7 +131,7 @@ export const personnelTable = snakeCase.table("personnel", {
     .unique()
     .references(() => userTable.id),
   // primaryAircraftTypeId: integer().references(() => aircraftTypeTable.id),
-  ...timeStampts,
+  ...auditColumns,
 });
 
 // export const aircraftTypeTable = snakeCase.table("aircraft_type", {
@@ -115,6 +160,11 @@ export const missionScheduleStatusEnum = pgEnum("mission_result", [
   "failed",
 ]);
 
+export const missionAssignmentGradingStatusEnum = pgEnum(
+  "mission_assignment_grading_status",
+  ["pending", "scored", "exempt"],
+);
+
 export const missionTable = snakeCase.table("mission", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   name: varchar().notNull(),
@@ -124,7 +174,7 @@ export const missionTable = snakeCase.table("mission", {
   durationMinutes: integer().notNull().default(60),
   // Types are Hardcoded in the Codebase
   missionType: varchar().notNull().default(missionTypes[0]!.id),
-  ...timeStampts,
+  ...auditColumns,
 });
 
 export const missionScheduleTable = snakeCase.table("mission_schedule", {
@@ -143,13 +193,8 @@ export const missionScheduleTable = snakeCase.table("mission_schedule", {
   // pilotId: integer().references(() => personnelTable.id),
   status: missionStatusEnum().notNull().default("draft"),
   remarks: varchar(),
-  ...timeStampts,
+  ...auditColumns,
 });
-
-export const missionAssignmentGradingStatusEnum = pgEnum(
-  "mission_assignment_grading_status",
-  ["pending", "scored", "exempt"],
-);
 
 // Mission Assigned to whom and there stats
 export const missionScheduleParticipantTable = snakeCase.table(
@@ -190,7 +235,7 @@ export const missionScheduleParticipantTable = snakeCase.table(
       .default("pending"),
     result: missionScheduleStatusEnum(),
     order: integer(),
-    ...timeStampts,
+    ...auditColumns,
   },
   (table) => [
     uniqueIndex("unique_mission_schedule_id_personnel_id_idx").on(
@@ -225,7 +270,7 @@ export const missionScheduleParticipantGradingTable = snakeCase.table(
       scale: 2,
     }),
     status: missionAssignmentGradingStatusEnum().notNull().default("pending"),
-    ...timeStampts,
+    ...auditColumns,
   },
   (table) => [
     // uniqueIndex("A".repeat(63)).on(
@@ -250,7 +295,7 @@ export const aircraftTable = snakeCase.table("aircraft", {
   inductionDate: date(),
   remarks: varchar(),
   status: varchar(), // active, grounded, reserved, in_storage, retired
-  ...timeStampts,
+  ...auditColumns,
 });
 
 export const mediaTable = snakeCase.table(
@@ -263,7 +308,7 @@ export const mediaTable = snakeCase.table(
     mimeType: varchar().notNull(),
     size: integer().notNull(),
     statusUpdatedAt: timestamp().defaultNow().notNull(),
-    ...timeStampts,
+    ...auditColumns,
   },
   (table) => [
     index("media_status_created_idx").on(table.status, table.createdAt),
@@ -278,7 +323,7 @@ export const locationTable = snakeCase.table("location", {
   address: varchar(),
   phone: varchar(),
   description: varchar(),
-  ...timeStampts,
+  ...auditColumns,
 });
 
 export const areaTable = snakeCase.table("area", {
@@ -287,16 +332,7 @@ export const areaTable = snakeCase.table("area", {
   code: varchar().notNull().unique(),
   address: varchar(),
   description: varchar(),
-  ...timeStampts,
-});
-
-// OTHERS
-export const sessionTable = snakeCase.table("session", {
-  sid: varchar().primaryKey().notNull(),
-  sess: jsonb().notNull(),
-  expireAt: timestamp().notNull(),
-  version: integer().notNull().default(1),
-  ...timeStampts,
+  ...auditColumns,
 });
 
 // export const documentTypeEnum = pgEnum("document_type", [
@@ -335,14 +371,14 @@ export const gradingAttributeTable = snakeCase.table("grading_attribute", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   name: varchar().notNull().unique(),
   notes: varchar(),
-  ...timeStampts,
+  ...auditColumns,
 });
 
 export const gradingScaleTable = snakeCase.table("grading_scale", {
   id: integer().primaryKey().generatedAlwaysAsIdentity(),
   name: varchar().notNull(),
   notes: varchar(),
-  ...timeStampts,
+  ...auditColumns,
 });
 
 export const gradingScaleOptionTable = snakeCase.table(
@@ -367,7 +403,7 @@ export const gradingScaleOptionTable = snakeCase.table(
       precision: 5,
       scale: 2,
     }).notNull(),
-    ...timeStampts,
+    ...auditColumns,
   },
   (table) => [
     uniqueIndex("unique_grading_scale_id_label_idx").on(
@@ -384,7 +420,7 @@ export const gradingTemplateTable = snakeCase.table("grading_template", {
   gradingScaleId: integer()
     .references(() => gradingScaleTable.id)
     .notNull(),
-  ...timeStampts,
+  ...auditColumns,
 });
 
 export const gradingTemplateAttributeTable = snakeCase.table(
@@ -401,7 +437,7 @@ export const gradingTemplateAttributeTable = snakeCase.table(
       .notNull(),
     weight: integer().notNull(),
     sortOrder: integer().notNull().default(0),
-    ...timeStampts,
+    ...auditColumns,
   },
   (table) => [
     uniqueIndex("unique_template_id_attribute_id_idx").on(
@@ -410,3 +446,16 @@ export const gradingTemplateAttributeTable = snakeCase.table(
     ),
   ],
 );
+
+// Internal Tables For Application Use Only
+export const sessionTable = snakeCase.table("session", {
+  sid: varchar().primaryKey().notNull(),
+  sess: jsonb().notNull(),
+  expireAt: timestamp().notNull(),
+  version: integer().notNull().default(1),
+  // On User Delete All his Session Will gone Be Deleted
+  userId: integer().references(() => userTable.id, {
+    onDelete: "cascade",
+  }),
+  ...timeStampts,
+});

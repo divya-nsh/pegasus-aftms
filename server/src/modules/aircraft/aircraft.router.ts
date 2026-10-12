@@ -1,4 +1,5 @@
 import db from "#/db/db.js";
+import { withAuditColumns } from "#/db/query-utilts.js";
 import { aircraftTable } from "#/db/schema.js";
 import { protectedProcedure, router } from "#/trpc.js";
 import { TRPCError } from "@trpc/server";
@@ -27,7 +28,10 @@ const deleteSchema = z.object({
 
 const aircraftRouter = router({
   getAll: protectedProcedure.query(async () => {
-    const aircraft = await db.select().from(aircraftTable).orderBy(desc(aircraftTable.id));
+    const aircraft = await db.query.aircraftTable.findMany({
+      with: withAuditColumns(),
+      orderBy: { id: "desc" },
+    });
 
     return {
       items: aircraft,
@@ -53,51 +57,46 @@ const aircraftRouter = router({
       return aircraft;
     }),
 
-  create: protectedProcedure
-    .input(createSchema)
-    .mutation(async ({ input }) => {
-      const aircraft = await db
-        .insert(aircraftTable)
-        .values(input)
-        .returning({ id: aircraftTable.id });
-      return aircraft;
-    }),
+  // ----------Mutations Are Below ---------------------------
+  create: protectedProcedure.input(createSchema).mutation(async ({ input }) => {
+    const aircraft = await db
+      .insert(aircraftTable)
+      .values(input)
+      .returning({ id: aircraftTable.id });
+    return aircraft;
+  }),
 
-  update: protectedProcedure
-    .input(updateSchema)
-    .mutation(async ({ input }) => {
-      const { toEditId, ...data } = input;
-      const aircraft = await db
-        .update(aircraftTable)
-        .set(data)
-        .where(eq(aircraftTable.id, toEditId))
-        .returning({ id: aircraftTable.id });
+  update: protectedProcedure.input(updateSchema).mutation(async ({ input }) => {
+    const { toEditId, ...data } = input;
+    const aircraft = await db
+      .update(aircraftTable)
+      .set(data)
+      .where(eq(aircraftTable.id, toEditId))
+      .returning({ id: aircraftTable.id });
 
-      if (aircraft.length === 0) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Aircraft not found",
-        });
-      }
-    }),
+    if (aircraft.length === 0) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Aircraft not found",
+      });
+    }
+  }),
 
-  delete: protectedProcedure
-    .input(deleteSchema)
-    .mutation(async ({ input }) => {
-      const aircraft = await db
-        .delete(aircraftTable)
-        .where(eq(aircraftTable.id, input.toDeleteId))
-        .returning({ id: aircraftTable.id });
+  delete: protectedProcedure.input(deleteSchema).mutation(async ({ input }) => {
+    const aircraft = await db
+      .delete(aircraftTable)
+      .where(eq(aircraftTable.id, input.toDeleteId))
+      .returning({ id: aircraftTable.id });
 
-      if (aircraft.length === 0) {
-        throw new TRPCError({
-          code: "NOT_FOUND",
-          message: "Aircraft not found",
-        });
-      }
+    if (aircraft.length === 0) {
+      throw new TRPCError({
+        code: "NOT_FOUND",
+        message: "Aircraft not found",
+      });
+    }
 
-      return aircraft;
-    }),
+    return aircraft;
+  }),
 });
 
 export default aircraftRouter;

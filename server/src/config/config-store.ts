@@ -32,6 +32,9 @@ Guide:
   },
 });
 
-configStore.save();
+if (!process.argv.includes("--open-site")) {
+  // Sync config with file
+  configStore.save();
+}
 
 export default configStore;

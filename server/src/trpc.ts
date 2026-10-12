@@ -4,6 +4,8 @@ import type { SessionData } from "express-session";
 import { SESSION_COOKIE_NAME } from "./config/constants.js";
 import { prettifyError, ZodError } from "zod";
 import userService from "./modules/user/user.service.js";
+import type { TPermissionKey } from "./modules/role/permissions.js";
+import { runWithCtx } from "./db/schema.js";
 
 type SessionUser = NonNullable<SessionData["user"]>;
 
@@ -136,15 +138,27 @@ export const protectedProcedure = baseProcedure.use(async ({ ctx, next }) => {
     });
   }
 
-  const userRole = await userService.getUserRole(ctx.user.id);
+  const user = ctx.user;
+  const userRole = await userService.getUserRole(user.id);
 
-  return next({
-    ctx: {
-      ...ctx,
-      user: {
-        ...ctx.user,
-        role: userRole,
+  return runWithCtx(user.id, () =>
+    next({
+      ctx: {
+        ...ctx,
+        user: {
+          ...user,
+          role: userRole,
+        },
       },
-    },
-  });
+    }),
+  );
 });
+
+export const permissionProcedure = (permission: TPermissionKey) =>
+  protectedProcedure.use(async ({ ctx, next }) => {
+    if (!ctx.user.role?.permissions.includes(permission)) {
+      throw new TRPCError({ code: "FORBIDDEN" });
+    }
+
+    return next({ ctx });
+  });

@@ -1,4 +1,5 @@
 import db, { type DBTransaction } from "#/db/db.js";
+import { withAuditColumns } from "#/db/query-utilts.js";
 import { gradingScaleOptionTable, gradingScaleTable } from "#/db/schema.js";
 import { diffIds } from "#/lib/diffIds.js";
 import { TRPCError } from "@trpc/server";
@@ -24,6 +25,7 @@ class GradingScaleService {
     const items = await db.query.gradingScaleTable.findMany({
       with: {
         options: true,
+        ...withAuditColumns(),
       },
       orderBy: {
         id: "desc",
@@ -68,6 +70,8 @@ class GradingScaleService {
 
     return scale?.id ?? false;
   }
+
+  // ---------- Mutations Goes Below ---------------------------
 
   async create(values: TCreateGradingScale) {
     validateOptions(values.options);

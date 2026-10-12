@@ -1,4 +1,4 @@
-import { publicProcedure, router } from "#/trpc.js";
+import { protectedProcedure, router } from "#/trpc.js";
 import { z } from "zod";
 import { mediaService } from "./media.service.js";
 import { TRPCError } from "@trpc/server";
@@ -17,9 +17,9 @@ const MAX_IMAGE_SIZE = 10 * 1024 * 1024; // 10MB
 const MAX_FILE_SIZE = 50 * 1024 * 1024; // 100MB
 
 const mediaRouter = router({
-  uploadFile: publicProcedure
+  uploadFile: protectedProcedure
     .input(z.custom<globalThis.FormData>((value) => value instanceof FormData))
-    .mutation(async ({ input }) => {
+    .mutation(async ({ input, ctx }) => {
       const file = input.get("file");
       if (!file) {
         throw new TRPCError({
@@ -53,9 +53,13 @@ const mediaRouter = router({
       }
       const nodeStream = Readable.fromWeb(file.stream());
       try {
-        const media = await mediaService.uploadFile(nodeStream, {
-          originalFileName: file.name,
-        });
+        const media = await mediaService.uploadFile(
+          nodeStream,
+          {
+            originalFileName: file.name,
+          },
+          ctx.user.id,
+        );
         return media;
       } catch (error) {
         throw new TRPCError({

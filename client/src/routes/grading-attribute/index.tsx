@@ -25,7 +25,6 @@ import FullPageSpinner from '@/components/loaders/page-loader'
 import { ActionMenu } from '@/components/table/action-menu'
 import { toast } from '@/components/ui/toast'
 import { BlockingLoaderOverlay } from '@/components/loaders/BlockingLoader'
-import { useState } from 'react'
 import PageCard, {
   ListTitle,
   PageCardContent,
@@ -36,6 +35,10 @@ import RefreshButton from '@/components/table/refresh-button'
 import { AccessControl, useUserCan } from '@/context/auth-context'
 import { protectRouteBeforeLoad } from '@/lib/utils'
 import { useModalForm } from '@/hooks/use-form-modal'
+import {
+  metaColumns,
+  metaHiddenColumns,
+} from '@/components/table/columns-utilts'
 
 export const Route = createFileRoute('/grading-attribute/')({
   component: RouteComponent,
@@ -92,6 +95,7 @@ const columns: ColumnDef<TTableFeatures, TGradingAttributeListItem>[] =
         preventDefaultRowClick: true,
       },
       minSize: 70,
+      enableHiding: false,
     }),
     ch.accessor('name', {
       header: 'Name',
@@ -104,6 +108,7 @@ const columns: ColumnDef<TTableFeatures, TGradingAttributeListItem>[] =
         )
       },
     }),
+    ...metaColumns<TGradingAttributeListItem>(),
   ])
 
 function RouteComponent() {
@@ -160,6 +165,9 @@ function RouteComponent() {
     data: gradingAttributeQ.data.items,
     getRowId: (row) => row.id.toString(),
     columns,
+    initialState: {
+      columnVisibility: metaHiddenColumns,
+    },
     meta: {
       onRowAction: (action, rowId) => {
         if (action === 'edit') {

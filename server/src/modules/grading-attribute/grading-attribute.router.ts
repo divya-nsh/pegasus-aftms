@@ -29,6 +29,8 @@ const gradingAttributeRouter = router({
       gradingAttributeService.isNameExists(input.name, input.excludeId),
     ),
 
+  // ---------- Mutations Routes Goes Below ---------------------------
+
   create: protectedProcedure
     .input(createSchema)
     .mutation(({ input }) => gradingAttributeService.create(input)),

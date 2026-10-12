@@ -1,5 +1,6 @@
 import db from "#/db/db.js";
 import { locationTable } from "#/db/schema.js";
+import { withAuditColumns } from "#/db/query-utilts.js";
 import { protectedProcedure, router } from "#/trpc.js";
 import { and, eq, ne, sql } from "drizzle-orm";
 import { z } from "zod";
@@ -22,7 +23,10 @@ const deleteSchema = z.object({
 
 const locationRouter = router({
   getAll: protectedProcedure.query(async () => {
-    const locations = await db.select().from(locationTable);
+    const locations = await db.query.locationTable.findMany({
+      with: withAuditColumns(),
+      orderBy: { id: "desc" },
+    });
 
     return {
       items: locations,
@@ -47,6 +51,8 @@ const locationRouter = router({
       return location?.id ?? false;
     }),
 
+  // ---------- Mutations Routes Goes Below ---------------------------
+
   create: protectedProcedure.input(createSchema).mutation(async ({ input }) => {
     const { name, code, address, phone, description } = input;
     return db.transaction(async (tx) => {
@@ -69,7 +75,13 @@ const locationRouter = router({
     const { toEditId, name, code, address, phone, description } = input;
     const location = await db
       .update(locationTable)
-      .set({ name, code, address, phone, description })
+      .set({
+        name,
+        code,
+        address,
+        phone,
+        description,
+      })
       .where(eq(locationTable.id, toEditId))
       .returning({ id: locationTable.id });
     return location;

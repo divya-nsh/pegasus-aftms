@@ -7,13 +7,14 @@ import { and, eq, ne, sql } from "drizzle-orm";
 import { z } from "zod";
 import userService from "./user.service.js";
 import roleService from "../role/role.service.js";
+import { withAuditColumns } from "#/db/query-utilts.js";
 
 const createSchema = z.object({
   username: z.string().trim().min(1).max(60),
   password: z.string().min(1),
   isActive: z.boolean().default(true),
-  name: z.string().trim().max(255).nullable().optional(),
-  roleId: z.number().optional(),
+  name: z.string().trim().max(255).nullable().default(""),
+  roleId: z.number().nullable().default(null),
 });
 
 const updateSchema = z.object({
@@ -21,8 +22,8 @@ const updateSchema = z.object({
   username: z.string().trim().min(1).max(60),
   password: z.string().optional(),
   isActive: z.boolean(),
-  name: z.string().trim().max(255).nullable().optional(),
-  roleId: z.number().optional(),
+  name: z.string().trim().max(255).nullable().default(""),
+  roleId: z.number().nullable().default(null),
 });
 
 const deleteSchema = z.object({
@@ -65,6 +66,7 @@ const userRouter = router({
             name: true,
           },
         },
+        ...withAuditColumns(),
       },
       orderBy: { id: "desc" },
     });
@@ -105,51 +107,18 @@ const userRouter = router({
       return user?.id ?? false;
     }),
 
-  create: protectedProcedure.input(createSchema).mutation(async ({ input }) => {
-    const password = await hashPassword(input.password);
-    const user = await db
-      .insert(userTable)
-      .values({
-        username: input.username,
-        password,
-        isActive: input.isActive,
-        name: input.name || null,
-        roleId: input.roleId ?? null,
-      })
-      .returning({ id: userTable.id });
-    return user;
-  }),
+  create: protectedProcedure
+    .input(createSchema)
+    .mutation(async ({ input, ctx }) => {
+      return userService.createUser(input, ctx.user.id);
+    }),
 
-  update: protectedProcedure.input(updateSchema).mutation(async ({ input }) => {
-    const { toEditId, password, ...data } = input;
-    const nextPassword = password?.trim();
-
-    const user = await db
-      .update(userTable)
-      .set({
-        username: data.username,
-        isActive: data.isActive,
-        name: data.name || null,
-        roleId: data.roleId ?? null,
-        ...(nextPassword
-          ? {
-              password: await hashPassword(nextPassword),
-              passwordChangedAt: new Date(),
-            }
-          : {}),
-      })
-      .where(eq(userTable.id, toEditId))
-      .returning({ id: userTable.id });
-
-    if (user.length === 0) {
-      throw new TRPCError({
-        code: "NOT_FOUND",
-        message: "User not found",
-      });
-    }
-
-    return user;
-  }),
+  update: protectedProcedure
+    .input(updateSchema)
+    .mutation(async ({ input, ctx }) => {
+      const { toEditId, password, ...data } = input;
+      return userService.updateUser(toEditId, data, ctx.user.id);
+    }),
 
   delete: protectedProcedure
     .input(deleteSchema)

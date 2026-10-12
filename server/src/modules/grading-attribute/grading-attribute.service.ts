@@ -1,5 +1,6 @@
 import db from "#/db/db.js";
 import { gradingAttributeTable } from "#/db/schema.js";
+import { withAuditColumns } from "#/db/query-utilts.js";
 import { TRPCError } from "@trpc/server";
 import { and, desc, eq, ne, sql } from "drizzle-orm";
 
@@ -10,10 +11,10 @@ type TCreateGradingAttribute = {
 
 class GradingAttributeService {
   async getAll() {
-    const items = await db
-      .select()
-      .from(gradingAttributeTable)
-      .orderBy(desc(gradingAttributeTable.id));
+    const items = await db.query.gradingAttributeTable.findMany({
+      with: withAuditColumns(),
+      orderBy: { id: "desc" },
+    });
 
     return {
       items,
@@ -53,6 +54,7 @@ class GradingAttributeService {
     return attribute?.id ?? false;
   }
 
+  // ---------- Mutations Goes Below ---------------------------
   async create(values: TCreateGradingAttribute) {
     const nameExists = await this.isNameExists(values.name);
     if (nameExists) {

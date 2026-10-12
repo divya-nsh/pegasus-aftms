@@ -36,6 +36,10 @@ import NewButton from '@/components/buttons/new-button'
 import AircraftForm from './-components/aircraft-form'
 import type { AircraftFormData } from './-components/aircraft-form'
 import { AccessControl, useAuth } from '@/context/auth-context'
+import {
+  metaColumns,
+  metaHiddenColumns,
+} from '@/components/table/columns-utilts'
 
 export const Route = createFileRoute('/aircraft/')({
   component: RouteComponent,
@@ -88,6 +92,7 @@ const columns: ColumnDef<TTableFeatures, TAircraftListItem>[] = ch.columns([
       preventDefaultRowClick: true,
     },
     minSize: 70,
+    enableHiding: false,
   }),
   ch.accessor('tailNumber', {
     header: 'Tail Number',
@@ -113,10 +118,7 @@ const columns: ColumnDef<TTableFeatures, TAircraftListItem>[] = ch.columns([
     header: 'Status',
     size: 140,
   }),
-  ch.accessor('createdAt', {
-    header: 'Created At',
-    cell: (info) => formatDate(info.getValue<Date>(), true),
-  }),
+  ...metaColumns<TAircraftListItem>(),
 ])
 
 function RouteComponent() {
@@ -184,10 +186,7 @@ function RouteComponent() {
     getRowId: (row) => row.id.toString(),
     columns,
     initialState: {
-      pagination: {
-        pageIndex: 0,
-        pageSize: 50,
-      },
+      columnVisibility: metaHiddenColumns,
     },
     meta: {
       onRowAction: (action, rowId) => {
