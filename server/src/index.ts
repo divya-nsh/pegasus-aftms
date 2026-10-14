@@ -4,26 +4,27 @@ import session from "express-session";
 import { createExpressMiddleware } from "@trpc/server/adapters/express";
 import { appRouter } from "./router.js";
 import { createContext } from "./trpc.js";
-import { IS_PACKAGED, SESSION_COOKIE_NAME } from "./config/constants.js";
-import db, { testDBConnection } from "./db/db.js";
+import {
+  IS_PACKAGED,
+  SESSION_COOKIE_NAME,
+  UPLOADS_DIR_PATH,
+} from "./config/constants.js";
+import { testDBConnection } from "./db/db.js";
 import morgan from "morgan";
 import path from "node:path";
-import {
-  MEDIA_FOLDER_PATH,
-  mediaService,
-} from "./modules/media/media.service.js";
+import { mediaService } from "./modules/media/media.service.js";
 import { serveClient } from "./middleware/serveClient.js";
 import drizzleSessionStore from "./lib/drizzle-session-store.js";
 import { fileURLToPath } from "node:url";
 import fs from "node:fs";
 import { IS_DEVELOPMENT } from "./lib/env.js";
 import { populateData } from "./populate.js";
-import runMigrations from "./db/migrate.js";
 import configStore from "./config/config-store.js";
 import { getAppDirname } from "./dirname.js";
 import { logger } from "./lib/logger.js";
 import { runSetupServer } from "./setup.js";
 import { isPortAvailable, openUrl } from "./lib/utils.js";
+import { expressDatabaseManagementRouter } from "./modules/backups/backup.router.js";
 
 if (process.argv.includes("--open-site")) {
   // Utility to open site in browser , used when making installer setup
@@ -86,7 +87,7 @@ app.get("/api/uploads/:mediaId", async (req, res) => {
     mediaIdToPathCache.set(mediaId, media.path);
   }
   const filePath = mediaIdToPathCache.get(mediaId)!;
-  res.sendFile(path.join(MEDIA_FOLDER_PATH, filePath!));
+  res.sendFile(path.join(UPLOADS_DIR_PATH, filePath!));
 });
 
 app.use(
@@ -111,9 +112,12 @@ app.use(
   }),
 );
 
+// Required Admin Access to Access This Routes
+app.use("/api/databaseManagement", expressDatabaseManagementRouter);
+
 console.log("System Info:", {
   NODE_ENV: process.env.NODE_ENV,
-  UPLOADS_DIR: MEDIA_FOLDER_PATH,
+  UPLOADS_DIR: UPLOADS_DIR_PATH,
   NODE_VERSION: process.version,
 });
 

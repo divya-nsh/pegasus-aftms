@@ -447,6 +447,15 @@ export const gradingTemplateAttributeTable = snakeCase.table(
   ],
 );
 
+// Used to Store Application Settings or Configuration or System Parameters
+// export const settingsTable = snakeCase.table("settings", {
+//   id: integer().primaryKey().generatedAlwaysAsIdentity(),
+//   key: varchar().notNull().unique(),
+//   value: varchar().notNull(),
+//   description: varchar(),
+//   ...auditColumns,
+// });
+
 // Internal Tables For Application Use Only
 export const sessionTable = snakeCase.table("session", {
   sid: varchar().primaryKey().notNull(),

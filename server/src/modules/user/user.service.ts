@@ -173,6 +173,17 @@ class UserService {
 
     return row?.role;
   }
+
+  async verifyPassword(userId: number, password: string) {
+    const [user] = await db
+      .select()
+      .from(userTable)
+      .where(eq(userTable.id, userId))
+      .limit(1);
+    if (!user) return null;
+
+    return await comparePassword(password, user.password ?? "");
+  }
 }
 
 const userService = new UserService();

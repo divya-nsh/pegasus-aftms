@@ -27,6 +27,16 @@ IS_SET_UP_DONE=false
   );
 }
 
+if (
+  !["postgres:", "postgresql:"].includes(
+    new URL(process.env.DATABASE_URL ?? "").protocol,
+  )
+) {
+  throw new Error(
+    "Connection string must start with postgres:// or postgresql://",
+  );
+}
+
 const envConfig = envSchema.parse(process.env);
 
 export default envConfig;

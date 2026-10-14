@@ -15,6 +15,7 @@ import userService from "./modules/user/user.service.js";
 import gradingAttributeRouter from "./modules/grading-attribute/grading-attribute.router.js";
 import gradingScaleRouter from "./modules/grading-scale/grading-scale.router.js";
 import gradingTemplateRouter from "./modules/grading-template/grading-template.router.js";
+import databaseManagementRouter from "./modules/backups/backup.router.js";
 
 export const appRouter = router({
   hello: protectedProcedure.query(() => {
@@ -64,6 +65,7 @@ export const appRouter = router({
       return { success: true };
     }),
   }),
+  databaseManagement: databaseManagementRouter,
 });
 
 // @ts-expect-error

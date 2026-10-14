@@ -12,6 +12,7 @@ import {
   PrinterIcon,
   ClipboardCheckIcon,
   ShieldIcon,
+  DatabaseIcon,
 } from 'lucide-react'
 import type { NavNode } from './sidebar.types'
 
@@ -103,6 +104,13 @@ export const navItems: NavNode[] = [
             title: 'Roles',
             url: '/roles',
             icon: ShieldIcon,
+            // Only show to super admin
+            permissionKey: '*',
+          },
+          {
+            title: 'Database Management',
+            url: '/database-managment',
+            icon: DatabaseIcon,
             // Only show to super admin
             permissionKey: '*',
           },

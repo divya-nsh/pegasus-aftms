@@ -21,6 +21,7 @@ import { Route as TestRouteImport } from './routes/test'
 import { Route as UploadRouteImport } from './routes/upload'
 import { Route as AircraftIndexRouteImport } from './routes/aircraft/index'
 import { Route as AreaIndexRouteImport } from './routes/area/index'
+import { Route as DatabaseManagmentIndexRouteImport } from './routes/database-managment/index'
 import { Route as EventsIndexRouteImport } from './routes/events/index'
 import { Route as GradingAttributeIndexRouteImport } from './routes/grading-attribute/index'
 import { Route as GradingScaleIndexRouteImport } from './routes/grading-scale/index'
@@ -103,6 +104,11 @@ const AircraftIndexRoute = AircraftIndexRouteImport.update({
 const AreaIndexRoute = AreaIndexRouteImport.update({
   id: '/area/',
   path: '/area/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const DatabaseManagmentIndexRoute = DatabaseManagmentIndexRouteImport.update({
+  id: '/database-managment/',
+  path: '/database-managment/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const EventsIndexRoute = EventsIndexRouteImport.update({
@@ -244,6 +250,7 @@ export interface FileRoutesByFullPath {
   '/trainee-dashboard/copy': typeof TraineeDashboardCopyRoute
   '/aircraft/': typeof AircraftIndexRoute
   '/area/': typeof AreaIndexRoute
+  '/database-managment/': typeof DatabaseManagmentIndexRoute
   '/events/': typeof EventsIndexRoute
   '/grading-attribute/': typeof GradingAttributeIndexRoute
   '/grading-scale/': typeof GradingScaleIndexRoute
@@ -281,6 +288,7 @@ export interface FileRoutesByTo {
   '/trainee-dashboard/copy': typeof TraineeDashboardCopyRoute
   '/aircraft': typeof AircraftIndexRoute
   '/area': typeof AreaIndexRoute
+  '/database-managment': typeof DatabaseManagmentIndexRoute
   '/events': typeof EventsIndexRoute
   '/grading-attribute': typeof GradingAttributeIndexRoute
   '/grading-scale': typeof GradingScaleIndexRoute
@@ -319,6 +327,7 @@ export interface FileRoutesById {
   '/trainee-dashboard/copy': typeof TraineeDashboardCopyRoute
   '/aircraft/': typeof AircraftIndexRoute
   '/area/': typeof AreaIndexRoute
+  '/database-managment/': typeof DatabaseManagmentIndexRoute
   '/events/': typeof EventsIndexRoute
   '/grading-attribute/': typeof GradingAttributeIndexRoute
   '/grading-scale/': typeof GradingScaleIndexRoute
@@ -358,6 +367,7 @@ export interface FileRouteTypes {
     | '/trainee-dashboard/copy'
     | '/aircraft/'
     | '/area/'
+    | '/database-managment/'
     | '/events/'
     | '/grading-attribute/'
     | '/grading-scale/'
@@ -395,6 +405,7 @@ export interface FileRouteTypes {
     | '/trainee-dashboard/copy'
     | '/aircraft'
     | '/area'
+    | '/database-managment'
     | '/events'
     | '/grading-attribute'
     | '/grading-scale'
@@ -432,6 +443,7 @@ export interface FileRouteTypes {
     | '/trainee-dashboard/copy'
     | '/aircraft/'
     | '/area/'
+    | '/database-managment/'
     | '/events/'
     | '/grading-attribute/'
     | '/grading-scale/'
@@ -470,6 +482,7 @@ export interface RootRouteChildren {
   TraineeDashboardCopyRoute: typeof TraineeDashboardCopyRoute
   AircraftIndexRoute: typeof AircraftIndexRoute
   AreaIndexRoute: typeof AreaIndexRoute
+  DatabaseManagmentIndexRoute: typeof DatabaseManagmentIndexRoute
   EventsIndexRoute: typeof EventsIndexRoute
   GradingAttributeIndexRoute: typeof GradingAttributeIndexRoute
   GradingScaleIndexRoute: typeof GradingScaleIndexRoute
@@ -571,6 +584,13 @@ declare module '@tanstack/react-router' {
       path: '/area'
       fullPath: '/area/'
       preLoaderRoute: typeof AreaIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/database-managment/': {
+      id: '/database-managment/'
+      path: '/database-managment'
+      fullPath: '/database-managment/'
+      preLoaderRoute: typeof DatabaseManagmentIndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/events/': {
@@ -758,6 +778,7 @@ const rootRouteChildren: RootRouteChildren = {
   TraineeDashboardCopyRoute: TraineeDashboardCopyRoute,
   AircraftIndexRoute: AircraftIndexRoute,
   AreaIndexRoute: AreaIndexRoute,
+  DatabaseManagmentIndexRoute: DatabaseManagmentIndexRoute,
   EventsIndexRoute: EventsIndexRoute,
   GradingAttributeIndexRoute: GradingAttributeIndexRoute,
   GradingScaleIndexRoute: GradingScaleIndexRoute,
